@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, Key } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function ResetPasswordPage() {
     const [newPassword, setNewPassword] = useState('');
@@ -12,6 +13,8 @@ export default function ResetPasswordPage() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const router = useRouter();
+    const tCommon = useTranslations('common');
+    const tAuth = useTranslations('auth.resetPassword');
 
     // Check if we have a valid recovery session
     useEffect(() => {
@@ -21,10 +24,10 @@ export default function ResetPasswordPage() {
                 const { data: { user }, error } = await supabase.getSupabaseClient().auth.getUser();
 
                 if (error || !user) {
-                    setError('Invalid or expired reset link. Please request a new password reset.');
+                    setError(tAuth('error.invalidLink'));
                 }
             } catch {
-                setError('Failed to verify reset session');
+                setError(tAuth('error.verifySession'));
             }
         };
 
@@ -36,12 +39,12 @@ export default function ResetPasswordPage() {
         setError('');
 
         if (newPassword !== confirmPassword) {
-            setError("Passwords don't match");
+            setError(tAuth('error.passwordsMismatch'));
             return;
         }
 
         if (newPassword.length < 6) {
-            setError('Password must be at least 6 characters long');
+            setError(tAuth('error.tooShort'));
             return;
         }
 
@@ -63,7 +66,7 @@ export default function ResetPasswordPage() {
             if (err instanceof Error) {
                 setError(err.message);
             } else {
-                setError('Failed to reset password');
+                setError(tAuth('error.generic'));
             }
         } finally {
             setLoading(false);
@@ -79,12 +82,11 @@ export default function ResetPasswordPage() {
                     </div>
 
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        Password reset successful
+                        {tAuth('success.title')}
                     </h2>
 
                     <p className="text-gray-600 mb-8">
-                        Your password has been successfully reset.
-                        You will be redirected to the app in a moment.
+                        {tAuth('success.description')}
                     </p>
                 </div>
             </div>
@@ -98,7 +100,7 @@ export default function ResetPasswordPage() {
                     <Key className="h-12 w-12 text-primary-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
-                    Create new password
+                    {tAuth('title')}
                 </h2>
             </div>
 
@@ -111,7 +113,7 @@ export default function ResetPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <label htmlFor="new-password" className="block text-sm font-medium text-gray-700">
-                        New Password
+                        {tCommon('newPassword')}
                     </label>
                     <div className="mt-1">
                         <input
@@ -129,7 +131,7 @@ export default function ResetPasswordPage() {
 
                 <div>
                     <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
-                        Confirm New Password
+                        {tCommon('confirmNewPassword')}
                     </label>
                     <div className="mt-1">
                         <input
@@ -144,7 +146,7 @@ export default function ResetPasswordPage() {
                         />
                     </div>
                     <p className="mt-2 text-sm text-gray-500">
-                        Password must be at least 6 characters long
+                        {tAuth('helper')}
                     </p>
                 </div>
 
@@ -154,7 +156,7 @@ export default function ResetPasswordPage() {
                         disabled={loading}
                         className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
                     >
-                        {loading ? 'Resetting password...' : 'Reset password'}
+                        {loading ? tAuth('button.resetting') : tAuth('button.reset')}
                     </button>
                 </div>
             </form>

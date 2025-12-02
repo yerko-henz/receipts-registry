@@ -6,6 +6,7 @@ import {useEffect, useState} from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SSOButtons from '@/components/SSOButtons';
+import { useTranslations } from 'next-intl';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -14,6 +15,8 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [showMFAPrompt, setShowMFAPrompt] = useState(false);
     const router = useRouter();
+    const tCommon = useTranslations('common');
+    const tAuth = useTranslations('auth.login');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,7 +45,7 @@ export default function LoginPage() {
             if (err instanceof Error) {
                 setError(err.message);
             } else {
-                setError('An unknown error occurred');
+                setError(tAuth('error.unknown'));
             }
         } finally {
             setLoading(false);
@@ -68,7 +71,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email address
+                        {tCommon('email')}
                     </label>
                     <div className="mt-1">
                         <input
@@ -86,7 +89,7 @@ export default function LoginPage() {
 
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Password
+                        {tCommon('password')}
                     </label>
                     <div className="mt-1">
                         <input
@@ -105,7 +108,7 @@ export default function LoginPage() {
                 <div className="flex items-center justify-between">
                     <div className="text-sm">
                         <Link href="/auth/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
-                            Forgot your password?
+                            {tCommon('forgotYourPassword')}
                         </Link>
                     </div>
                 </div>
@@ -116,7 +119,7 @@ export default function LoginPage() {
                         disabled={loading}
                         className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
                     >
-                        {loading ? 'Signing in...' : 'Sign in'}
+                        {loading ? tAuth('button.signingIn') : tCommon('signIn')}
                     </button>
                 </div>
             </form>
@@ -124,10 +127,10 @@ export default function LoginPage() {
             <SSOButtons onError={setError} />
 
             <div className="mt-6 text-center text-sm">
-                <span className="text-gray-600">Don&#39;t have an account?</span>
+                <span className="text-gray-600">{tCommon('dontHaveAccount')}</span>
                 {' '}
                 <Link href="/auth/register" className="font-medium text-primary-600 hover:text-primary-500">
-                    Sign up
+                    {tCommon('signUp')}
                 </Link>
             </div>
         </div>

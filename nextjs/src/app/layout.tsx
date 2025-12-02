@@ -4,11 +4,16 @@ import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/Cookies";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_PRODUCTNAME,
-  description: "The best way to build your SaaS product.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("layout");
+
+  return {
+    title: process.env.NEXT_PUBLIC_PRODUCTNAME,
+    description: t("description"),
+  };
+}
 
 export default function RootLayout({
   children,
@@ -23,9 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={theme}>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>{" "}
+        <NextIntlClientProvider>
+          {children}
+          <CookieConsent />
+        </NextIntlClientProvider>
         <Analytics />
-        <CookieConsent />
         {gaID && <GoogleAnalytics gaId={gaID} />}
       </body>
     </html>

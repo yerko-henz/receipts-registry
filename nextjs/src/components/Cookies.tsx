@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Shield, X } from 'lucide-react';
 import { setCookie, getCookie } from 'cookies-next/client';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 const COOKIE_CONSENT_KEY = 'cookie-accept';
 const COOKIE_EXPIRY_DAYS = 365;
 
 const CookieConsent = () => {
     const [isVisible, setIsVisible] = useState(false);
+    const t = useTranslations('cookies');
 
     useEffect(() => {
         const consent = getCookie(COOKIE_CONSENT_KEY);
@@ -51,19 +53,27 @@ const CookieConsent = () => {
                         <Shield className="h-5 w-5 text-blue-600" />
                         <div className="space-y-1">
                             <p className="text-sm text-gray-600">
-                                We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic.
-                                By clicking &quot;Accept&quot;, you consent to our use of cookies.
+                                {t('message')}
                             </p>
                             <p className="text-sm text-gray-500">
-                                Read our{' '}
-                                <Link href={`/legal/privacy`} className="text-blue-600 hover:text-blue-700 underline">
-                                    Privacy Policy
-                                </Link>{' '}
-                                and{' '}
-                                <Link href={`/legal/terms`} className="text-blue-600 hover:text-blue-700 underline">
-                                    Terms of Service
-                                </Link>{' '}
-                                for more information.
+                                {t.rich('moreInfo', {
+                                    privacyPolicy: (chunks) => (
+                                        <Link
+                                            href={`/legal/privacy`}
+                                            className="text-blue-600 hover:text-blue-700 underline"
+                                        >
+                                            {chunks}
+                                        </Link>
+                                    ),
+                                    termsOfService: (chunks) => (
+                                        <Link
+                                            href={`/legal/terms`}
+                                            className="text-blue-600 hover:text-blue-700 underline"
+                                        >
+                                            {chunks}
+                                        </Link>
+                                    ),
+                                })}
                             </p>
                         </div>
                     </div>
@@ -74,19 +84,19 @@ const CookieConsent = () => {
                             onClick={handleDecline}
                             className="text-gray-600 hover:text-gray-700"
                         >
-                            Decline
+                            {t('decline')}
                         </Button>
                         <Button
                             size="sm"
                             onClick={handleAccept}
                             className="bg-blue-600 text-white hover:bg-blue-700"
                         >
-                            Accept
+                            {t('accept')}
                         </Button>
                         <button
                             onClick={handleDecline}
                             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                            aria-label="Close"
+                            aria-label={t('close')}
                         >
                             <X className="h-4 w-4 text-gray-500" />
                         </button>

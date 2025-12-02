@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SSOButtons from "@/components/SSOButtons";
+import { useTranslations } from 'next-intl';
 
 export default function RegisterPage() {
     const [email, setEmail] = useState('');
@@ -14,18 +15,20 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const router = useRouter();
+    const tCommon = useTranslations('common');
+    const tAuth = useTranslations('auth.register');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
         if (!acceptedTerms) {
-            setError('You must accept the Terms of Service and Privacy Policy');
+            setError(tAuth('error.acceptTerms'));
             return;
         }
 
         if (password !== confirmPassword) {
-            setError("Passwords don't match");
+            setError(tAuth('error.passwordMismatch'));
             return;
         }
 
@@ -42,7 +45,7 @@ export default function RegisterPage() {
             if(err instanceof Error) {
                 setError(err.message);
             } else {
-                setError('An unknown error occurred');
+                setError(tAuth('error.unknown'));
             }
         } finally {
             setLoading(false);
@@ -60,7 +63,7 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email address
+                        {tCommon('email')}
                     </label>
                     <div className="mt-1">
                         <input
@@ -78,7 +81,7 @@ export default function RegisterPage() {
 
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Password
+                        {tCommon('password')}
                     </label>
                     <div className="mt-1">
                         <input
@@ -96,7 +99,7 @@ export default function RegisterPage() {
 
                 <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                        Confirm Password
+                        {tCommon('confirmPassword')}
                     </label>
                     <div className="mt-1">
                         <input
@@ -126,22 +129,26 @@ export default function RegisterPage() {
                         </div>
                         <div className="ml-3 text-sm">
                             <label htmlFor="terms" className="text-gray-600">
-                                I agree to the{' '}
-                                <Link
-                                    href="/legal/terms"
-                                    className="font-medium text-primary-600 hover:text-primary-500"
-                                    target="_blank"
-                                >
-                                    Terms of Service
-                                </Link>{' '}
-                                and{' '}
-                                <Link
-                                    href="/legal/privacy"
-                                    className="font-medium text-primary-600 hover:text-primary-500"
-                                    target="_blank"
-                                >
-                                    Privacy Policy
-                                </Link>
+                                {tAuth.rich('checkbox.label', {
+                                    termsOfService: (chunks) => (
+                                        <Link
+                                            href="/legal/terms"
+                                            className="font-medium text-primary-600 hover:text-primary-500"
+                                            target="_blank"
+                                        >
+                                            {chunks}
+                                        </Link>
+                                    ),
+                                    privacyPolicy: (chunks) => (
+                                        <Link
+                                            href="/legal/privacy"
+                                            className="font-medium text-primary-600 hover:text-primary-500"
+                                            target="_blank"
+                                        >
+                                            {chunks}
+                                        </Link>
+                                    ),
+                                })}
                             </label>
                         </div>
                     </div>
@@ -152,7 +159,7 @@ export default function RegisterPage() {
                         disabled={loading}
                         className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
                     >
-                        {loading ? 'Creating account...' : 'Create account'}
+                        {loading ? tAuth('button.creatingAccount') : tCommon('createAccount')}
                     </button>
                 </div>
             </form>
@@ -160,10 +167,10 @@ export default function RegisterPage() {
             <SSOButtons onError={setError}/>
 
             <div className="mt-6 text-center text-sm">
-                <span className="text-gray-600">Already have an account?</span>
+                <span className="text-gray-600">{tCommon('alreadyHaveAccount')}</span>
                 {' '}
                 <Link href="/auth/login" className="font-medium text-primary-600 hover:text-primary-500">
-                    Sign in
+                    {tCommon('signIn')}
                 </Link>
             </div>
         </div>

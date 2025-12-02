@@ -14,59 +14,53 @@ import HomePricing from "@/components/HomePricing";
 import { useTranslations } from "next-intl";
 
 export default function Home() {
-  const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
+  const productName = process.env.NEXT_PUBLIC_PRODUCTNAME ?? "";
   const t = useTranslations("homepage");
 
   const features = [
     {
       icon: Shield,
-      title: "Robust Authentication",
-      description:
-        "Secure login with email/password, Multi-Factor Authentication, and SSO providers",
+      title: t("feature.auth.title"),
+      description: t("feature.auth.description"),
       color: "text-green-600",
     },
     {
       icon: Database,
-      title: "File Management",
-      description:
-        "Built-in file storage with secure sharing, downloads, and granular permissions",
+      title: t("feature.storage.title"),
+      description: t("feature.storage.description"),
       color: "text-orange-600",
     },
     {
       icon: Users,
-      title: "User Settings",
-      description:
-        "Complete user management with password updates, MFA setup, and profile controls",
+      title: t("feature.settings.title"),
+      description: t("feature.settings.description"),
       color: "text-red-600",
     },
     {
       icon: Clock,
-      title: "Task Management",
-      description:
-        "Built-in todo system with real-time updates and priority management",
+      title: t("feature.tasks.title"),
+      description: t("feature.tasks.description"),
       color: "text-teal-600",
     },
     {
       icon: Globe,
-      title: "Legal Documents",
-      description:
-        "Pre-configured privacy policy, terms of service, and refund policy pages",
+      title: t("feature.legal.title"),
+      description: t("feature.legal.description"),
       color: "text-purple-600",
     },
     {
       icon: Key,
-      title: "Cookie Consent",
-      description:
-        "GDPR-compliant cookie consent system with customizable preferences",
+      title: t("feature.cookies.title"),
+      description: t("feature.cookies.description"),
       color: "text-blue-600",
     },
   ];
 
   const stats = [
-    { label: "Active Users", value: "10K+" },
-    { label: "Organizations", value: "2K+" },
-    { label: "Countries", value: "50+" },
-    { label: "Uptime", value: "99.9%" },
+    { label: t("stats.activeUsers"), value: "10K+" },
+    { label: t("stats.organizations"), value: "2K+" },
+    { label: t("stats.countries"), value: "50+" },
+    { label: t("stats.uptime"), value: "99.9%" },
   ];
 
   return (
@@ -84,14 +78,14 @@ export default function Home() {
                 href="#features"
                 className="text-gray-600 hover:text-gray-900"
               >
-                {t("features")}
+                {t("nav.features")}
               </Link>
 
               <Link
                 href="#pricing"
                 className="text-gray-600 hover:text-gray-900"
               >
-                Pricing
+                {t("nav.pricing")}
               </Link>
               <Link
                 href="https://github.com/Razikus/supabase-nextjs-template"
@@ -99,7 +93,7 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Documentation
+                {t("nav.documentation")}
               </Link>
 
               <Link
@@ -108,7 +102,7 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Grab This Template
+                {t("nav.cta")}
               </Link>
 
               <AuthAwareButtons variant="nav" />
@@ -121,12 +115,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-              Bootstrap Your SaaS
-              <span className="block text-primary-600">In 5 minutes</span>
+              {t("hero.title")}
+              <span className="block text-primary-600">
+                {t("hero.highlight")}
+              </span>
             </h1>
             <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-              Launch your SaaS product in days, not months. Complete with
-              authentication and enterprise-grade security built right in.
+              {t("hero.subtitle")}
             </p>
             <div className="mt-10 flex gap-4 justify-center">
               <AuthAwareButtons />
@@ -154,9 +149,9 @@ export default function Home() {
       <section id="features" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold">Everything You Need</h2>
+            <h2 className="text-3xl font-bold">{t("features.title")}</h2>
             <p className="mt-4 text-xl text-gray-600">
-              Built with modern technologies for reliability and speed
+              {t("features.subtitle")}
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -178,17 +173,15 @@ export default function Home() {
 
       <section className="py-24 bg-primary-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white">
-            Ready to Transform Your Idea into Reality?
-          </h2>
+          <h2 className="text-3xl font-bold text-white">{t("cta.title")}</h2>
           <p className="mt-4 text-xl text-primary-100">
-            Join thousands of developers building their SaaS with {productName}
+            {t("cta.subtitle", { productName })}
           </p>
           <Link
             href="/auth/register"
             className="mt-8 inline-flex items-center px-6 py-3 rounded-lg bg-white text-primary-600 font-medium hover:bg-primary-50 transition-colors"
           >
-            Get Started Now
+            {t("cta.button")}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </div>
@@ -198,14 +191,16 @@ export default function Home() {
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <h4 className="text-sm font-semibold text-gray-900">Product</h4>
+              <h4 className="text-sm font-semibold text-gray-900">
+                {t("footer.product")}
+              </h4>
               <ul className="mt-4 space-y-2">
                 <li>
                   <Link
                     href="#features"
                     className="text-gray-600 hover:text-gray-900"
                   >
-                    Features
+                    {t("footer.features")}
                   </Link>
                 </li>
                 <li>
@@ -213,33 +208,37 @@ export default function Home() {
                     href="#pricing"
                     className="text-gray-600 hover:text-gray-900"
                   >
-                    Pricing
+                    {t("footer.pricing")}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-900">Resources</h4>
+              <h4 className="text-sm font-semibold text-gray-900">
+                {t("footer.resources")}
+              </h4>
               <ul className="mt-4 space-y-2">
                 <li>
                   <Link
                     href="https://github.com/Razikus/supabase-nextjs-template"
                     className="text-gray-600 hover:text-gray-900"
                   >
-                    Documentation
+                    {t("footer.documentation")}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-900">Legal</h4>
+              <h4 className="text-sm font-semibold text-gray-900">
+                {t("footer.legal")}
+              </h4>
               <ul className="mt-4 space-y-2">
                 <li>
                   <Link
                     href="/legal/privacy"
                     className="text-gray-600 hover:text-gray-900"
                   >
-                    Privacy
+                    {t("footer.privacy")}
                   </Link>
                 </li>
                 <li>
@@ -247,7 +246,7 @@ export default function Home() {
                     href="/legal/terms"
                     className="text-gray-600 hover:text-gray-900"
                   >
-                    Terms
+                    {t("footer.terms")}
                   </Link>
                 </li>
               </ul>
@@ -255,7 +254,10 @@ export default function Home() {
           </div>
           <div className="mt-8 pt-8 border-t border-gray-200">
             <p className="text-center text-gray-600">
-              © {new Date().getFullYear()} {productName}. All rights reserved.
+              {t("footer.copyright", {
+                year: new Date().getFullYear(),
+                productName,
+              })}
             </p>
           </div>
         </div>

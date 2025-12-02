@@ -3,26 +3,27 @@
 import React from 'react';
 import LegalDocument from '@/components/LegalDocument';
 import { notFound } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 const legalDocuments = {
     'privacy': {
-        title: 'Privacy Notice',
+        titleKey: 'document.privacy',
         path: '/terms/privacy-notice.md'
     },
     'terms': {
-        title: 'Terms of Service',
+        titleKey: 'document.terms',
         path: '/terms/terms-of-service.md'
     },
     'refund': {
-        title: 'Refund Policy',
+        titleKey: 'document.refund',
         path: '/terms/refund-policy.md'
     }
 } as const;
 
-type LegalDocument = keyof typeof legalDocuments;
+type LegalDocumentKey = keyof typeof legalDocuments;
 
 interface LegalPageProps {
-    document: LegalDocument;
+    document: LegalDocumentKey;
     lng: string;
 }
 
@@ -32,17 +33,18 @@ interface LegalPageParams {
 
 export default function LegalPage({ params }: LegalPageParams) {
     const {document} = React.use<LegalPageProps>(params);
+    const t = useTranslations('legal');
 
     if (!legalDocuments[document]) {
         notFound();
     }
 
-    const { title, path } = legalDocuments[document];
+    const { titleKey, path } = legalDocuments[document];
 
     return (
         <div className="container mx-auto px-4 py-8">
             <LegalDocument
-                title={title}
+                title={t(titleKey)}
                 filePath={path}
             />
         </div>

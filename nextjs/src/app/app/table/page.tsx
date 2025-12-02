@@ -1,4 +1,4 @@
-"use client";
+\"use client\";
 
 import React, { useState, useEffect } from 'react';
 import { useGlobal } from '@/lib/context/GlobalContext';
@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, Loader2, Plus, Trash2, AlertCircle } from 'lucide-react';
 import Confetti from '@/components/Confetti';
+import { useTranslations } from 'next-intl';
 
 import { Database } from '@/lib/types';
 
@@ -31,6 +32,7 @@ interface CreateTaskDialogProps {
 
 function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
     const { user } = useGlobal();
+    const t = useTranslations('tasks');
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
@@ -62,7 +64,7 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
             setOpen(false);
             await onTaskCreated();
         } catch (err) {
-            setError('Failed to add task');
+            setError(t('createDialog.error.add'));
             console.error('Error adding task:', err);
         } finally {
             setLoading(false);
@@ -79,7 +81,7 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Create New Task</DialogTitle>
+                    <DialogTitle>{t('createDialog.title')}</DialogTitle>
                 </DialogHeader>
                 {error && (
                     <Alert variant="destructive">
@@ -93,7 +95,7 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                             type="text"
                             value={newTaskTitle}
                             onChange={(e) => setNewTaskTitle(e.target.value)}
-                            placeholder="Task title"
+                            placeholder={t('createDialog.taskTitle.placeholder')}
                             required
                         />
                     </div>
@@ -101,7 +103,7 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                         <Textarea
                             value={newTaskDescription}
                             onChange={(e) => setNewTaskDescription(e.target.value)}
-                            placeholder="Task description (optional)"
+                            placeholder={t('createDialog.taskDescription.placeholder')}
                             rows={3}
                         />
                     </div>
@@ -113,7 +115,7 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                                 onChange={(e) => setIsUrgent(e.target.checked)}
                                 className="rounded border-gray-300 focus:ring-primary-500"
                             />
-                            <span className="text-sm">Mark as urgent</span>
+                            <span className="text-sm">{t('createDialog.markUrgent')}</span>
                         </label>
                         <Button
                             type="submit"
@@ -121,7 +123,7 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                             className="bg-primary-600 text-white hover:bg-primary-700"
                         >
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Task
+                            {t('createDialog.addTask')}
                         </Button>
                     </div>
                 </form>
@@ -132,6 +134,7 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
 
 export default function TaskManagementPage() {
     const { user } = useGlobal();
+    const t = useTranslations('tasks');
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [initialLoading, setInitialLoading] = useState<boolean>(true);
@@ -156,7 +159,7 @@ export default function TaskManagementPage() {
             if (supabaseError) throw supabaseError;
             setTasks(data || []);
         } catch (err) {
-            setError('Failed to load tasks');
+            setError(t('list.error.load'));
             console.error('Error loading tasks:', err);
         } finally {
             setLoading(false);
@@ -171,7 +174,7 @@ export default function TaskManagementPage() {
             if (supabaseError) throw supabaseError;
             await loadTasks();
         } catch (err) {
-            setError('Failed to remove task');
+            setError(t('list.error.remove'));
             console.error('Error removing task:', err);
         }
     };
@@ -186,7 +189,7 @@ export default function TaskManagementPage() {
 
             await loadTasks();
         } catch (err) {
-            setError('Failed to update task');
+            setError(t('list.error.update'));
             console.error('Error updating task:', err);
         }
     };
@@ -204,8 +207,8 @@ export default function TaskManagementPage() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle>Task Management</CardTitle>
-                        <CardDescription>Manage your tasks and to-dos</CardDescription>
+                        <CardTitle>{t('list.title')}</CardTitle>
+                        <CardDescription>{t('list.subtitle')}</CardDescription>
                     </div>
                     <CreateTaskDialog onTaskCreated={loadTasks} />
                 </CardHeader>
@@ -224,7 +227,7 @@ export default function TaskManagementPage() {
                             size="sm"
                             className={filter === null ? "bg-primary-600 text-white hover:bg-primary-700" : ""}
                         >
-                            All Tasks
+                            {t('filters.all')}
                         </Button>
                         <Button
                             variant={filter === false ? "default" : "secondary"}
@@ -232,7 +235,7 @@ export default function TaskManagementPage() {
                             size="sm"
                             className={filter === false ? "bg-primary-600 text-white hover:bg-primary-700" : ""}
                         >
-                            Active
+                            {t('filters.active')}
                         </Button>
                         <Button
                             variant={filter === true ? "default" : "secondary"}
@@ -240,7 +243,7 @@ export default function TaskManagementPage() {
                             size="sm"
                             className={filter === true ? "bg-primary-600 text-white hover:bg-primary-700" : ""}
                         >
-                            Completed
+                            {t('filters.completed')}
                         </Button>
                     </div>
 
@@ -253,7 +256,7 @@ export default function TaskManagementPage() {
 
                         {tasks.length === 0 ? (
                             <div className="text-center py-8">
-                                <p className="text-muted-foreground">No tasks found</p>
+                                <p className="text-muted-foreground">{t('empty')}</p>
                             </div>
                         ) : (
                             tasks.map((task) => (
@@ -275,11 +278,13 @@ export default function TaskManagementPage() {
                                             )}
                                             <div className="mt-2 flex items-center gap-2">
                                                 <span className="text-xs text-muted-foreground">
-                                                    Created: {new Date(task.created_at).toLocaleDateString()}
+                                                    {t('created', {
+                                                        date: new Date(task.created_at).toLocaleDateString(),
+                                                    })}
                                                 </span>
                                                 {task.urgent && !task.done && (
                                                     <span className="px-2 py-0.5 text-xs bg-red-50 text-red-600 rounded-full">
-                                                        Urgent
+                                                        {t('urgent')}
                                                     </span>
                                                 )}
                                             </div>
