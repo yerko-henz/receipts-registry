@@ -6,8 +6,8 @@ import * as FileSystem from 'expo-file-system';
 import { Image } from 'expo-image';
 import { Camera, Upload, RefreshCw, ShoppingBag, Percent, Banknote, ScanLine } from 'lucide-react-native';
 
-import { ReceiptAnalyzer } from './receiptAnalizer';
-import { ReceiptData, AnalysisState } from './types';
+import { ReceiptAnalyzer } from '@/components/receiptAnalizer/ReceiptAnalyzer';
+import { ReceiptData, AnalysisState } from '@/components/receiptAnalizer/types';
 import { analyzeReceipt } from '@/services/processReceipt';
 
 import { Colors } from '@/constants/theme';

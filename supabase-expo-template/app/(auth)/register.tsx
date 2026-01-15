@@ -50,7 +50,10 @@ export default function RegisterScreen() {
     if (signUpError) {
       setError(signUpError.message)
     } else {
-      router.replace('/(auth)/verify-email')
+      router.replace({
+        pathname: '/(auth)/verify-email',
+        params: { email }
+      })
     }
     
     setLoading(false)

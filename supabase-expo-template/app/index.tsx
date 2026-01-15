@@ -11,11 +11,19 @@ export default function Index() {
   }, [])
 
   async function checkAuth() {
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (session) {
-      router.replace('/(app)')
-    } else {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) throw error
+
+      if (session) {
+        router.replace('/(app)')
+      } else {
+        router.replace('/(auth)/login')
+      }
+    } catch (error) {
+      console.error('Check auth error:', error)
+      // If we can't get the session, default to login to avoid getting stuck
       router.replace('/(auth)/login')
     }
   }

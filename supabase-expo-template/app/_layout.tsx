@@ -14,28 +14,32 @@ function RootLayoutContent() {
   useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
       const url = event.url
-      
-      if (url && url.includes('reset-password')) {
-        const hashIndex = url.indexOf('#')
-        if (hashIndex !== -1) {
-          const hashFragment = url.substring(hashIndex + 1)
-          const params = new URLSearchParams(hashFragment)
+      if (!url) return
+
+      // Handle standard Supabase auth redirects (email confirmation, password reset)
+      // These often come as #access_token=...&refresh_token=...&type=...
+      const hashIndex = url.indexOf('#')
+      if (hashIndex !== -1) {
+        const hashFragment = url.substring(hashIndex + 1)
+        const params = new URLSearchParams(hashFragment)
+        
+        const accessToken = params.get('access_token')
+        const refreshToken = params.get('refresh_token')
+        const type = params.get('type') // 'recovery', 'signup', 'invite'
+        
+        if (accessToken && refreshToken) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
           
-          const accessToken = params.get('access_token')
-          const refreshToken = params.get('refresh_token')
-          const type = params.get('type')
-          
-          
-          if (accessToken && refreshToken && type === 'recovery') {
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            })
-            
-            
-            if (!error && data.session) {
+          if (!error && data.session) {
+            if (type === 'recovery') {
               router.replace('/(auth)/reset-password')
-            } 
+            } else {
+              // For signup/invite or generic login, go to app
+              router.replace('/(app)')
+            }
           }
         }
       }
@@ -43,14 +47,27 @@ function RootLayoutContent() {
 
     const subscription = Linking.addEventListener('url', handleDeepLink)
 
+    // Handle initial URL
     Linking.getInitialURL().then((url) => {
       if (url) {
         handleDeepLink({ url })
       }
     })
 
+    // Listen for auth state changes (e.g. session expiration or manual logout)
+    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        router.replace('/(auth)/login')
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Optional: Ensure we are in the app? 
+        // Usually index.tsx or the deep link handler takes care of navigation, 
+        // but this safeguards against inconsistent states.
+      }
+    })
+
     return () => {
       subscription.remove()
+      authSubscription.unsubscribe()
     }
   }, [])
 

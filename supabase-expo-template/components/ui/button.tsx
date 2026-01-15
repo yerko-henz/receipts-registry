@@ -5,7 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-nat
 interface ButtonProps {
   title: string
   onPress: () => void
-  variant?: 'primary' | 'secondary' | 'outline'
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost'
   loading?: boolean
   disabled?: boolean
 }
@@ -25,6 +25,7 @@ export function Button({ title, onPress, variant = 'primary', loading, disabled 
           borderWidth: 1, 
           borderColor: colors.tint 
         },
+        variant === 'ghost' && { backgroundColor: 'transparent' },
         (disabled || loading) && styles.disabled
       ]}
       onPress={onPress}
@@ -37,7 +38,8 @@ export function Button({ title, onPress, variant = 'primary', loading, disabled 
           styles.text,
           variant === 'primary' && styles.primaryText,
           variant === 'secondary' && { color: colors.text },
-          variant === 'outline' && { color: colors.tint }
+          variant === 'outline' && { color: colors.tint },
+          variant === 'ghost' && { color: colors.tint }
         ]}>
           {title}
         </Text>
