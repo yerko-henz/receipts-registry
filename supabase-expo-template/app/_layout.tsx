@@ -4,9 +4,12 @@ import * as Linking from 'expo-linking'
 import { Stack, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
+import { ThemeProvider, useTheme } from '@/components/ThemeProvider'
+import { View } from 'react-native'
 
-export default function RootLayout() {
+function RootLayoutContent() {
   const router = useRouter()
+  const { activeTheme } = useTheme()
 
   useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
@@ -58,7 +61,15 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(app)" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={activeTheme === 'dark' ? 'light' : 'dark'} />
     </>
+  )
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutContent />
+    </ThemeProvider>
   )
 }

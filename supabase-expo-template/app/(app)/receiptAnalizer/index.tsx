@@ -10,7 +10,14 @@ import { ReceiptAnalyzer } from './receiptAnalizer';
 import { ReceiptData, AnalysisState } from './types';
 import { analyzeReceipt } from '@/services/processReceipt';
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/components/ThemeProvider';
+
 const App: React.FC = () => {
+  const { activeTheme } = useTheme();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
   const [analysis, setAnalysis] = useState<AnalysisState>({
     isLoading: false,
     error: null,
@@ -82,17 +89,20 @@ const App: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar 
+        barStyle={activeTheme === 'dark' ? 'light-content' : 'dark-content'} 
+        backgroundColor={colors.background} 
+      />
       
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
             <View style={styles.logoIcon}>
               <ScanLine color="#ffffff" size={20} />
             </View>
-            <Text style={styles.headerTitle}>ReceiptScan AI</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>ReceiptScan AI</Text>
           </View>
           {previewUrl && (
             <TouchableOpacity onPress={resetScanner} style={styles.newScanButton}>
@@ -107,45 +117,48 @@ const App: React.FC = () => {
         {!previewUrl ? (
           <View style={styles.landingContainer}>
             <View style={styles.heroTextContainer}>
-              <Text style={styles.heroTitle}>Digitize your receipts in seconds</Text>
-              <Text style={styles.heroSubtitle}>
+              <Text style={[styles.heroTitle, { color: colors.text }]}>Digitize your receipts in seconds</Text>
+              <Text style={[styles.heroSubtitle, { color: colors.icon }]}>
                 Our advanced AI extracts items, prices, and taxes with high precision. Just upload an image to get started.
               </Text>
             </View>
             
-            <TouchableOpacity onPress={pickImage} style={styles.uploadCard}>
+            <TouchableOpacity onPress={pickImage} style={[styles.uploadCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.uploadIconCircle}>
                 <Upload color="#4f46e5" size={40} />
               </View>
-              <Text style={styles.uploadTitle}>Upload Receipt</Text>
+              <Text style={[styles.uploadTitle, { color: colors.text }]}>Upload Receipt</Text>
               <Text style={styles.uploadSubtitle}>Tap to select from Gallery</Text>
             </TouchableOpacity>
 
             <View style={styles.featuresGrid}>
               <FeatureCard 
-                icon={<ShoppingBag color="#1e293b" size={24} />}
+                icon={<ShoppingBag color={colors.text} size={24} />}
                 title="Itemized Extraction" 
-                desc="Every product listed with individual pricing." 
+                desc="Every product listed with individual pricing."
+                colors={colors}
               />
               <FeatureCard 
-                icon={<Percent color="#1e293b" size={24} />}
+                icon={<Percent color={colors.text} size={24} />}
                 title="Tax & VAT Detection" 
-                desc="Automatically calculates tax components." 
+                desc="Automatically calculates tax components."
+                colors={colors}
               />
               <FeatureCard 
-                icon={<Banknote color="#1e293b" size={24} />}
+                icon={<Banknote color={colors.text} size={24} />}
                 title="Currency Support" 
-                desc="Handles multiple global currencies." 
+                desc="Handles multiple global currencies."
+                colors={colors}
               />
             </View>
           </View>
         ) : (
           <View style={styles.resultsContainer}>
             {/* Image Preview */}
-            <View style={styles.imagePreviewContainer}>
+            <View style={[styles.imagePreviewContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Image 
                 source={{ uri: previewUrl }} 
-                style={styles.previewImage}
+                style={[styles.previewImage, { backgroundColor: colors.background }]}
                 contentFit="contain" // 'contain' for expo-image, similar to object-contain
               />
               {analysis.isLoading && (
@@ -173,11 +186,11 @@ const App: React.FC = () => {
 };
 
 // Helper component for features
-const FeatureCard = ({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) => (
-  <View style={styles.featureCard}>
+const FeatureCard = ({ icon, title, desc, colors }: { icon: React.ReactNode, title: string, desc: string, colors: any }) => (
+  <View style={[styles.featureCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
     <View style={styles.featureIconContainer}>{icon}</View>
-    <Text style={styles.featureTitle}>{title}</Text>
-    <Text style={styles.featureDesc}>{desc}</Text>
+    <Text style={[styles.featureTitle, { color: colors.text }]}>{title}</Text>
+    <Text style={[styles.featureDesc, { color: colors.icon }]}>{desc}</Text>
   </View>
 );
 

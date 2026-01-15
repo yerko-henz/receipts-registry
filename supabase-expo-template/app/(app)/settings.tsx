@@ -8,7 +8,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { storage } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'expo-router'
-import { ChevronRight, Globe, Key, Shield, User } from 'lucide-react-native'
+import { useTheme } from '@/components/ThemeProvider'
+import { ChevronRight, Globe, Key, Palette, Shield, User } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal, Alert as RNAlert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
@@ -23,7 +24,9 @@ export default function SettingsScreen() {
   const [user, setUser] = useState<any>(null)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [showMFAModal, setShowMFAModal] = useState(false)
+  const { theme, setTheme } = useTheme()
   const [showLanguageModal, setShowLanguageModal] = useState(false)
+  const [showThemeModal, setShowThemeModal] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -85,6 +88,11 @@ export default function SettingsScreen() {
     await storage.setLanguage(lang)
     i18n.changeLanguage(lang)
     setShowLanguageModal(false)
+  }
+
+  async function handleChangeTheme(newTheme: 'light' | 'dark' | 'system') {
+    await setTheme(newTheme)
+    setShowThemeModal(false)
   }
 
   async function handleLogout() {
@@ -196,6 +204,31 @@ export default function SettingsScreen() {
                       : i18n.language === 'zh'
                       ? t('settings.languages.chinese')
                       : t('settings.languages.english')
+                    }
+                  </Text>
+                </View>
+              </View>
+              <ChevronRight size={20} color={colors.icon} />
+            </View>
+          </Card>
+        </TouchableOpacity>
+
+        {/* Theme */}
+        <TouchableOpacity onPress={() => setShowThemeModal(true)}>
+          <Card>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLeft}>
+                <Palette size={20} color={colors.icon} />
+                <View>
+                  <Text style={[styles.settingText, { color: colors.text }]}>
+                    {t('settings.theme', { defaultValue: 'Theme' })}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.icon }]}>
+                    {theme === 'system' 
+                      ? t('settings.themes.system', { defaultValue: 'System' })
+                      : theme === 'light'
+                      ? t('settings.themes.light', { defaultValue: 'Light' })
+                      : t('settings.themes.dark', { defaultValue: 'Dark' })
                     }
                   </Text>
                 </View>
@@ -353,6 +386,51 @@ export default function SettingsScreen() {
                 {t('settings.languages.chinese')}
               </Text>
             </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Theme Modal */}
+      <Modal
+        visible={showThemeModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowThemeModal(false)}
+      >
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t('settings.theme', { defaultValue: 'Theme' })}
+            </Text>
+            <TouchableOpacity onPress={() => setShowThemeModal(false)}>
+              <Text style={{ color: colors.tint }}>
+                {t('settings.close')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            {[
+              { label: t('settings.themes.system', { defaultValue: 'System' }), value: 'system' },
+              { label: t('settings.themes.light', { defaultValue: 'Light' }), value: 'light' },
+              { label: t('settings.themes.dark', { defaultValue: 'Dark' }), value: 'dark' },
+            ].map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.languageOption,
+                  theme === option.value && { backgroundColor: colors.tint }
+                ]}
+                onPress={() => handleChangeTheme(option.value as any)}
+              >
+                <Text style={[
+                  styles.languageText,
+                  { color: theme === option.value ? '#fff' : colors.text }
+                ]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </SafeAreaView>
       </Modal>

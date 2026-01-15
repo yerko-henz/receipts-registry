@@ -10,4 +10,12 @@ export const storage = {
   async setLanguage(lang: string): Promise<void> {
     await AsyncStorage.setItem(LANGUAGE_KEY, lang)
   },
+
+  async getTheme(): Promise<string | null> {
+    return AsyncStorage.getItem('@app_theme')
+  },
+
+  async setTheme(theme: string): Promise<void> {
+    await AsyncStorage.setItem('@app_theme', theme)
+  },
 }
