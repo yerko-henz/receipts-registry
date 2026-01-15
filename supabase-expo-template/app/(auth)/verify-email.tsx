@@ -74,7 +74,7 @@ export default function VerifyEmailScreen() {
           value={code}
           onChangeText={setCode}
           placeholder="123456"
-          keyboardType="number-pad"
+          keyboardType="numeric"
           autoCapitalize="none"
         />
 
