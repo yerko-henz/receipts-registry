@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { AnalysisState } from './types';
-import { AlertCircle, Calendar, Download, Save } from 'lucide-react-native';
+import { AlertCircle, Calendar, Download, Save, Loader2 } from 'lucide-react-native';
 
-export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, data }) => {
+export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, data, onSave }) => {
+  const [isSaving, setIsSaving] = React.useState(false);
   if (error) {
     return (
       <View style={styles.errorContainer}>
@@ -73,11 +74,6 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, dat
               <Text style={styles.colQty}>{item.quantity}</Text>
               <View style={styles.colDesc}>
                 <Text style={styles.itemName}>{item.name}</Text>
-                {item.pricePerUnit && (
-                  <Text style={styles.itemUnitPrice}>
-                    @ {formatCurrency(item.pricePerUnit)} / unit
-                  </Text>
-                )}
               </View>
               <Text style={styles.colPrice}>{formatCurrency(item.totalPrice)}</Text>
             </View>
@@ -87,31 +83,19 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, dat
 
       {/* Summary Section */}
       <View style={styles.summaryContainer}>
-        {data.subtotal > 0 && (
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(data.subtotal)}</Text>
-          </View>
-        )}
-        
-        {data.tax && (
+        {data.taxAmount !== undefined && (
           <View style={styles.summaryRow}>
             <View style={styles.taxLabelRow}>
-              <Text style={styles.summaryLabel}>{data.tax.type}</Text>
-              {data.tax.percentage && (
-                <View style={styles.taxBadge}>
-                  <Text style={styles.taxBadgeText}>{data.tax.percentage}%</Text>
-                </View>
-              )}
+              <Text style={styles.summaryLabel}>Tax/IVA</Text>
             </View>
-            <Text style={styles.summaryValue}>{formatCurrency(data.tax.amount)}</Text>
+            <Text style={styles.summaryValue}>{formatCurrency(data.taxAmount)}</Text>
           </View>
         )}
 
-        {data.discounts > 0 && (
+        {data.discount !== undefined && data.discount > 0 && (
           <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, styles.discountText]}>Discounts</Text>
-            <Text style={[styles.summaryValue, styles.discountText]}>-{formatCurrency(data.discounts)}</Text>
+            <Text style={styles.summaryLabel}>Discount</Text>
+            <Text style={[styles.summaryValue, styles.discountText]}>-{formatCurrency(data.discount)}</Text>
           </View>
         )}
 
@@ -127,9 +111,28 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, dat
           <Download size={20} color="#334155" style={{ marginRight: 8 }} />
           <Text style={styles.actionButtonTextSecondary}>Export CSV</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButtonPrimary}>
-          <Save size={20} color="#ffffff" style={{ marginRight: 8 }} />
-          <Text style={styles.actionButtonTextPrimary}>Save Record</Text>
+        <TouchableOpacity 
+          style={[styles.actionButtonPrimary, isSaving && styles.actionButtonDisabled]}
+          onPress={async () => {
+            if (onSave && data && !isSaving) {
+              setIsSaving(true);
+              try {
+                await onSave(data);
+              } finally {
+                setIsSaving(false);
+              }
+            }
+          }}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <Loader2 size={20} color="#ffffff" style={{ marginRight: 8 }} />
+          ) : (
+            <Save size={20} color="#ffffff" style={{ marginRight: 8 }} />
+          )}
+          <Text style={styles.actionButtonTextPrimary}>
+            {isSaving ? 'Saving...' : 'Save Record'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -393,5 +396,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  actionButtonDisabled: {
+    opacity: 0.7,
+    backgroundColor: '#94a3b8',
   },
 });

@@ -9,6 +9,7 @@ import { Camera, Upload, RefreshCw, ShoppingBag, Percent, Banknote, ScanLine } f
 import { ReceiptAnalyzer } from '@/components/receiptAnalizer/ReceiptAnalyzer';
 import { ReceiptData, AnalysisState } from '@/components/receiptAnalizer/types';
 import { analyzeReceipt } from '@/services/processReceipt';
+import { createReceipt } from '@/services/receipts';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -80,6 +81,36 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       setAnalysis({ isLoading: false, error: err.message || "An error occurred during analysis", data: null });
+    }
+  };
+
+  const handleSaveReceipt = async (data: ReceiptData) => {
+    try {
+      await createReceipt({
+        merchant_name: data.merchantName,
+        total: data.total,
+        currency: data.currency,
+        date: data.date,
+        category: data.category,
+        tax_amount: data.taxAmount || 0,
+        raw_ai_output: data,
+        items: data.items.map(item => {
+          const quantity = item.quantity || 1;
+          const unitPrice = item.unitPrice || (item.totalPrice / quantity);
+          return {
+            name: item.name,
+            totalPrice: item.totalPrice,
+            unitPrice: unitPrice,
+            quantity: quantity,
+          };
+        }),
+      });
+      Alert.alert('Success', 'Receipt saved successfully!');
+      resetScanner();
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert('Error', 'Failed to save receipt: ' + (err.message || 'Unknown error'));
+      throw err; // Re-throw so the component can handle it (isSaving state)
     }
   };
 
@@ -176,7 +207,8 @@ const App: React.FC = () => {
             <ReceiptAnalyzer 
               isLoading={analysis.isLoading} 
               error={analysis.error} 
-              data={analysis.data} 
+              data={analysis.data}
+              onSave={handleSaveReceipt}
             />
           </View>
         )}

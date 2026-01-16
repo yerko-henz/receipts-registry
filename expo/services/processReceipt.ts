@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ReceiptData } from "@/app/(app)/receiptAnalizer/types";
+import { ReceiptData } from "@/components/receiptAnalizer/types";
 
 export const analyzeReceipt = async (base64Image: string): Promise<ReceiptData> => {
   const ai = new GoogleGenAI({ apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY || '' });
@@ -15,46 +15,41 @@ export const analyzeReceipt = async (base64Image: string): Promise<ReceiptData> 
           },
         },
         {
-          text: "Analyze this receipt carefully. Extract the merchant name, date, all line items (name, quantity, total price), subtotal, tax details (specifically look for IVA if present), discounts, and the final total. Be very precise with numbers."
-        }
+      text: "Analyze this receipt carefully. Extract the merchant name, date, all line items (name, quantity, total price), subtotal, tax details (specifically look for IVA if present), aggregate all discounts into a single value, and the final total. Be very precise with numbers.\n\nRules for items:\n1. If an item is listed by weight (e.g., KG, G), set its quantity to 1.\n2. Do NOT include discounts (negative values) in the items array.\n3. Sum all negative values/discounts into the single 'discount' field at the top level (as a positive number, e.g., if it says -1000, put 1000 in discount).\n4. Ensure all extracted numbers are accurate."
+}
       ]
     },
     config: {
       responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          merchantName: { type: Type.STRING },
-          date: { type: Type.STRING },
-          currency: { type: Type.STRING, description: "Currency symbol or code, e.g., CLP, USD, $" },
+    responseSchema: {
+      type: Type.OBJECT,
+      properties: {
+        merchantName: { type: Type.STRING },
+        date: { type: Type.STRING, description: "YYYY-MM-DD" },
+        currency: { type: Type.STRING, description: "3-letter ISO code (e.g. CLP)" },
+        items: {
+          type: Type.ARRAY,
           items: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                quantity: { type: Type.STRING },
-                pricePerUnit: { type: Type.NUMBER },
-                totalPrice: { type: Type.NUMBER },
-              },
-              required: ["name", "totalPrice"]
-            }
-          },
-          subtotal: { type: Type.NUMBER },
-          tax: {
             type: Type.OBJECT,
             properties: {
-              type: { type: Type.STRING },
-              amount: { type: Type.NUMBER },
-              percentage: { type: Type.NUMBER },
+              name: { type: Type.STRING },
+              quantity: { type: Type.NUMBER }, 
+              totalPrice: { type: Type.NUMBER },
+              unitPrice: { type: Type.NUMBER },
             },
-            required: ["type", "amount"]
-          },
-          discounts: { type: Type.NUMBER },
-          total: { type: Type.NUMBER },
+            required: ["name", "totalPrice"]
+          }
         },
-        required: ["merchantName", "items", "total", "currency"]
-      }
+        taxAmount: { type: Type.NUMBER, description: "Total tax/IVA amount" },
+        discount: { type: Type.NUMBER, description: "Total discount amount (sum of all negative fields)" },
+        total: { type: Type.NUMBER },
+        category: { 
+          type: Type.STRING, 
+          description: "One word: Food, Transport, Shopping, Health, or Other" 
+        },
+      },
+      required: ["merchantName", "date", "total", "currency", "items"]
+    }
     }
   });
 
@@ -62,9 +57,12 @@ export const analyzeReceipt = async (base64Image: string): Promise<ReceiptData> 
   if (!text) throw new Error("No data returned from AI analysis.");
   
   try {
-    return JSON.parse(text) as ReceiptData;
+    const data = JSON.parse(text) as ReceiptData;
+    console.log("Gemini AI Analysis Result:", JSON.stringify(data, null, 2));
+    return data;
   } catch (err) {
-    console.error("Failed to parse AI response", text);
+    console.error("Gemini AI Response Text (Parse Failed):", text);
+    console.error("Failed to parse AI response error:", err);
     throw new Error("Failed to process receipt data.");
   }
 };

@@ -1,29 +1,24 @@
 export interface ReceiptItem {
   name: string;
-  quantity: string | number;
-  pricePerUnit?: number;
+  quantity: number;
   totalPrice: number;
-}
-
-export interface TaxInfo {
-  type: string;
-  amount: number;
-  percentage?: number;
+  unitPrice: number;
 }
 
 export interface ReceiptData {
   merchantName: string;
   date: string;
   items: ReceiptItem[];
-  subtotal: number;
-  tax: TaxInfo;
-  discounts: number;
+  taxAmount?: number;
+  discount?: number;
   total: number;
   currency: string;
+  category: string;
 }
 
 export interface AnalysisState {
   isLoading: boolean;
   error: string | null;
   data: ReceiptData | null;
+  onSave?: (data: ReceiptData) => Promise<void>;
 }
