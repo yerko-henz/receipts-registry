@@ -25,6 +25,7 @@ const App: React.FC = () => {
     data: null,
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [lastAsset, setLastAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const pickImage = async () => {
     try {
@@ -45,6 +46,7 @@ const App: React.FC = () => {
       });
 
       if (!result.canceled && result.assets && result.assets[0].uri) {
+        setLastAsset(result.assets[0]);
         processImage(result.assets[0]);
       }
     } catch (e) {
@@ -117,6 +119,13 @@ const App: React.FC = () => {
   const resetScanner = () => {
     setAnalysis({ isLoading: false, error: null, data: null });
     setPreviewUrl(null);
+    setLastAsset(null);
+  };
+
+  const handleRetry = () => {
+    if (lastAsset) {
+      processImage(lastAsset);
+    }
   };
 
   return (
@@ -209,6 +218,7 @@ const App: React.FC = () => {
               error={analysis.error} 
               data={analysis.data}
               onSave={handleSaveReceipt}
+              onRetry={handleRetry}
             />
           </View>
         )}

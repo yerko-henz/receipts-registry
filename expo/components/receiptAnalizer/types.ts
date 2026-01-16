@@ -21,4 +21,5 @@ export interface AnalysisState {
   error: string | null;
   data: ReceiptData | null;
   onSave?: (data: ReceiptData) => Promise<void>;
+  onRetry?: () => void;
 }
