@@ -1,18 +1,123 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { AnalysisState } from './types';
-import { AlertCircle, Calendar, Download, Save, Loader2 } from 'lucide-react-native';
+import { AlertCircle, Calendar, Download, Save, Loader2, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/components/ThemeProvider';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, data, onSave }) => {
+  const { activeTheme } = useTheme();
+  const colorScheme = useColorScheme();
+  const themeColors = Colors[colorScheme ?? 'light'];
+  
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(true);
+
+  const toggleAccordion = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsExpanded(!isExpanded);
+  };
+  
+  const dynamicStyles = StyleSheet.create({
+    errorContainer: {
+        backgroundColor: activeTheme === 'dark' ? '#2d1a1a' : '#fef2f2',
+        borderColor: activeTheme === 'dark' ? '#b91c1c' : '#fee2e2',
+    },
+    errorTitle: {
+        color: activeTheme === 'dark' ? '#fca5a5' : '#b91c1c',
+    },
+    errorMessage: {
+        color: activeTheme === 'dark' ? '#fca5a5' : '#b91c1c',
+    },
+    loadingContainer: {
+        backgroundColor: themeColors.card,
+        borderColor: themeColors.border,
+    },
+    skeletonLine: {
+        backgroundColor: activeTheme === 'dark' ? '#333' : '#e2e8f0',
+    },
+    container: {
+      backgroundColor: themeColors.card,
+      borderColor: themeColors.border,
+    },
+    header: {
+      backgroundColor: activeTheme === 'dark' ? '#1f1f1f' : '#f8fafc',
+      borderBottomColor: themeColors.border,
+    },
+    merchantName: {
+      color: themeColors.text,
+    },
+    dateText: {
+      color: themeColors.icon,
+    },
+    tableHeader: {
+        borderBottomColor: themeColors.border,
+        backgroundColor: themeColors.card,
+    },
+    itemName: {
+      color: themeColors.text,
+    },
+    summaryContainer: {
+      backgroundColor: activeTheme === 'dark' ? '#1f1f1f' : '#f8fafc',
+    },
+    totalLabel: {
+      color: themeColors.text,
+    },
+    totalRow: {
+        borderTopColor: themeColors.border,
+    },
+    actionButtonTextSecondary: {
+        color: themeColors.text,
+    },
+    actionButtonSecondary: {
+        backgroundColor: activeTheme === 'dark' ? '#333' : '#f1f5f9',
+    },
+    tableRow: {
+        borderBottomColor: activeTheme === 'dark' ? '#333' : '#f8fafc',
+    },
+    verifiedBadge: {
+        backgroundColor: activeTheme === 'dark' ? '#333' : '#e0e7ff',
+    },
+    verifiedText: {
+        color: activeTheme === 'dark' ? themeColors.tint : '#4338ca',
+    },
+    colLabel: {
+        color: themeColors.icon,
+    },
+    colText: {
+        color: themeColors.text,
+    },
+    itemUnitPrice: {
+        color: themeColors.icon,
+    },
+    summaryLabel: {
+        color: themeColors.text,
+        opacity: 0.8,
+    },
+    summaryValue: {
+        color: themeColors.text,
+    },
+    totalValue: {
+        color: themeColors.tint,
+    },
+    actionsContainer: {
+        backgroundColor: themeColors.card,
+    }
+  });
+
   if (error) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, dynamicStyles.errorContainer]}>
         <View style={styles.errorHeader}>
-          <AlertCircle size={24} color="#b91c1c" />
-          <Text style={styles.errorTitle}>Analysis Failed</Text>
+          <AlertCircle size={24} color={activeTheme === 'dark' ? '#fca5a5' : '#b91c1c'} />
+          <Text style={[styles.errorTitle, dynamicStyles.errorTitle]}>Analysis Failed</Text>
         </View>
-        <Text style={styles.errorMessage}>{error}</Text>
+        <Text style={[styles.errorMessage, dynamicStyles.errorMessage]}>{error}</Text>
         {/* Note: Reload logic depends on parent, omitting generic reload for now or keeping a retry button if parent passes a handler */}
       </View>
     );
@@ -20,16 +125,16 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, dat
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <View style={[styles.skeletonLine, { width: '50%', height: 32, marginBottom: 24 }]} />
+      <View style={[styles.loadingContainer, dynamicStyles.loadingContainer]}>
+        <View style={[styles.skeletonLine, dynamicStyles.skeletonLine, { width: '50%', height: 32, marginBottom: 24 }]} />
         <View style={styles.skeletonGroup}>
-          <View style={styles.skeletonLine} />
-          <View style={styles.skeletonLine} />
-          <View style={[styles.skeletonLine, { width: '75%' }]} />
+          <View style={[styles.skeletonLine, dynamicStyles.skeletonLine]} />
+          <View style={[styles.skeletonLine, dynamicStyles.skeletonLine, { width: '80%' }]} />
+          <View style={[styles.skeletonLine, dynamicStyles.skeletonLine, { width: '90%' }]} />
         </View>
-        <View style={styles.skeletonFooter}>
-          <View style={[styles.skeletonLine, { width: 80 }]} />
-          <View style={[styles.skeletonLine, { width: 64 }]} />
+        <View style={[styles.skeletonFooter, { borderTopColor: themeColors.border }]}>
+          <View style={[styles.skeletonLine, dynamicStyles.skeletonLine, { width: 100, marginBottom: 0 }]} />
+          <View style={[styles.skeletonLine, dynamicStyles.skeletonLine, { width: 120, marginBottom: 0 }]} />
         </View>
       </View>
     );
@@ -45,96 +150,117 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, dat
     }).format(val).replace('USD', '$');
   };
 
+
   return (
-    <View style={styles.container}>
-      {/* Merchant Header */}
-      <View style={styles.header}>
-        <View style={styles.merchantRow}>
-          <Text style={styles.merchantName}>{data.merchantName}</Text>
-          <View style={styles.verifiedBadge}>
-            <Text style={styles.verifiedText}>Verified</Text>
-          </View>
+    <View style={[styles.container, dynamicStyles.container]}>
+      {/* Merchant Header - Clickable for Accordion */}
+      <TouchableOpacity 
+        onPress={toggleAccordion} 
+        style={[styles.header, dynamicStyles.header]}
+        activeOpacity={0.7}
+      >
+        <View style={styles.headerContent}>
+            <View style={{ flex: 1 }}>
+                <View style={styles.merchantRow}>
+                    <Text style={[styles.merchantName, dynamicStyles.merchantName]}>{data.merchantName}</Text>
+                    <View style={[styles.verifiedBadge, dynamicStyles.verifiedBadge]}>
+                        <Text style={[styles.verifiedText, dynamicStyles.verifiedText]}>Verified</Text>
+                    </View>
+                </View>
+                <View style={styles.dateRow}>
+                    <Calendar size={16} color={themeColors.icon} />
+                    <Text style={[styles.dateText, dynamicStyles.dateText]}>{data.date || 'Date not detected'}</Text>
+                </View>
+            </View>
+            <View style={styles.accordionIcon}>
+                {isExpanded ? <ChevronUp size={24} color={themeColors.icon} /> : <ChevronDown size={24} color={themeColors.icon} />}
+            </View>
         </View>
-        <View style={styles.dateRow}>
-          <Calendar size={16} color="#64748b" />
-          <Text style={styles.dateText}>{data.date || 'Date not detected'}</Text>
-        </View>
-      </View>
+      </TouchableOpacity>
 
-      {/* Items Table */}
-      <View style={styles.tableContainer}>
-        <View style={styles.tableHeader}>
-          <Text style={styles.colQty}>Qty</Text>
-          <Text style={styles.colDesc}>Description</Text>
-          <Text style={styles.colPrice}>Price</Text>
-        </View>
-        <View>
-          {data.items.map((item, idx) => (
-            <View key={idx} style={styles.tableRow}>
-              <Text style={styles.colQty}>{item.quantity}</Text>
-              <View style={styles.colDesc}>
-                <Text style={styles.itemName}>{item.name}</Text>
+      {isExpanded && (
+        <>
+          {/* Items Table */}
+          <View style={styles.tableContainer}>
+            <View style={[styles.tableHeader, dynamicStyles.tableHeader]}>
+              <Text style={[styles.colQty, dynamicStyles.colLabel]}>Qty</Text>
+              <Text style={[styles.colDesc, dynamicStyles.colLabel]}>Description</Text>
+              <Text style={[styles.colPrice, dynamicStyles.colLabel]}>Price</Text>
+            </View>
+            <View>
+              {data.items.map((item, idx) => (
+                <View key={idx} style={[styles.tableRow, dynamicStyles.tableRow]}>
+                  <Text style={[styles.colQty, dynamicStyles.colText]}>{item.quantity}</Text>
+                  <View style={styles.colDesc}>
+                    <Text style={[styles.itemName, dynamicStyles.itemName]}>{item.name}</Text>
+                    {item.unitPrice && item.unitPrice !== item.totalPrice && (
+                      <Text style={[styles.itemUnitPrice, dynamicStyles.itemUnitPrice]}>
+                        {formatCurrency(item.unitPrice)} ea.
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={[styles.colPrice, dynamicStyles.colText]}>{formatCurrency(item.totalPrice)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Summary Section */}
+          <View style={[styles.summaryContainer, dynamicStyles.summaryContainer]}>
+            {data.taxAmount !== undefined && (
+              <View style={styles.summaryRow}>
+                <View style={styles.taxLabelRow}>
+                  <Text style={[styles.summaryLabel, dynamicStyles.summaryLabel]}>Tax/IVA</Text>
+                </View>
+                <Text style={[styles.summaryValue, dynamicStyles.summaryValue]}>{formatCurrency(data.taxAmount)}</Text>
               </View>
-              <Text style={styles.colPrice}>{formatCurrency(item.totalPrice)}</Text>
+            )}
+
+            {data.discount !== undefined && data.discount > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, dynamicStyles.summaryLabel]}>Discount</Text>
+                <Text style={[styles.summaryValue, styles.discountText]}>-{formatCurrency(data.discount)}</Text>
+              </View>
+            )}
+
+            <View style={[styles.totalRow, dynamicStyles.totalRow]}>
+              <Text style={[styles.totalLabel, dynamicStyles.totalLabel]}>Total Amount</Text>
+              <Text style={[styles.totalValue, dynamicStyles.totalValue]}>{formatCurrency(data.total)}</Text>
             </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Summary Section */}
-      <View style={styles.summaryContainer}>
-        {data.taxAmount !== undefined && (
-          <View style={styles.summaryRow}>
-            <View style={styles.taxLabelRow}>
-              <Text style={styles.summaryLabel}>Tax/IVA</Text>
-            </View>
-            <Text style={styles.summaryValue}>{formatCurrency(data.taxAmount)}</Text>
           </View>
-        )}
 
-        {data.discount !== undefined && data.discount > 0 && (
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Discount</Text>
-            <Text style={[styles.summaryValue, styles.discountText]}>-{formatCurrency(data.discount)}</Text>
+          {/* Action Buttons */}
+          <View style={[styles.actionsContainer, dynamicStyles.actionsContainer]}>
+            <TouchableOpacity style={[styles.actionButtonSecondary, dynamicStyles.actionButtonSecondary]}>
+              <Download size={20} color={themeColors.text} style={{ marginRight: 8 }} />
+              <Text style={[styles.actionButtonTextSecondary, dynamicStyles.actionButtonTextSecondary]}>Export CSV</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.actionButtonPrimary, isSaving && styles.actionButtonDisabled]}
+              onPress={async () => {
+                if (onSave && data && !isSaving) {
+                  setIsSaving(true);
+                  try {
+                    await onSave(data);
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }
+              }}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Loader2 size={20} color="#ffffff" style={{ marginRight: 8 }} />
+              ) : (
+                <Save size={20} color="#ffffff" style={{ marginRight: 8 }} />
+              )}
+              <Text style={styles.actionButtonTextPrimary}>
+                {isSaving ? 'Saving...' : 'Save Record'}
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
-
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total Amount</Text>
-          <Text style={styles.totalValue}>{formatCurrency(data.total)}</Text>
-        </View>
-      </View>
-
-      {/* Action Buttons */}
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.actionButtonSecondary}>
-          <Download size={20} color="#334155" style={{ marginRight: 8 }} />
-          <Text style={styles.actionButtonTextSecondary}>Export CSV</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionButtonPrimary, isSaving && styles.actionButtonDisabled]}
-          onPress={async () => {
-            if (onSave && data && !isSaving) {
-              setIsSaving(true);
-              try {
-                await onSave(data);
-              } finally {
-                setIsSaving(false);
-              }
-            }
-          }}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <Loader2 size={20} color="#ffffff" style={{ marginRight: 8 }} />
-          ) : (
-            <Save size={20} color="#ffffff" style={{ marginRight: 8 }} />
-          )}
-          <Text style={styles.actionButtonTextPrimary}>
-            {isSaving ? 'Saving...' : 'Save Record'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+        </>
+      )}
     </View>
   );
 };
@@ -207,10 +333,16 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    backgroundColor: '#f8fafc',
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  accordionIcon: {
+    marginLeft: 16,
   },
   merchantRow: {
     flexDirection: 'row',
