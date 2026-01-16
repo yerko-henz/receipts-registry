@@ -9,33 +9,18 @@ import { storage } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'expo-router'
 import { useTheme } from '@/components/ThemeProvider'
-import { ChevronRight, Globe, Key, Palette, Shield, User } from 'lucide-react-native'
+import { ChevronRight, Globe, Key, Mail, Palette, Shield, User } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal, Alert as RNAlert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+// Helper function to check if a setting is visible outside the component if needed, 
+// but we'll define the dynamic one inside.
 type SettingConfig = {
   id: string
   visible: boolean
   order: number
-}
-
-// Settings visibility configuration
-// Set visible to false to hide a setting section, useful for permissions/payment plans
-const settingsConfig: SettingConfig[] = [
-  { id: 'userDetails', visible: true, order: 1 },
-  { id: 'changePassword', visible: true, order: 2 },
-  { id: 'mfa', visible: false, order: 3 },
-  { id: 'language', visible: false, order: 4 },
-  { id: 'theme', visible: true, order: 5 },
-  { id: 'logout', visible: true, order: 6 },
-]
-
-// Helper function to check if a setting is visible
-const isSettingVisible = (settingId: string) => {
-  const setting = settingsConfig.find(s => s.id === settingId)
-  return setting?.visible ?? false
 }
 
 export default function SettingsScreen() {
@@ -46,21 +31,52 @@ export default function SettingsScreen() {
   
   const [user, setUser] = useState<any>(null)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [showVerifyEmailModal, setShowVerifyEmailModal] = useState(false)
   const [showMFAModal, setShowMFAModal] = useState(false)
   const { theme, setTheme } = useTheme()
   const [showLanguageModal, setShowLanguageModal] = useState(false)
   const [showThemeModal, setShowThemeModal] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [emailSent, setEmailSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [mfaFactors, setMfaFactors] = useState<any[]>([])
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  // Settings visibility configuration
+  // Moved inside component to handle dynamic visibility based on state (e.g., user email status)
+  const settingsConfig: SettingConfig[] = [
+    { id: 'userDetails', visible: true, order: 1 },
+    { id: 'verifyEmail', visible: !user?.email_confirmed_at, order: 2 },
+    { id: 'changePassword', visible: true, order: 3 },
+    { id: 'mfa', visible: false, order: 4 },
+    { id: 'language', visible: false, order: 5 },
+    { id: 'theme', visible: true, order: 6 },
+    { id: 'logout', visible: true, order: 7 },
+  ]
+
+  const isSettingVisible = (settingId: string) => {
+    const setting = settingsConfig.find(s => s.id === settingId)
+    return setting?.visible ?? false
+  }
 
   useEffect(() => {
     loadUser()
     loadMFAFactors()
   }, [])
+
+  useEffect(() => {
+    let interval: any
+    if (resendCooldown > 0) {
+      interval = setInterval(() => {
+        setResendCooldown((prev) => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [resendCooldown])
 
   async function loadUser() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -104,6 +120,70 @@ export default function SettingsScreen() {
       }, 2000)
     }
 
+    setLoading(false)
+  }
+
+  async function handleOpenVerifyEmailModal() {
+    setShowVerifyEmailModal(true)
+    setError('')
+    setSuccess('')
+    setVerificationCode('')
+    setEmailSent(false)
+    
+    // Automatically send verification email when modal opens
+    await sendVerificationEmail()
+  }
+
+  async function sendVerificationEmail() {
+    if (!user?.email) return
+    
+    setLoading(true)
+    setError('')
+    
+    const { error: sendError } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email,
+    })
+    
+    if (sendError) {
+      setError(sendError.message)
+    } else {
+      setEmailSent(true)
+      setResendCooldown(60) // Start 60 second cooldown
+      setSuccess(t('settings.verificationEmailSent', { defaultValue: 'Verification email sent!' }))
+    }
+    
+    setLoading(false)
+  }
+
+  async function handleVerifyEmail() {
+    setError('')
+    setSuccess('')
+    
+    if (!verificationCode || verificationCode.length < 6) {
+      setError(t('auth.invalidCode', { defaultValue: 'Please enter a valid code' }))
+      return
+    }
+    
+    setLoading(true)
+    
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email: user?.email,
+      token: verificationCode,
+      type: 'email',
+    })
+    
+    if (verifyError) {
+      setError(verifyError.message)
+    } else {
+      setSuccess(t('settings.emailVerified', { defaultValue: 'Email verified successfully!' }))
+      await loadUser()
+      setTimeout(() => {
+        setShowVerifyEmailModal(false)
+        setSuccess('')
+      }, 2000)
+    }
+    
     setLoading(false)
   }
 
@@ -166,6 +246,28 @@ export default function SettingsScreen() {
 
             </View>
           </Card>
+        )}
+
+        {/* Verify Email */}
+        {isSettingVisible('verifyEmail') && (
+          <TouchableOpacity onPress={handleOpenVerifyEmailModal}>
+            <Card>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <Mail size={20} color={colors.icon} />
+                  <View>
+                    <Text style={[styles.settingText, { color: colors.text }]}>
+                      {t('settings.verifyEmail', { defaultValue: 'Verify Email' })}
+                    </Text>
+                    <Text style={[styles.settingSubtext, { color: colors.icon }]}>
+                      {t('settings.emailNotVerified', { defaultValue: 'Email not verified' })}
+                    </Text>
+                  </View>
+                </View>
+                <ChevronRight size={20} color={colors.icon} />
+              </View>
+            </Card>
+          </TouchableOpacity>
         )}
 
         {/* Change Password */}
@@ -317,6 +419,63 @@ export default function SettingsScreen() {
               title={t('settings.updatePassword')}
               onPress={handleChangePassword}
               loading={loading}
+            />
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Verify Email Modal */}
+      <Modal
+        visible={showVerifyEmailModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowVerifyEmailModal(false)}
+      >
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t('settings.verifyEmail', { defaultValue: 'Verify Email' })}
+            </Text>
+            <TouchableOpacity onPress={() => setShowVerifyEmailModal(false)}>
+              <Text style={{ color: colors.tint }}>
+                {t('settings.close')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            {error && <Alert variant="error" message={error} />}
+            {success && <Alert variant="success" message={success} />}
+
+            <Text style={[styles.modalDescription, { color: colors.icon }]}>
+              {t('settings.verifyEmailDescription', { 
+                defaultValue: `We've sent a verification code to ${user?.email}. Enter it below to verify your email.` 
+              })}
+            </Text>
+
+            <Input
+              label={t('auth.code', { defaultValue: 'Verification Code' })}
+              value={verificationCode}
+              onChangeText={setVerificationCode}
+              placeholder="123456"
+              keyboardType="numeric"
+            />
+
+            <Button
+              title={t('settings.verifyCode', { defaultValue: 'Verify Code' })}
+              onPress={handleVerifyEmail}
+              loading={loading}
+            />
+
+            <Button
+              title={resendCooldown > 0 
+                ? t('settings.resendCodeWithTimer', { defaultValue: `Resend Code (${resendCooldown}s)`, seconds: resendCooldown })
+                : t('settings.resendCode', { defaultValue: 'Resend Code' })
+              }
+              onPress={sendVerificationEmail}
+              variant="ghost"
+              loading={loading}
+              disabled={resendCooldown > 0}
             />
           </View>
         </SafeAreaView>
@@ -543,6 +702,11 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     padding: 16,
+  },
+  modalDescription: {
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 16,
   },
   languageOption: {
     padding: 16,
