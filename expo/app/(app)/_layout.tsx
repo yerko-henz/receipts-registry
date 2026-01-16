@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 type TabConfig = {
   name: string
   visible: boolean
+  order: number
   options: ComponentProps<typeof Tabs.Screen>['options']
 }
 
@@ -21,31 +22,17 @@ export default function AppLayout() {
   const tabsConfig: TabConfig[] = [
     {
       name: 'index',
-      visible: true, // Always visible
+      visible: true, 
+      order: 1,
       options: {
         title: t('app.home'),
         tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
       },
     },
     {
-      name: 'storage',
-      visible: true, // Can be controlled by permissions
-      options: {
-        title: t('app.storage'),
-        tabBarIcon: ({ color, size }) => <FolderOpen size={size} color={color} />,
-      },
-    },
-    {
-      name: 'tasks',
-      visible: true, // Can be controlled by permissions
-      options: {
-        title: t('app.tasks'),
-        tabBarIcon: ({ color, size }) => <ListTodo size={size} color={color} />,
-      },
-    },
-    {
       name: 'receiptAnalizer',
-      visible: true, // Can be controlled by permissions
+      visible: true, 
+      order: 2, 
       options: {
         title: 'Analyzer',
         tabBarIcon: ({ color, size }) => <ScanLine size={size} color={color} />,
@@ -54,9 +41,28 @@ export default function AppLayout() {
     {
       name: 'settings',
       visible: true, // Always visible
+      order: 3, 
       options: {
         title: t('app.settings'),
         tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+      },
+    },
+    {
+      name: 'storage',
+      visible: false, 
+      order: 4,
+      options: {
+        title: t('app.storage'),
+        tabBarIcon: ({ color, size }) => <FolderOpen size={size} color={color} />,
+      },
+    },
+    {
+      name: 'tasks',
+      visible: false, 
+      order: 5,
+      options: {
+        title: t('app.tasks'),
+        tabBarIcon: ({ color, size }) => <ListTodo size={size} color={color} />,
       },
     },
   ]
@@ -71,14 +77,18 @@ export default function AppLayout() {
         },
       }}>
       {tabsConfig
-        .filter(tab => tab.visible)
+        .sort((a, b) => a.order - b.order)
         .map(tab => (
           <Tabs.Screen
             key={tab.name}
             name={tab.name}
-            options={tab.options}
+            options={{
+              ...tab.options,
+              // Setting href to null hides the tab from the tab bar
+              href: tab.visible ? undefined : null,
+            }}
           />
-        ))}
+      ))}
     </Tabs>
   )
 }
