@@ -15,6 +15,29 @@ import { useTranslation } from 'react-i18next'
 import { Modal, Alert as RNAlert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+type SettingConfig = {
+  id: string
+  visible: boolean
+  order: number
+}
+
+// Settings visibility configuration
+// Set visible to false to hide a setting section, useful for permissions/payment plans
+const settingsConfig: SettingConfig[] = [
+  { id: 'userDetails', visible: true, order: 1 },
+  { id: 'changePassword', visible: true, order: 2 },
+  { id: 'mfa', visible: false, order: 3 },
+  { id: 'language', visible: false, order: 4 },
+  { id: 'theme', visible: true, order: 5 },
+  { id: 'logout', visible: true, order: 6 },
+]
+
+// Helper function to check if a setting is visible
+const isSettingVisible = (settingId: string) => {
+  const setting = settingsConfig.find(s => s.id === settingId)
+  return setting?.visible ?? false
+}
+
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation()
   const router = useRouter()
@@ -123,127 +146,132 @@ export default function SettingsScreen() {
         </View>
 
         {/* User Details */}
-        <Card>
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <User size={20} color={colors.icon} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('settings.userDetails')}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={[styles.label, { color: colors.icon }]}>
-                {t('auth.email')}
-              </Text>
-              <Text style={[styles.value, { color: colors.text }]}>
-                {user?.email}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={[styles.label, { color: colors.icon }]}>
-                {t('settings.userId')}
-              </Text>
-              <Text style={[styles.value, { color: colors.text }]} numberOfLines={1}>
-                {user?.id}
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Change Password */}
-        <TouchableOpacity onPress={() => setShowPasswordModal(true)}>
+        {isSettingVisible('userDetails') && (
           <Card>
-            <View style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <Key size={20} color={colors.icon} />
-                <Text style={[styles.settingText, { color: colors.text }]}>
-                  {t('settings.changePassword')}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <User size={20} color={colors.icon} />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  {t('settings.userDetails')}
                 </Text>
               </View>
-              <ChevronRight size={20} color={colors.icon} />
+              <View style={styles.detailRow}>
+                <Text style={[styles.label, { color: colors.icon }]}>
+                  {t('auth.email')}
+                </Text>
+                <Text style={[styles.value, { color: colors.text }]}>
+                  {user?.email}
+                </Text>
+              </View>
+
             </View>
           </Card>
-        </TouchableOpacity>
+        )}
+
+        {/* Change Password */}
+        {isSettingVisible('changePassword') && (
+          <TouchableOpacity onPress={() => setShowPasswordModal(true)}>
+            <Card>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <Key size={20} color={colors.icon} />
+                  <Text style={[styles.settingText, { color: colors.text }]}>
+                    {t('settings.changePassword')}
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.icon} />
+              </View>
+            </Card>
+          </TouchableOpacity>
+        )}
 
         {/* MFA */}
-        <TouchableOpacity onPress={() => setShowMFAModal(true)}>
-          <Card>
-            <View style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <Shield size={20} color={colors.icon} />
-                <View>
-                  <Text style={[styles.settingText, { color: colors.text }]}>
-                    {t('settings.mfa')}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.icon }]}>
-                    {mfaFactors.length > 0 
-                      ? `${mfaFactors.length} ${t('mfa.devicesEnrolled')}`
-                      : t('settings.mfaNotEnabled')
-                    }
-                  </Text>
+        {isSettingVisible('mfa') && (
+          <TouchableOpacity onPress={() => setShowMFAModal(true)}>
+            <Card>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <Shield size={20} color={colors.icon} />
+                  <View>
+                    <Text style={[styles.settingText, { color: colors.text }]}>
+                      {t('settings.mfa')}
+                    </Text>
+                    <Text style={[styles.settingSubtext, { color: colors.icon }]}>
+                      {mfaFactors.length > 0 
+                        ? `${mfaFactors.length} ${t('mfa.devicesEnrolled')}`
+                        : t('settings.mfaNotEnabled')
+                      }
+                    </Text>
+                  </View>
                 </View>
+                <ChevronRight size={20} color={colors.icon} />
               </View>
-              <ChevronRight size={20} color={colors.icon} />
-            </View>
-          </Card>
-        </TouchableOpacity>
+            </Card>
+          </TouchableOpacity>
+        )}
 
         {/* Language */}
-        <TouchableOpacity onPress={() => setShowLanguageModal(true)}>
-          <Card>
-            <View style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <Globe size={20} color={colors.icon} />
-                <View>
-                  <Text style={[styles.settingText, { color: colors.text }]}>
-                    {t('settings.language')}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.icon }]}>
-                    {i18n.language === 'pl' 
-                      ? t('settings.languages.polish')
-                      : i18n.language === 'zh'
-                      ? t('settings.languages.chinese')
-                      : t('settings.languages.english')
-                    }
-                  </Text>
+        {isSettingVisible('language') && (
+          <TouchableOpacity onPress={() => setShowLanguageModal(true)}>
+            <Card>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <Globe size={20} color={colors.icon} />
+                  <View>
+                    <Text style={[styles.settingText, { color: colors.text }]}>
+                      {t('settings.language')}
+                    </Text>
+                    <Text style={[styles.settingSubtext, { color: colors.icon }]}>
+                      {i18n.language === 'pl' 
+                        ? t('settings.languages.polish')
+                        : i18n.language === 'zh'
+                        ? t('settings.languages.chinese')
+                        : t('settings.languages.english')
+                      }
+                    </Text>
+                  </View>
                 </View>
+                <ChevronRight size={20} color={colors.icon} />
               </View>
-              <ChevronRight size={20} color={colors.icon} />
-            </View>
-          </Card>
-        </TouchableOpacity>
+            </Card>
+          </TouchableOpacity>
+        )}
 
         {/* Theme */}
-        <TouchableOpacity onPress={() => setShowThemeModal(true)}>
-          <Card>
-            <View style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <Palette size={20} color={colors.icon} />
-                <View>
-                  <Text style={[styles.settingText, { color: colors.text }]}>
-                    {t('settings.theme', { defaultValue: 'Theme' })}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.icon }]}>
-                    {theme === 'system' 
-                      ? t('settings.themes.system', { defaultValue: 'System' })
-                      : theme === 'light'
-                      ? t('settings.themes.light', { defaultValue: 'Light' })
-                      : t('settings.themes.dark', { defaultValue: 'Dark' })
-                    }
-                  </Text>
+        {isSettingVisible('theme') && (
+          <TouchableOpacity onPress={() => setShowThemeModal(true)}>
+            <Card>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <Palette size={20} color={colors.icon} />
+                  <View>
+                    <Text style={[styles.settingText, { color: colors.text }]}>
+                      {t('settings.theme', { defaultValue: 'Theme' })}
+                    </Text>
+                    <Text style={[styles.settingSubtext, { color: colors.icon }]}>
+                      {theme === 'system' 
+                        ? t('settings.themes.system', { defaultValue: 'System' })
+                        : theme === 'light'
+                        ? t('settings.themes.light', { defaultValue: 'Light' })
+                        : t('settings.themes.dark', { defaultValue: 'Dark' })
+                      }
+                    </Text>
+                  </View>
                 </View>
+                <ChevronRight size={20} color={colors.icon} />
               </View>
-              <ChevronRight size={20} color={colors.icon} />
-            </View>
-          </Card>
-        </TouchableOpacity>
+            </Card>
+          </TouchableOpacity>
+        )}
 
         {/* Logout */}
-        <Button
-          title={t('auth.logout')}
-          onPress={handleLogout}
-          variant="outline"
-        />
+        {isSettingVisible('logout') && (
+          <Button
+            title={t('auth.logout')}
+            onPress={handleLogout}
+            variant="outline"
+          />
+        )}
       </ScrollView>
 
       {/* Password Change Modal */}
