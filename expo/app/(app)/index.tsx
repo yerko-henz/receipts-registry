@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { supabase } from '@/lib/supabase'
+import { getReceiptsByUserId } from '@/services/receipts'
 import { Calendar, User } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,6 +18,17 @@ export default function HomeScreen() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
+      
+      if (user?.id) {
+        getReceiptsByUserId(user.id)
+          .then((receipts) => {
+            console.log(`[Home] Fetched ${receipts?.length} receipts for user ${user.id}`)
+            // console.log(JSON.stringify(receipts, null, 2))
+          })
+          .catch((err) => {
+            console.error('[Home] Failed to fetch receipts:', err)
+          })
+      }
     })
   }, [])
 
@@ -43,20 +55,6 @@ export default function HomeScreen() {
             <Text style={[styles.cardText, { color: colors.text }]}>
               {t('home.memberFor', { days: getDaysSinceRegistration() })}
             </Text>
-          </View>
-        </Card>
-
-        <Card>
-          <View style={styles.cardContent}>
-            <User size={24} color={colors.icon} />
-            <View style={styles.userInfo}>
-              <Text style={[styles.label, { color: colors.icon }]}>
-                {t('home.email')}
-              </Text>
-              <Text style={[styles.value, { color: colors.text }]}>
-                {user?.email}
-              </Text>
-            </View>
           </View>
         </Card>
       </ScrollView>

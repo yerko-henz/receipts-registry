@@ -30,6 +30,17 @@ export const getReceipts = async () => {
   return data;
 };
 
+export const getReceiptsByUserId = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('receipts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('transaction_date', { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
+
 export const getReceiptById = async (id: string) => {
   const { data, error } = await supabase
     .from('receipts')
