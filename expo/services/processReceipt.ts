@@ -16,7 +16,7 @@ export const analyzeReceipt = async (base64Image: string): Promise<ReceiptData> 
           },
         },
         {
-      text: "Analyze this receipt carefully. Extract the merchant name, date, all line items (name, quantity, total price), subtotal, tax details (specifically look for IVA if present), aggregate all discounts into a single value, and the final total. Be very precise with numbers.\n\nRules for items:\n1. If an item is listed by weight (e.g., KG, G), set its quantity to 1.\n2. Do NOT include discounts (negative values) in the items array.\n3. Sum all negative values/discounts into the single 'discount' field at the top level (as a positive number, e.g., if it says -1000, put 1000 in discount).\n4. Ensure all extracted numbers are accurate."
+      text: "Analyze this receipt carefully. Extract the merchant name, date, all line items (name, quantity, total price), subtotal, tax details (specifically look for IVA if present), the tax rate percentage (e.g., 0.19 for 19%), aggregate all discounts into a single value, and the final total. Be very precise with numbers.\n\nRules for items:\n1. If an item is listed by weight (e.g., KG, G), set its quantity to 1.\n2. Do NOT include discounts (negative values) in the items array.\n3. Sum all negative values/discounts into the single 'discount' field at the top level (as a positive number, e.g., if it says -1000, put 1000 in discount).\n4. Ensure all extracted numbers are accurate."
 }
       ]
     },
@@ -48,6 +48,7 @@ export const analyzeReceipt = async (base64Image: string): Promise<ReceiptData> 
           type: Type.STRING, 
           description: "One word: Food, Transport, Shopping, Health, or Other" 
         },
+        taxRate: { type: Type.NUMBER, description: "Tax rate as a decimal (e.g., 0.19 for 19%)" },
       },
       required: ["merchantName", "date", "total", "currency", "items"]
     }

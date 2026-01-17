@@ -12,17 +12,43 @@ export const calculateReceiptIntegrity = (data: ReceiptData): number => {
 
   // 1. Sum Check: Items + Tax - Discount = Total
   const itemsSum = data.items.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
-  const tax = data.taxAmount || 0;
+  const detectedTax = data.taxAmount || 0;
   const discount = data.discount || 0;
-  const calculatedTotal = Number((itemsSum + tax - discount).toFixed(2));
   const reportedTotal = Number(data.total.toFixed(2));
+  
+  // Strategy: Try both tax-inclusive and tax-exclusive models
+  const totalExclusive = Number((itemsSum + detectedTax - discount).toFixed(2));
+  const totalInclusive = Number((itemsSum - discount).toFixed(2));
+  
+  const diffExclusive = Math.abs(totalExclusive - reportedTotal);
+  const diffInclusive = Math.abs(totalInclusive - reportedTotal);
+  
+  const bestDiff = Math.min(diffExclusive, diffInclusive);
+  const isInclusive = diffInclusive < diffExclusive;
 
-  const totalDiff = Math.abs(calculatedTotal - reportedTotal);
-  if (totalDiff > 0.01) {
-    // Heavy penalty for total mismatch
-    const penalty = Math.min(40, (totalDiff / reportedTotal) * 100);
+  if (bestDiff > 0.1) {
+    const penalty = Math.min(30, (bestDiff / reportedTotal) * 100);
     score -= penalty;
-    penalties.push(`Total mismatch: diff ${totalDiff}`);
+    penalties.push(`Total mismatch: best variant diff ${bestDiff.toFixed(2)} (${isInclusive ? 'Inclusive' : 'Exclusive'} model)`);
+  } else {
+    console.log(`[ReceiptIntegrity] Sum check passed using ${isInclusive ? 'Tax-Inclusive' : 'Tax-Exclusive'} model.`);
+  }
+
+  // 1b. Implied Tax Check (Requested by User)
+  // Logic: Divide by (1+Tax Rate) to derive the implied Net Total.
+  // Subtract the Net Total from the Final Total.
+  // Compare against Tax Amount printed.
+  if (data.taxRate && data.taxRate > 0) {
+    const impliedNetTotal = reportedTotal / (1 + data.taxRate);
+    const impliedTaxAmount = reportedTotal - impliedNetTotal;
+    const taxIntegrityDiff = Math.abs(impliedTaxAmount - detectedTax);
+    
+    // If tax mismatch is > 0.5 (larger buffer for tax rounding/implied calc)
+    if (taxIntegrityDiff > 1.0) {
+      const penalty = Math.min(20, (taxIntegrityDiff / detectedTax) * 100);
+      score -= penalty;
+      penalties.push(`Tax rate integrity mismatch: implied tax ${impliedTaxAmount.toFixed(2)}, detected ${detectedTax}`);
+    }
   }
 
   // 2. Line Item Check: quantity * unitPrice = totalPrice

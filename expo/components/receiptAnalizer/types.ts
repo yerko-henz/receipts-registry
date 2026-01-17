@@ -14,6 +14,7 @@ export interface ReceiptData {
   total: number;
   currency: string;
   category: string;
+  taxRate?: number;
   integrityScore?: number;
 }
 
