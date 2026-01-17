@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ReceiptData } from "@/components/receiptAnalizer/types";
+import { calculateReceiptIntegrity } from "./receiptIntegrity";
 
 export const analyzeReceipt = async (base64Image: string): Promise<ReceiptData> => {
   const ai = new GoogleGenAI({ apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY || '' });
@@ -58,6 +59,10 @@ export const analyzeReceipt = async (base64Image: string): Promise<ReceiptData> 
   
   try {
     const data = JSON.parse(text) as ReceiptData;
+    
+    // Add integrity score calculation
+    data.integrityScore = calculateReceiptIntegrity(data);
+    
     console.log("Gemini AI Analysis Result:", JSON.stringify(data, null, 2));
     return data;
   } catch (err) {

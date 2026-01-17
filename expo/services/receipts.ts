@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { Database } from './database.types';
 import { ReceiptData } from '@/components/receiptAnalizer/types';
+import { isIntegrityAcceptable } from './receiptIntegrity';
 
 export type Receipt = Database['public']['Tables']['receipts']['Row'];
 export type NewReceiptWithItems = {
@@ -41,6 +42,13 @@ export const getReceiptById = async (id: string) => {
 };
 
 export const createReceipt = async (params: NewReceiptWithItems) => {
+  // Check integrity before saving
+  if (params.raw_ai_output?.integrityScore !== undefined) {
+    if (!isIntegrityAcceptable(params.raw_ai_output.integrityScore)) {
+      throw new Error(`Cannot save: Receipt integrity score (${params.raw_ai_output.integrityScore}) is below acceptable threshold.`);
+    }
+  }
+
   const { error } = await supabase.rpc('save_receipt_with_items', {
     p_merchant_name: params.merchant_name,
     p_total: params.total,
@@ -56,6 +64,13 @@ export const createReceipt = async (params: NewReceiptWithItems) => {
 };
 
 export const createReceipts = async (receipts: ReceiptData[]) => {
+  // Check integrity for all receipts in batch
+  for (const receipt of receipts) {
+    if (receipt.integrityScore !== undefined && !isIntegrityAcceptable(receipt.integrityScore)) {
+      throw new Error(`Cannot save batch: One or more receipts have low integrity scores (e.g., ${receipt.merchantName}: ${receipt.integrityScore}).`);
+    }
+  }
+
   const { error } = await supabase.rpc('save_receipts_batch', {
     p_receipts: receipts as any,
   });

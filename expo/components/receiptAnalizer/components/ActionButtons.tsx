@@ -28,32 +28,37 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, isSaving }
   });
 
   return (
-    <View style={[styles.actionsContainer, dynamicStyles.actionsContainer]}>
-      <TouchableOpacity style={[styles.actionButtonSecondary, dynamicStyles.actionButtonSecondary]}>
-        <Download size={20} color={themeColors.text} style={{ marginRight: 8 }} />
-        <Text style={[styles.actionButtonTextSecondary, dynamicStyles.actionButtonTextSecondary]}>Export CSV</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={[styles.actionButtonPrimary, isSaving && styles.actionButtonDisabled]}
-        onPress={onSave}
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <Loader2 size={20} color="#ffffff" style={{ marginRight: 8 }} />
-        ) : (
-          <Save size={20} color="#ffffff" style={{ marginRight: 8 }} />
-        )}
-        <Text style={styles.actionButtonTextPrimary}>
-          {isSaving ? 'Saving...' : 'Save Record'}
-        </Text>
-      </TouchableOpacity>
+    <View style={styles.actionsWrapper}>
+      <View style={[styles.actionsContainer, dynamicStyles.actionsContainer]}>
+        <TouchableOpacity style={[styles.actionButtonSecondary, dynamicStyles.actionButtonSecondary]}>
+          <Download size={20} color={themeColors.text} style={{ marginRight: 8 }} />
+          <Text style={[styles.actionButtonTextSecondary, dynamicStyles.actionButtonTextSecondary]}>Export CSV</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.actionButtonPrimary, isSaving && styles.actionButtonDisabled]}
+          onPress={onSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <Loader2 size={20} color="#ffffff" style={{ marginRight: 8 }} />
+          ) : (
+            <Save size={20} color="#ffffff" style={{ marginRight: 8 }} />
+          )}
+          <Text style={styles.actionButtonTextPrimary}>
+            {isSaving ? 'Saving...' : 'Save Record'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
-
 const styles = StyleSheet.create({
+  actionsWrapper: {
+    gap: 8,
+  },
   actionsContainer: {
     padding: 24,
+    paddingBottom: 16,
     flexDirection: 'row',
     gap: 12,
   },
@@ -91,5 +96,12 @@ const styles = StyleSheet.create({
   actionButtonDisabled: {
     opacity: 0.7,
     backgroundColor: '#94a3b8',
+  },
+  integrityWarning: {
+    color: '#ef4444',
+    fontSize: 12,
+    textAlign: 'center',
+    paddingBottom: 16,
+    fontWeight: '600',
   },
 });

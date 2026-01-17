@@ -16,7 +16,7 @@ export const MerchantHeader: React.FC<MerchantHeaderProps> = ({
   merchantName, 
   date, 
   isExpanded, 
-  onToggle 
+  onToggle
 }) => {
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
@@ -51,8 +51,10 @@ export const MerchantHeader: React.FC<MerchantHeaderProps> = ({
           <View style={{ flex: 1 }}>
               <View style={styles.merchantRow}>
                   <Text style={[styles.merchantName, dynamicStyles.merchantName]}>{merchantName}</Text>
-                  <View style={[styles.verifiedBadge, dynamicStyles.verifiedBadge]}>
-                      <Text style={[styles.verifiedText, dynamicStyles.verifiedText]}>Verified</Text>
+                  <View style={styles.badgeRow}>
+                    <View style={[styles.verifiedBadge, dynamicStyles.verifiedBadge]}>
+                        <Text style={[styles.verifiedText, dynamicStyles.verifiedText]}>Verified</Text>
+                    </View>
                   </View>
               </View>
               <View style={styles.dateRow}>
@@ -91,10 +93,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
+  badgeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
   verifiedBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 9999,
+  },
+  integrityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 9999,
+    borderWidth: 1,
+  },
+  integrityText: {
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   verifiedText: {
     fontSize: 10,

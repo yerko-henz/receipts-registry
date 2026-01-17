@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager, TouchableOpacity, Alert } from 'react-native';
 import { AnalysisState, ReceiptData } from './types';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/components/ThemeProvider';
 import { Save, Download, Loader2 } from 'lucide-react-native';
+import { isIntegrityAcceptable } from '@/services/receiptIntegrity';
 
 // Extracted Components
 import { AnalysisError } from './components/AnalysisError';
@@ -133,7 +134,6 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, res
         if (onSaveAll) {
           await onSaveAll();
         } else if (onSave) {
-          // Fallback if onSaveAll is not provided
           for (const result of results) {
             await onSave(result);
           }
