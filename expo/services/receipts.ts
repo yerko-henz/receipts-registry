@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Database } from './database.types';
+import { ReceiptData } from '@/components/receiptAnalizer/types';
 
 export type Receipt = Database['public']['Tables']['receipts']['Row'];
 export type NewReceiptWithItems = {
@@ -53,6 +54,15 @@ export const createReceipt = async (params: NewReceiptWithItems) => {
 
   if (error) throw error;
 };
+
+export const createReceipts = async (receipts: ReceiptData[]) => {
+  const { error } = await supabase.rpc('save_receipts_batch', {
+    p_receipts: receipts as any,
+  });
+
+  if (error) throw error;
+};
+
 
 export const deleteReceipt = async (id: string) => {
   const { error } = await supabase

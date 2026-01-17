@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { AnalysisState } from './types';
+import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager, TouchableOpacity } from 'react-native';
+import { AnalysisState, ReceiptData } from './types';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/components/ThemeProvider';
+import { Save, Download, Loader2 } from 'lucide-react-native';
 
 // Extracted Components
 import { AnalysisError } from './components/AnalysisError';
@@ -17,20 +18,74 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, data, onSave, onRetry }) => {
-  const { activeTheme } = useTheme();
-  const colorScheme = useColorScheme();
-  const themeColors = Colors[colorScheme ?? 'light'];
-  
+// Sub-component for individual receipt result to manage its own expanded state
+const ResultItem: React.FC<{ 
+  data: ReceiptData; 
+  onSave?: (data: ReceiptData) => Promise<void>; 
+  themeColors: any;
+  activeTheme: 'light' | 'dark';
+  initiallyExpanded?: boolean;
+}> = ({ data, onSave, themeColors, activeTheme, initiallyExpanded = false }) => {
+  const [isExpanded, setIsExpanded] = React.useState(initiallyExpanded);
   const [isSaving, setIsSaving] = React.useState(false);
-  const [isExpanded, setIsExpanded] = React.useState(true);
-  const [retryCountdown, setRetryCountdown] = React.useState(0);
-  const [simulatedProgress, setSimulatedProgress] = React.useState(0);
 
   const toggleAccordion = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsExpanded(!isExpanded);
   };
+
+  const handleSave = async () => {
+    if (onSave && data && !isSaving) {
+      setIsSaving(true);
+      try {
+        await onSave(data);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  return (
+    <View style={[
+      styles.resultContainer, 
+      { backgroundColor: themeColors.card, borderColor: themeColors.border }
+    ]}>
+      <MerchantHeader 
+        merchantName={data.merchantName}
+        date={data.date}
+        isExpanded={isExpanded}
+        onToggle={toggleAccordion}
+      />
+
+      {isExpanded && (
+        <>
+          <ItemsTable items={data.items} currency={data.currency} />
+          
+          <SummarySection 
+            taxAmount={data.taxAmount}
+            discount={data.discount}
+            total={data.total}
+            currency={data.currency}
+          />
+
+          <ActionButtons 
+            onSave={handleSave}
+            isSaving={isSaving}
+          />
+        </>
+      )}
+    </View>
+  );
+};
+
+export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, results, onSave, onSaveAll, onRetry }) => {
+  const { activeTheme } = useTheme();
+  const colorScheme = useColorScheme();
+  const themeColors = Colors[colorScheme ?? 'light'];
+  
+  const [simulatedProgress, setSimulatedProgress] = React.useState(0);
+  const [retryCountdown, setRetryCountdown] = React.useState(0);
+  const [isSavingAll, setIsSavingAll] = React.useState(false);
 
   // Simulated progress during loading
   React.useEffect(() => {
@@ -70,14 +125,21 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, dat
     }
     return () => clearInterval(timer);
   }, [error]);
-  
-  const handleSave = async () => {
-    if (onSave && data && !isSaving) {
-      setIsSaving(true);
+
+  const handleSaveAll = async () => {
+    if (results.length > 0 && !isSavingAll) {
+      setIsSavingAll(true);
       try {
-        await onSave(data);
+        if (onSaveAll) {
+          await onSaveAll();
+        } else if (onSave) {
+          // Fallback if onSaveAll is not provided
+          for (const result of results) {
+            await onSave(result);
+          }
+        }
       } finally {
-        setIsSaving(false);
+        setIsSavingAll(false);
       }
     }
   };
@@ -96,43 +158,114 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, dat
     return <AnalysisLoading progress={simulatedProgress} />;
   }
 
-  if (!data) return null;
+  if (results.length === 0) return null;
 
   return (
-    <View style={[
-      styles.container, 
-      { backgroundColor: themeColors.card, borderColor: themeColors.border }
-    ]}>
-      <MerchantHeader 
-        merchantName={data.merchantName}
-        date={data.date}
-        isExpanded={isExpanded}
-        onToggle={toggleAccordion}
-      />
+    <View style={styles.container}>
+      <View style={styles.resultsHeader}>
+        <View style={styles.headerTitleRow}>
+            <Text style={[styles.resultsTitle, { color: themeColors.text }]}>
+            {results.length} Receipt{results.length > 1 ? 's' : ''} Analyzed
+            </Text>
+        </View>
 
-      {isExpanded && (
-        <>
-          <ItemsTable items={data.items} currency={data.currency} />
-          
-          <SummarySection 
-            taxAmount={data.taxAmount}
-            discount={data.discount}
-            total={data.total}
-            currency={data.currency}
-          />
+        {results.length > 1 && (
+            <View style={styles.batchActions}>
+                <TouchableOpacity style={[styles.batchButtonSecondary, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
+                    <Download size={16} color={themeColors.tint} />
+                    <Text style={[styles.batchButtonTextSecondary, { color: themeColors.tint }]}>Export All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                    style={[styles.batchButtonPrimary, isSavingAll && styles.batchButtonDisabled, { backgroundColor: themeColors.tint }]} 
+                    onPress={handleSaveAll}
+                    disabled={isSavingAll}
+                >
+                    {isSavingAll ? (
+                        <Loader2 size={16} color="#ffffff" style={{ marginRight: 4 }} />
+                    ) : (
+                        <Save size={16} color="#ffffff" style={{ marginRight: 4 }} />
+                    )}
+                    <Text style={styles.batchButtonTextPrimary}>Save All</Text>
+                </TouchableOpacity>
+            </View>
+        )}
+      </View>
 
-          <ActionButtons 
-            onSave={handleSave}
-            isSaving={isSaving}
+      <View style={styles.resultsList}>
+        {results.map((data, index) => (
+          <ResultItem 
+            key={index} 
+            data={data} 
+            onSave={onSave} 
+            themeColors={themeColors}
+            activeTheme={activeTheme as 'light' | 'dark'}
+            initiallyExpanded={results.length === 1}
           />
-        </>
-      )}
+        ))}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    gap: 16,
+  },
+  resultsHeader: {
+    paddingHorizontal: 4,
+    marginBottom: 0,
+    gap: 12,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  resultsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    opacity: 0.9,
+  },
+  batchActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  batchButtonPrimary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  batchButtonSecondary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  batchButtonTextPrimary: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  batchButtonTextSecondary: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  batchButtonDisabled: {
+    opacity: 0.7,
+  },
+  resultsList: {
+    gap: 16,
+  },
+  resultContainer: {
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',

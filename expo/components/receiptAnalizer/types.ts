@@ -19,7 +19,10 @@ export interface ReceiptData {
 export interface AnalysisState {
   isLoading: boolean;
   error: string | null;
-  data: ReceiptData | null;
+  results: ReceiptData[]; // Changed from 'data: ReceiptData | null'
   onSave?: (data: ReceiptData) => Promise<void>;
+  onSaveAll?: () => Promise<void>;
   onRetry?: () => void;
 }
+
+

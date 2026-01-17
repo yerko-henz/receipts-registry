@@ -9,7 +9,7 @@ import { Camera, Upload, RefreshCw, ShoppingBag, Percent, Banknote, ScanLine } f
 import { ReceiptAnalyzer } from '@/components/receiptAnalizer/ReceiptAnalyzer';
 import { ReceiptData, AnalysisState } from '@/components/receiptAnalizer/types';
 import { analyzeReceipt } from '@/services/processReceipt';
-import { createReceipt } from '@/services/receipts';
+import { createReceipt, createReceipts } from '@/services/receipts';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -22,10 +22,10 @@ const App: React.FC = () => {
   const [analysis, setAnalysis] = useState<AnalysisState>({
     isLoading: false,
     error: null,
-    data: null,
+    results: [],
   });
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [lastAsset, setLastAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [lastAssets, setLastAssets] = useState<ImagePicker.ImagePickerAsset[]>([]);
 
   const pickImage = async () => {
     try {
@@ -40,14 +40,16 @@ const App: React.FC = () => {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true, // Optional: allow cropping
+        allowsMultipleSelection: true,
+        selectionLimit: 10, 
+        allowsEditing: false, 
         quality: 0.8,
-        base64: true, // Request base64 directly
+        base64: true,
       });
 
-      if (!result.canceled && result.assets && result.assets[0].uri) {
-        setLastAsset(result.assets[0]);
-        processImage(result.assets[0]);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setLastAssets(result.assets);
+        processImages(result.assets);
       }
     } catch (e) {
       console.error(e);
@@ -55,34 +57,24 @@ const App: React.FC = () => {
     }
   };
 
-  const processImage = async (asset: ImagePicker.ImagePickerAsset) => {
-    const uri = asset.uri;
-    setPreviewUrl(uri);
-    setAnalysis({ isLoading: true, error: null, data: null });
+  const processImages = async (assets: ImagePicker.ImagePickerAsset[]) => {
+    setPreviewUrls(assets.map(a => a.uri));
+    setAnalysis({ isLoading: true, error: null, results: [] });
 
     try {
-      let base64 = asset.base64;
-      
-      // If base64 is missing (sometimes happens on Android depending on version/options), read it manually
-      if (!base64) {
-        base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      }
+      const results = await Promise.all(assets.map(async (asset) => {
+        let base64 = asset.base64;
+        if (!base64) {
+          base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
+        }
+        if (!base64) throw new Error('Could not read image data');
+        return await analyzeReceipt(base64);
+      }));
 
-      if (!base64) {
-        throw new Error('Could not read image data');
-      }
-
-      // Add prefix if missing (GenAI usually handles raw base64, but data URI scheme helps sometimes)
-      // The service expects just base64 or creating inlineData. 
-      // Checking service/processReceipt.ts:
-      // It does `base64Image.split(',')[1] || base64Image`
-      // So assuming we pass the raw base64 or data url is fine.
-      
-      const result = await analyzeReceipt(base64);
-      setAnalysis({ isLoading: false, error: null, data: result });
+      setAnalysis({ isLoading: false, error: null, results });
     } catch (err: any) {
       console.error(err);
-      setAnalysis({ isLoading: false, error: err.message || "An error occurred during analysis", data: null });
+      setAnalysis({ isLoading: false, error: err.message || "An error occurred during analysis", results: [] });
     }
   };
 
@@ -93,7 +85,7 @@ const App: React.FC = () => {
         total: data.total,
         currency: data.currency,
         date: data.date,
-        category: data.category,
+        category: data.category || 'Other',
         tax_amount: data.taxAmount || 0,
         raw_ai_output: data,
         items: data.items.map(item => {
@@ -107,24 +99,48 @@ const App: React.FC = () => {
           };
         }),
       });
-      Alert.alert('Success', 'Receipt saved successfully!');
-      resetScanner();
+
+      // Remove the specifically saved item from the list
+      setAnalysis(prev => {
+        const newResults = prev.results.filter(r => r !== data);
+        if (newResults.length === 0) {
+          // If no more results, reset everything
+          setTimeout(resetScanner, 500);
+        }
+        return { ...prev, results: newResults };
+      });
+
+      Alert.alert('Success', `${data.merchantName} receipt saved successfully!`);
     } catch (err: any) {
       console.error(err);
       Alert.alert('Error', 'Failed to save receipt: ' + (err.message || 'Unknown error'));
-      throw err; // Re-throw so the component can handle it (isSaving state)
+      throw err;
+    }
+  };
+
+  const handleSaveAllResults = async () => {
+    if (analysis.results.length === 0) return;
+
+    try {
+      await createReceipts(analysis.results);
+      
+      Alert.alert("Success", "All receipts have been saved successfully.");
+      resetScanner();
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert("Error", "Failed to save all receipts: " + (err.message || "Unknown error"));
     }
   };
 
   const resetScanner = () => {
-    setAnalysis({ isLoading: false, error: null, data: null });
-    setPreviewUrl(null);
-    setLastAsset(null);
+    setAnalysis({ isLoading: false, error: null, results: [] });
+    setPreviewUrls([]);
+    setLastAssets([]);
   };
 
   const handleRetry = () => {
-    if (lastAsset) {
-      processImage(lastAsset);
+    if (lastAssets.length > 0) {
+      processImages(lastAssets);
     }
   };
 
@@ -144,7 +160,7 @@ const App: React.FC = () => {
             </View>
             <Text style={[styles.headerTitle, { color: colors.text }]}>ReceiptScan AI</Text>
           </View>
-          {previewUrl && (
+          {previewUrls.length > 0 && (
             <TouchableOpacity onPress={resetScanner} style={styles.newScanButton}>
               <RefreshCw size={14} color="#4f46e5" />
               <Text style={styles.newScanText}>Scan New</Text>
@@ -154,12 +170,12 @@ const App: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {!previewUrl ? (
+        {previewUrls.length === 0 ? (
           <View style={styles.landingContainer}>
             <View style={styles.heroTextContainer}>
               <Text style={[styles.heroTitle, { color: colors.text }]}>Digitize your receipts in seconds</Text>
               <Text style={[styles.heroSubtitle, { color: colors.icon }]}>
-                Our advanced AI extracts items, prices, and taxes with high precision. Just upload an image to get started.
+                Our advanced AI extracts items, prices, and taxes with high precision. Just upload images to get started.
               </Text>
             </View>
             
@@ -167,57 +183,61 @@ const App: React.FC = () => {
               <View style={styles.uploadIconCircle}>
                 <Upload color="#4f46e5" size={40} />
               </View>
-              <Text style={[styles.uploadTitle, { color: colors.text }]}>Upload Receipt</Text>
+              <Text style={[styles.uploadTitle, { color: colors.text }]}>Upload Receipts</Text>
               <Text style={styles.uploadSubtitle}>Tap to select from Gallery</Text>
             </TouchableOpacity>
 
             <View style={styles.featuresGrid}>
               <FeatureCard 
                 icon={<ShoppingBag color={colors.text} size={24} />}
-                title="Itemized Extraction" 
-                desc="Every product listed with individual pricing."
+                title="Bulk Processing" 
+                desc="Upload multiple receipts at once and process them in parallel."
                 colors={colors}
               />
               <FeatureCard 
                 icon={<Percent color={colors.text} size={24} />}
                 title="Tax & VAT Detection" 
-                desc="Automatically calculates tax components."
+                desc="Automatically calculates tax components for each receipt."
                 colors={colors}
               />
               <FeatureCard 
                 icon={<Banknote color={colors.text} size={24} />}
-                title="Currency Support" 
-                desc="Handles multiple global currencies."
+                title="History Tracking" 
+                desc="Save records directly to your account for easy tracking."
                 colors={colors}
               />
             </View>
           </View>
         ) : (
           <View style={styles.resultsContainer}>
-            {/* Image Preview */}
-            <View style={[styles.imagePreviewContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Image 
-                source={{ uri: previewUrl }} 
-                style={[styles.previewImage, { backgroundColor: colors.background }]}
-                contentFit="contain" // 'contain' for expo-image, similar to object-contain
-              />
-              {analysis.isLoading && (
-                <View style={styles.loadingOverlay}>
-                  <Text style={styles.analyzingText}>Analyzing receipt details...</Text>
+            {/* Image Preview List */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.previewList}>
+              {previewUrls.map((url, idx) => (
+                <View key={idx} style={[styles.imagePreviewContainer, { backgroundColor: colors.card, borderColor: colors.border, marginRight: previewUrls.length > 1 ? 12 : 0, width: previewUrls.length > 1 ? 280 : '100%' }]}>
+                  <Image 
+                    source={{ uri: url }} 
+                    style={[styles.previewImage, { backgroundColor: colors.background }]}
+                    contentFit="contain"
+                  />
+                  {analysis.isLoading && (
+                    <View style={styles.loadingOverlay}>
+                      <Text style={styles.analyzingText}>Analyzing...</Text>
+                    </View>
+                  )}
+                  <View style={styles.previewFooter}>
+                    <Text style={styles.previewFooterText}>RECEIPT {idx + 1}</Text>
+                  </View>
                 </View>
-              )}
-              <View style={styles.previewFooter}>
-                <Text style={styles.previewFooterText}>RECEIPT CAPTURE</Text>
-                <Text style={styles.previewFooterText}>ORIGINAL FILE</Text>
-              </View>
-            </View>
+              ))}
+            </ScrollView>
 
             {/* Results */}
             <ReceiptAnalyzer 
               isLoading={analysis.isLoading} 
               error={analysis.error} 
-              data={analysis.data}
+              results={analysis.results}
               onSave={handleSaveReceipt}
+              onSaveAll={handleSaveAllResults}
               onRetry={handleRetry}
             />
           </View>
@@ -441,6 +461,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  previewList: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    gap: 12,
   },
 });
 
