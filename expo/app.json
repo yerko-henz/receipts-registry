@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "RAZ Supabase Expo Template",
-    "slug": "supabase-expo-template",
+    "name": "Receipts Register",
+    "slug": "receipts-register",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.razikus.supabase-expo-template"
+      "bundleIdentifier": "com.yerkohenz.receiptsregister"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,13 +21,14 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.razikus.supabaseexpotemplate"
+      "package": "com.yerkohenz.receiptsregister"
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "@react-native-google-signin/google-signin",
       "expo-router",
       [
         "expo-splash-screen",

@@ -10,6 +10,7 @@ import * as WebBrowser from 'expo-web-browser'
 import { CheckCircle, Globe } from 'lucide-react-native'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { GoogleSigninButton } from '@/components/GoogleSigninButton'
 import { Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -170,6 +171,12 @@ export default function RegisterScreen() {
             loading={loading}
             disabled={!acceptedTerms}
           />
+          <View style={styles.dividerContainer}>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dividerText, { color: colors.icon }]}>{t('common.or') || 'OR'}</Text>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          </View>
+          <GoogleSigninButton />
         </View>
 
         <View style={styles.footer}>

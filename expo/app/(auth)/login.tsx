@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router'
 import { Globe } from 'lucide-react-native'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { GoogleSigninButton } from '@/components/GoogleSigninButton'
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -114,6 +115,12 @@ export default function LoginScreen() {
             onPress={handleLogin}
             loading={loading}
           />
+          <View style={styles.dividerContainer}>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dividerText, { color: colors.icon }]}>{t('common.or') || 'OR'}</Text>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          </View>
+          <GoogleSigninButton />
         </View>
 
         <View style={styles.footer}>

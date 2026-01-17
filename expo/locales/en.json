@@ -11,6 +11,7 @@
     "signIn": "Sign in",
     "signUp": "Sign up",
     "loading": "Loading...",
+    "continueWithGoogle": "Continue with Google",
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
     "verifyEmail": "Verify your email",

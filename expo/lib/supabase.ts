@@ -3,8 +3,14 @@ import { createClient } from '@supabase/supabase-js'
 import 'react-native-url-polyfill/auto'
 import { Database } from '../services/database.types'
 
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
+
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
+
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+})
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
