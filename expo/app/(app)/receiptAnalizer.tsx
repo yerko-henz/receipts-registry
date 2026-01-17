@@ -10,6 +10,7 @@ import { ReceiptAnalyzer } from '@/components/receiptAnalizer/ReceiptAnalyzer';
 import { ReceiptData, AnalysisState } from '@/components/receiptAnalizer/types';
 import { analyzeReceipt } from '@/services/processReceipt';
 import { createReceipt, createReceipts } from '@/services/receipts';
+import { isIntegrityAcceptable } from '@/services/receiptIntegrity';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -62,16 +63,42 @@ const App: React.FC = () => {
     setAnalysis({ isLoading: true, error: null, results: [] });
 
     try {
-      const results = await Promise.all(assets.map(async (asset) => {
-        let base64 = asset.base64;
-        if (!base64) {
-          base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
-        }
+      const getBase64 = async (asset: ImagePicker.ImagePickerAsset) => {
+        if (asset.base64) return asset.base64;
+        return await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
+      };
+
+      // Initial analysis
+      const initialResults = await Promise.all(assets.map(async (asset) => {
+        const base64 = await getBase64(asset);
         if (!base64) throw new Error('Could not read image data');
-        return await analyzeReceipt(base64);
+        const data = await analyzeReceipt(base64);
+        return { asset, data };
       }));
 
-      setAnalysis({ isLoading: false, error: null, results });
+      // Identify receipts needing retry
+      const resultsWithRetry = await Promise.all(initialResults.map(async ({ asset, data }) => {
+        if (data.integrityScore !== undefined && !isIntegrityAcceptable(data.integrityScore)) {
+          console.log(`[Retry] Low integrity (${data.integrityScore}) for ${data.merchantName}. Retrying...`);
+          try {
+            const base64 = await getBase64(asset);
+            const retriedData = await analyzeReceipt(base64);
+            
+            // If retry improved the score, use it; otherwise stay with the best we got
+            if ((retriedData.integrityScore || 0) > (data.integrityScore || 0)) {
+              console.log(`[Retry] Success! Improved integrity from ${data.integrityScore} to ${retriedData.integrityScore}`);
+              return retriedData;
+            }
+            return data;
+          } catch (retryErr) {
+            console.error(`[Retry] Failed for ${data.merchantName}:`, retryErr);
+            return data;
+          }
+        }
+        return data;
+      }));
+
+      setAnalysis({ isLoading: false, error: null, results: resultsWithRetry });
     } catch (err: any) {
       console.error(err);
       setAnalysis({ isLoading: false, error: err.message || "An error occurred during analysis", results: [] });
