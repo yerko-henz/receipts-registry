@@ -21,11 +21,9 @@ const App: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [analysis, setAnalysis] = useState<AnalysisState>({
-    isLoading: false,
-    error: null,
-    results: [],
+    items: [],
   });
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  // const [previewUrls, setPreviewUrls] = useState<string[]>([]); // Removed
   const [lastAssets, setLastAssets] = useState<ImagePicker.ImagePickerAsset[]>([]);
 
   const pickImage = async () => {
@@ -59,50 +57,70 @@ const App: React.FC = () => {
   };
 
   const processImages = async (assets: ImagePicker.ImagePickerAsset[]) => {
-    setPreviewUrls(assets.map(a => a.uri));
-    setAnalysis({ isLoading: true, error: null, results: [] });
+    // Initialize items with processing status
+    const newItems = assets.map(asset => ({
+      id: Math.random().toString(36).substring(7),
+      uri: asset.uri,
+      status: 'processing' as const,
+    }));
 
-    try {
-      const getBase64 = async (asset: ImagePicker.ImagePickerAsset) => {
-        if (asset.base64) return asset.base64;
-        return await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
-      };
+    setAnalysis({ items: newItems });
 
-      // Initial analysis
-      const initialResults = await Promise.all(assets.map(async (asset) => {
-        const base64 = await getBase64(asset);
+    // Process each image concurrently
+    assets.forEach(async (asset, index) => {
+      const itemId = newItems[index].id;
+
+      try {
+        let base64 = asset.base64;
+        if (!base64) {
+          base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
+        }
+        
         if (!base64) throw new Error('Could not read image data');
-        const data = await analyzeReceipt(base64);
-        return { asset, data };
-      }));
+        
+        // Initial analysis
+        let data = await analyzeReceipt(base64);
 
-      // Identify receipts needing retry
-      const resultsWithRetry = await Promise.all(initialResults.map(async ({ asset, data }) => {
+        // Check integrity and retry if needed
         if (data.integrityScore !== undefined && !isIntegrityAcceptable(data.integrityScore)) {
           console.log(`[Retry] Low integrity (${data.integrityScore}) for ${data.merchantName}. Retrying...`);
           try {
-            const base64 = await getBase64(asset);
-            const retriedData = await analyzeReceipt(base64);
-            
-            // If retry improved the score, use it; otherwise stay with the best we got
-            if ((retriedData.integrityScore || 0) > (data.integrityScore || 0)) {
-              console.log(`[Retry] Success! Improved integrity from ${data.integrityScore} to ${retriedData.integrityScore}`);
-              return retriedData;
-            }
-            return data;
+             // For retry, we need to read base64 again just to be safe or reuse? 
+             // reusing local variable base64 is fine.
+             const retriedData = await analyzeReceipt(base64);
+             
+             if ((retriedData.integrityScore || 0) > (data.integrityScore || 0)) {
+               console.log(`[Retry] Success! Improved integrity from ${data.integrityScore} to ${retriedData.integrityScore}`);
+               data = retriedData;
+             }
           } catch (retryErr) {
-            console.error(`[Retry] Failed for ${data.merchantName}:`, retryErr);
-            return data;
+             console.error(`[Retry] Failed for ${data.merchantName}:`, retryErr);
           }
         }
-        return data;
-      }));
 
-      setAnalysis({ isLoading: false, error: null, results: resultsWithRetry });
-    } catch (err: any) {
-      console.error(err);
-      setAnalysis({ isLoading: false, error: err.message || "An error occurred during analysis", results: [] });
-    }
+        // Update item to completed
+        setAnalysis(prev => ({
+          ...prev,
+          items: prev.items.map(item => 
+            item.id === itemId 
+              ? { ...item, status: 'completed', data } 
+              : item
+          )
+        }));
+
+      } catch (err: any) {
+        console.error(`Failed to process item ${itemId}:`, err);
+        // Update item to error
+        setAnalysis(prev => ({
+          ...prev,
+          items: prev.items.map(item => 
+            item.id === itemId 
+              ? { ...item, status: 'error', error: err.message || 'Analysis failed' } 
+              : item
+          )
+        }));
+      }
+    });
   };
 
   const handleSaveReceipt = async (data: ReceiptData) => {
@@ -128,13 +146,16 @@ const App: React.FC = () => {
       });
 
       // Remove the specifically saved item from the list
+      // Update the specific item to remove it (or mark saved?)
+      // User requested "stop showing the images at the top", so we might just keep the completed accordion.
+      // But typically "save" implies it's handled. 
+      // The original code filtered it out. Let's keep filtering it out for now so the list shrinks.
       setAnalysis(prev => {
-        const newResults = prev.results.filter(r => r !== data);
-        if (newResults.length === 0) {
-          // If no more results, reset everything
+        const newItems = prev.items.filter(item => item.data !== data);
+        if (newItems.length === 0) {
           setTimeout(resetScanner, 500);
         }
-        return { ...prev, results: newResults };
+        return { ...prev, items: newItems };
       });
 
       Alert.alert('Success', `${data.merchantName} receipt saved successfully!`);
@@ -146,10 +167,12 @@ const App: React.FC = () => {
   };
 
   const handleSaveAllResults = async () => {
-    if (analysis.results.length === 0) return;
+    const completedItems = analysis.items.filter(i => i.status === 'completed' && i.data);
+    if (completedItems.length === 0) return;
 
     try {
-      await createReceipts(analysis.results);
+      const resultsToSave = completedItems.map(i => i.data!);
+      await createReceipts(resultsToSave);
       
       Alert.alert("Success", "All receipts have been saved successfully.");
       resetScanner();
@@ -160,8 +183,7 @@ const App: React.FC = () => {
   };
 
   const resetScanner = () => {
-    setAnalysis({ isLoading: false, error: null, results: [] });
-    setPreviewUrls([]);
+    setAnalysis({ items: [] });
     setLastAssets([]);
   };
 
@@ -187,7 +209,7 @@ const App: React.FC = () => {
             </View>
             <Text style={[styles.headerTitle, { color: colors.text }]}>ReceiptScan AI</Text>
           </View>
-          {previewUrls.length > 0 && (
+          {(analysis.items.length > 0) && (
             <TouchableOpacity onPress={resetScanner} style={styles.newScanButton}>
               <RefreshCw size={14} color="#4f46e5" />
               <Text style={styles.newScanText}>Scan New</Text>
@@ -197,7 +219,7 @@ const App: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {previewUrls.length === 0 ? (
+        {analysis.items.length === 0 ? (
           <View style={styles.landingContainer}>
             <View style={styles.heroTextContainer}>
               <Text style={[styles.heroTitle, { color: colors.text }]}>Digitize your receipts in seconds</Text>
@@ -237,32 +259,8 @@ const App: React.FC = () => {
           </View>
         ) : (
           <View style={styles.resultsContainer}>
-            {/* Image Preview List */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.previewList}>
-              {previewUrls.map((url, idx) => (
-                <View key={idx} style={[styles.imagePreviewContainer, { backgroundColor: colors.card, borderColor: colors.border, marginRight: previewUrls.length > 1 ? 12 : 0, width: previewUrls.length > 1 ? 280 : '100%' }]}>
-                  <Image 
-                    source={{ uri: url }} 
-                    style={[styles.previewImage, { backgroundColor: colors.background }]}
-                    contentFit="contain"
-                  />
-                  {analysis.isLoading && (
-                    <View style={styles.loadingOverlay}>
-                      <Text style={styles.analyzingText}>Analyzing...</Text>
-                    </View>
-                  )}
-                  <View style={styles.previewFooter}>
-                    <Text style={styles.previewFooterText}>RECEIPT {idx + 1}</Text>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-
-            {/* Results */}
             <ReceiptAnalyzer 
-              isLoading={analysis.isLoading} 
-              error={analysis.error} 
-              results={analysis.results}
+              items={analysis.items}
               onSave={handleSaveReceipt}
               onSaveAll={handleSaveAllResults}
               onRetry={handleRetry}

@@ -17,10 +17,16 @@ export interface ReceiptData {
   integrityScore?: number;
 }
 
+export interface ProcessedReceipt {
+  id: string;
+  uri: string;
+  status: 'processing' | 'completed' | 'error';
+  data?: ReceiptData;
+  error?: string;
+}
+
 export interface AnalysisState {
-  isLoading: boolean;
-  error: string | null;
-  results: ReceiptData[]; // Changed from 'data: ReceiptData | null'
+  items: ProcessedReceipt[];
   onSave?: (data: ReceiptData) => Promise<void>;
   onSaveAll?: () => Promise<void>;
   onRetry?: () => void;

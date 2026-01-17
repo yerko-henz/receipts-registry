@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager, TouchableOpacity, Alert } from 'react-native';
-import { AnalysisState, ReceiptData } from './types';
+import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager, TouchableOpacity, Alert, Image } from 'react-native';
+import { AnalysisState, ReceiptData, ProcessedReceipt } from './types';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/components/ThemeProvider';
@@ -79,63 +79,87 @@ const ResultItem: React.FC<{
   );
 };
 
-export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, results, onSave, onSaveAll, onRetry }) => {
+const ProcessingItem: React.FC<{
+  item: ProcessedReceipt;
+  themeColors: any;
+  activeTheme: 'light' | 'dark';
+}> = ({ item, themeColors, activeTheme }) => {
+  const [progress, setProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    // Simulate progress
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev < 90) return prev + Math.random() * 10;
+        return prev;
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <View style={[
+      styles.resultContainer,
+      { backgroundColor: themeColors.card, borderColor: themeColors.border, padding: 16 }
+    ]}>
+      <View style={styles.merchantRow}>
+        <View style={{ gap: 4 }}>
+           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+             <Image source={{ uri: item.uri }} style={{ width: 40, height: 40, borderRadius: 4 }} />
+             <View>
+               <Text style={[styles.merchantName, { color: themeColors.text, fontSize: 16 }]}>
+                 {item.status === 'error' ? 'Analysis Failed' : 'Analyzing Receipt...'}
+               </Text>
+               <Text style={[styles.dateText, { color: themeColors.icon }]}>
+                 {item.status === 'error' ? 'Please try again' : `ID: ${item.id}`}
+               </Text>
+             </View>
+           </View>
+        </View>
+        
+        {item.status === 'error' ? (
+             <View style={[styles.verifiedBadge, { backgroundColor: '#fee2e2' }]}>
+                <Text style={[styles.verifiedText, { color: '#ef4444' }]}>Error</Text>
+            </View>
+        ) : null}
+      </View>
+
+      {item.status === 'processing' && (
+        <View style={{ marginTop: 12, height: 4, backgroundColor: themeColors.border, borderRadius: 2, overflow: 'hidden' }}>
+          <View style={{ width: `${progress}%`, height: '100%', backgroundColor: themeColors.tint }} />
+        </View>
+      )}
+
+      {item.error && (
+        <Text style={{ marginTop: 8, color: '#ef4444', fontSize: 14 }}>
+          {item.error}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ items, onSave, onSaveAll, onRetry }) => {
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
   
-  const [simulatedProgress, setSimulatedProgress] = React.useState(0);
-  const [retryCountdown, setRetryCountdown] = React.useState(0);
   const [isSavingAll, setIsSavingAll] = React.useState(false);
 
-  // Simulated progress during loading
-  React.useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isLoading) {
-      setSimulatedProgress(0);
-      interval = setInterval(() => {
-        setSimulatedProgress(prev => {
-          if (prev < 30) return prev + 5;
-          if (prev < 70) return prev + 2;
-          if (prev < 95) return prev + 0.5;
-          return prev;
-        });
-      }, 500);
-    } else {
-      setSimulatedProgress(100);
-    }
-    return () => clearInterval(interval);
-  }, [isLoading]);
-
-  // Retry countdown logic
-  React.useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
-    if (error) {
-      setRetryCountdown(10);
-      timer = setInterval(() => {
-        setRetryCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      setRetryCountdown(0);
-    }
-    return () => clearInterval(timer);
-  }, [error]);
+  const completedCount = items.filter(i => i.status === 'completed').length;
+  const processingCount = items.filter(i => i.status === 'processing').length;
 
   const handleSaveAll = async () => {
-    if (results.length > 0 && !isSavingAll) {
+    const completedItems = items.filter(i => i.status === 'completed' && i.data);
+    
+    if (completedItems.length > 0 && !isSavingAll) {
       setIsSavingAll(true);
       try {
         if (onSaveAll) {
           await onSaveAll();
         } else if (onSave) {
-          for (const result of results) {
-            await onSave(result);
+          for (const item of completedItems) {
+            if (item.data) await onSave(item.data);
           }
         }
       } finally {
@@ -144,32 +168,18 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, res
     }
   };
 
-  if (error) {
-    return (
-      <AnalysisError 
-        error={error} 
-        retryCountdown={retryCountdown} 
-        onRetry={onRetry} 
-      />
-    );
-  }
-
-  if (isLoading) {
-    return <AnalysisLoading progress={simulatedProgress} />;
-  }
-
-  if (results.length === 0) return null;
+  if (items.length === 0) return null;
 
   return (
     <View style={styles.container}>
       <View style={styles.resultsHeader}>
         <View style={styles.headerTitleRow}>
             <Text style={[styles.resultsTitle, { color: themeColors.text }]}>
-            {results.length} Receipt{results.length > 1 ? 's' : ''} Analyzed
+            {completedCount} / {items.length} Completed
             </Text>
         </View>
 
-        {results.length > 1 && (
+        {completedCount > 1 && (
             <View style={styles.batchActions}>
                 <TouchableOpacity style={[styles.batchButtonSecondary, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
                     <Download size={16} color={themeColors.tint} />
@@ -192,15 +202,24 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ isLoading, error, res
       </View>
 
       <View style={styles.resultsList}>
-        {results.map((data, index) => (
-          <ResultItem 
-            key={index} 
-            data={data} 
-            onSave={onSave} 
-            themeColors={themeColors}
-            activeTheme={activeTheme as 'light' | 'dark'}
-            initiallyExpanded={results.length === 1}
-          />
+        {items.map((item) => (
+          item.status === 'completed' && item.data ? (
+            <ResultItem 
+              key={item.id} 
+              data={item.data} 
+              onSave={onSave} 
+              themeColors={themeColors}
+              activeTheme={activeTheme as 'light' | 'dark'}
+              initiallyExpanded={completedCount === 1}
+            />
+          ) : (
+            <ProcessingItem
+              key={item.id}
+              item={item}
+              themeColors={themeColors}
+              activeTheme={activeTheme as 'light' | 'dark'}
+            />
+          )
         ))}
       </View>
     </View>
@@ -274,5 +293,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
+  },
+  merchantRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+  merchantName: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  dateText: {
+    fontSize: 12,
+  },
+  verifiedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#dcfce7',
+  },
+  verifiedText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#166534',
   },
 });
