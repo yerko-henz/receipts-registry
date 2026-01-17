@@ -1,11 +1,11 @@
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { supabase } from '@/lib/supabase'
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin'
+import { GoogleSignin, statusCodes, isNativeModuleAvailable } from '@/lib/google-signin'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export function GoogleSigninButton() {
   const { t } = useTranslation()
@@ -17,7 +17,20 @@ export function GoogleSigninButton() {
   const handleGoogleSignin = async () => {
     try {
       setLoading(true)
+
+      // Check if native module is available
+      if (!isNativeModuleAvailable || !GoogleSignin) {
+        console.warn('Google Sign-In native module is missing or not available')
+        Alert.alert(
+          'Google Sign-In Unavailable',
+          'This feature requires a development build with native modules. Please use a different login method for now.'
+        )
+        setLoading(false)
+        return
+      }
+
       await GoogleSignin.hasPlayServices()
+
       const userInfo = await GoogleSignin.signIn()
       
       if (userInfo.data?.idToken) {
@@ -40,10 +53,11 @@ export function GoogleSigninButton() {
       } else if (error.code === statusCodes.IN_PROGRESS) {
         // operation (e.g. sign in) is in progress already
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        // play services not available or outdated
+        Alert.alert('Play Services Unavailable', 'Google Play Services is not available on this device.')
       } else {
         // some other error happened
         console.error(error)
+        Alert.alert('Sign-In Error', error.message || 'An unexpected error occurred during Google Sign-In')
       }
     } finally {
       setLoading(false)
