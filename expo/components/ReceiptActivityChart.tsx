@@ -23,12 +23,14 @@ export default function ReceiptActivityChart({ receipts }: Props) {
   });
 
   const data = useMemo(() => {
-    // Reference Date: Jan 18, 2026
-    const REF_DATE_STR = '2026-01-18';
+    // Dynamic Reference Date: Today
+    // We adjust to noon to ensure date math is safe from timezone shifts
+    const now = new Date();
+    const REF_DATE_STR = now.toISOString().split('T')[0];
     
     // Generate last 7 days keys (YYYY-MM-DD)
     const last7Days: string[] = [];
-    const refDate = new Date(REF_DATE_STR + 'T12:00:00'); // Avoid timezone edge cases
+    const refDate = new Date(REF_DATE_STR + 'T12:00:00'); 
     
     for (let i = 6; i >= 0; i--) {
       const d = new Date(refDate);
@@ -44,9 +46,18 @@ export default function ReceiptActivityChart({ receipts }: Props) {
 
     // Aggregate receipts
     receipts.forEach(r => {
-      const rawDate = r.transaction_date || (r as any).date || (r as any).created_at;
+      // User requested to use created_at (upload date) instead of transaction_date
+      const rawDate = (r as any).created_at || r.transaction_date;
       if (rawDate) {
-        const dateKey = rawDate.split('T')[0];
+        // Safe extraction of date part
+        let dateKey = '';
+        if (rawDate.includes('T')) {
+           dateKey = rawDate.split('T')[0];
+        } else {
+           // Assume YYYY-MM-DD format if no T
+           dateKey = rawDate;
+        }
+
         if (counts[dateKey] !== undefined) {
           counts[dateKey] += 1;
         }

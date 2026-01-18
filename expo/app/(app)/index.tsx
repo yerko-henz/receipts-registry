@@ -5,7 +5,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { supabase } from '@/lib/supabase'
 import { getReceiptsByUserId, Receipt } from '@/services/receipts'
 import { Calendar, User } from 'lucide-react-native'
-import { useEffect, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -17,10 +18,16 @@ export default function HomeScreen() {
   const [user, setUser] = useState<any>(null)
   const [receipts, setReceipts] = useState<Receipt[]>([])
 
+  // Initial user fetch
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
-      
+    })
+  }, [])
+
+  // Refetch receipts when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
       if (user?.id) {
         getReceiptsByUserId(user.id)
           .then((data) => {
@@ -31,8 +38,8 @@ export default function HomeScreen() {
             console.error('[Home] Failed to fetch receipts:', err)
           })
       }
-    })
-  }, [])
+    }, [user?.id])
+  )
 
   const getDaysSinceRegistration = () => {
     if (!user?.created_at) return 0
