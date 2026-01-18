@@ -1,8 +1,9 @@
 import { Card } from '@/components/ui/card'
+import ReceiptActivityChart from '@/components/ReceiptActivityChart'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { supabase } from '@/lib/supabase'
-import { getReceiptsByUserId } from '@/services/receipts'
+import { getReceiptsByUserId, Receipt } from '@/services/receipts'
 import { Calendar, User } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +15,7 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
   const [user, setUser] = useState<any>(null)
+  const [receipts, setReceipts] = useState<Receipt[]>([])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -21,9 +23,9 @@ export default function HomeScreen() {
       
       if (user?.id) {
         getReceiptsByUserId(user.id)
-          .then((receipts) => {
-            console.log(`[Home] Fetched ${receipts?.length} receipts for user ${user.id}`)
-            // console.log(JSON.stringify(receipts, null, 2))
+          .then((data) => {
+            console.log(`[Home] Fetched ${data?.length} receipts for user ${user.id}`)
+            setReceipts(data || [])
           })
           .catch((err) => {
             console.error('[Home] Failed to fetch receipts:', err)
@@ -57,6 +59,10 @@ export default function HomeScreen() {
             </Text>
           </View>
         </Card>
+
+        <View style={{ marginBottom: 24, marginTop: 24 }}>
+          <ReceiptActivityChart receipts={receipts} />
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
