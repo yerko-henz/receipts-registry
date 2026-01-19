@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, Modal, Pressable, Animated } from 'react-native';
 // @ts-ignore - victory-native types might be tricky or missing in this setup
 import { CartesianChart, Bar } from 'victory-native';
@@ -22,7 +22,8 @@ export default function ReceiptActivityChart({ receipts }: Props) {
     fontWeight: "normal",
   });
 
-  const data = useMemo(() => {
+  // Compute final data from receipts
+  const finalData = useMemo(() => {
     // Dynamic Reference Date: Today
     // We adjust to noon to ensure date math is safe from timezone shifts
     const now = new Date();
@@ -73,17 +74,73 @@ export default function ReceiptActivityChart({ receipts }: Props) {
     }));
   }, [receipts]);
 
-  // Determine max value for Y axis domain
-  const maxCount = Math.max(...data.map(d => d.count));
-  const totalReceipts = data.reduce((sum, d) => sum + d.count, 0);
+  // State for animated chart data
+  const [chartData, setChartData] = useState(() => 
+     // Start at 0
+     finalData.map(d => ({ ...d, count: 0 }))
+  );
+  
+  const hasAnimated = React.useRef(false);
+
+  useEffect(() => {
+    const totalCount = finalData.reduce((sum, d) => sum + d.count, 0);
+
+    // If we've already animated once, just update the data directly without the "grow" effect.
+    // This prevents re-animation when switching tabs or refetching valid data.
+    if (hasAnimated.current) {
+        setChartData(finalData);
+        return;
+    }
+
+    // optimizing: If there's no data to show, just set it and wait.
+    // Don't burn the "hasAnimated" flag on an empty chart (initial load).
+    if (totalCount === 0) {
+       setChartData(finalData);
+       return;
+    }
+
+    // If we have data and haven't animated yet, Trigger the animation!
+    hasAnimated.current = true;
+
+    let startTime: number | null = null;
+    let animationFrameId: number;
+    const DURATION = 800; // Increased duration for smoother settle
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / DURATION, 1);
+      
+      // Easing: Exponential Ease Out (Aggressive start, soft finish)
+      // 1 - 2^(-10t)
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+
+      setChartData(
+        finalData.map(d => ({
+          ...d,
+          count: d.count * ease
+        }))
+      );
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [finalData]);
+
+  // Determine max value for Y axis domain from FINAL data
+  const maxCount = Math.max(...finalData.map(d => d.count));
+  const totalReceipts = finalData.reduce((sum, d) => sum + d.count, 0);
   
   // Create ticks:
-  // If maxCount is small (e.g. 3), we want 0, 1, 2, 3 (4 ticks).
-  // If maxCount is 0, we want 0, 1 (2 ticks).
-  // If maxCount is large, we cap at ~6 ticks (e.g. 0, 20, 40, 60, 80, 100).
   const yTickCount = maxCount <= 5 ? (maxCount > 0 ? maxCount + 1 : 2) : 6;
 
-  // State for chart interaction
+  // State for Chart Interaction
   const [chartWidth, setChartWidth] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -137,18 +194,14 @@ export default function ReceiptActivityChart({ receipts }: Props) {
   };
 
   const handleChartPress = (x: number) => {
-    console.log(`[ChartPress] Tap at x=${x}, width=${chartWidth}`);
     if (chartWidth === 0) return;
     
     // Account for domainPadding (20px left)
     const padding = 20;
     const chartContentWidth = chartWidth - (padding * 2);
     
-    // We allow some tolerance for taps slightly outside the "perfect" content area
-    // because touch targets near edges are often imprecise.
     let adjustedX = x - padding;
 
-    // Clamp values if they are within a reasonable margin (20px)
     if (adjustedX < 0 && adjustedX > -20) adjustedX = 0;
     if (adjustedX > chartContentWidth && adjustedX < chartContentWidth + 20) adjustedX = chartContentWidth - 1;
 
@@ -156,13 +209,11 @@ export default function ReceiptActivityChart({ receipts }: Props) {
         return;
     }
 
-    // Calculate index (7 days)
     const slotWidth = chartContentWidth / 7;
-    // Clamp index to 0-6 to prevent any off-by-one errors at the exact pixel edge
     const index = Math.min(Math.max(Math.floor(adjustedX / slotWidth), 0), 6);
 
-    if (index >= 0 && index < data.length) {
-      const item = data[index];
+    if (index >= 0 && index < finalData.length) {
+      const item = finalData[index];
       setSelectedDate(item.dateKey);
       openModal();
     }
@@ -183,9 +234,10 @@ export default function ReceiptActivityChart({ receipts }: Props) {
           }}
         >
           <CartesianChart
-            data={data}
+            data={chartData}
             xKey="label"
             yKeys={["count"]}
+            domain={{ y: [0, maxCount > 0 ? maxCount : 1] }} 
             domainPadding={{ left: 20, right: 20, top: 10, bottom: 0 }}
             axisOptions={{
               font,
@@ -197,26 +249,27 @@ export default function ReceiptActivityChart({ receipts }: Props) {
             }}
           >
             {({ points, chartBounds }) => {
-              const todayPoints = points.count.filter((_, index) => data[index]?.isToday);
-              const otherPoints = points.count.filter((_, index) => !data[index]?.isToday);
+              // We render ALL bars in the secondary style (background layer)
+              // Then render the "Today" bar on top in the primary style.
+              const todayPoints = points.count.filter((_, index) => finalData[index]?.isToday);
 
               return (
                 <>
                   <Bar
-                    points={otherPoints}
-                    chartBounds={chartBounds}
-                    color={themeColors.icon}
-                    roundedCorners={{ topLeft: 6, topRight: 6 }}
-                    barWidth={24}
-                    opacity={0.5}
-                  />
+                     points={points.count}
+                     chartBounds={chartBounds}
+                     color={themeColors.icon}
+                     roundedCorners={{ topLeft: 6, topRight: 6 }}
+                     barWidth={24}
+                     opacity={0.5}
+                   />
                   <Bar
-                    points={todayPoints}
-                    chartBounds={chartBounds}
-                    color={themeColors.tint}
-                    roundedCorners={{ topLeft: 6, topRight: 6 }}
-                    barWidth={24}
-                  />
+                     points={todayPoints}
+                     chartBounds={chartBounds}
+                     color={themeColors.tint}
+                     roundedCorners={{ topLeft: 6, topRight: 6 }}
+                     barWidth={24}
+                   />
                 </>
               );
             }}
