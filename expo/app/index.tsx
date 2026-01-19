@@ -19,12 +19,12 @@ export default function Index() {
       if (session) {
         router.replace('/(app)')
       } else {
-        router.replace('/(auth)/login')
+        router.replace('/(auth)/welcome')
       }
     } catch (error) {
       console.error('Check auth error:', error)
       // If we can't get the session, default to login to avoid getting stuck
-      router.replace('/(auth)/login')
+      router.replace('/(auth)/welcome')
     }
   }
 

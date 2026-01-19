@@ -14,9 +14,13 @@ import * as SplashScreen from 'expo-splash-screen'
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native'
+import { Colors } from '@/constants/theme'
+
 function RootLayoutContent() {
   const router = useRouter()
   const { activeTheme } = useTheme()
+  const colors = Colors[activeTheme === 'dark' ? 'dark' : 'light']
   
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
@@ -99,14 +103,19 @@ function RootLayoutContent() {
   }
 
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
+    <NavThemeProvider value={activeTheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack 
+        screenOptions={{ 
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background }
+        }}
+      >
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(app)" />
       </Stack>
       <StatusBar style={activeTheme === 'dark' ? 'light' : 'dark'} />
-    </>
+    </NavThemeProvider>
   )
 }
 
