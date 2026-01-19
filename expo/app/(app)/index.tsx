@@ -41,6 +41,16 @@ export default function HomeScreen() {
     }, [user?.id])
   )
 
+  const receiptsThisWeek = receipts.filter(r => {
+    const rawDate = (r as any).created_at || r.transaction_date;
+    if (!rawDate) return false;
+    const date = new Date(rawDate);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  }).length;
+
   const getDaysSinceRegistration = () => {
     if (!user?.created_at) return 0
     const today = new Date()
@@ -52,22 +62,19 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
+      <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
             {t('home.welcome')}, {user?.email?.split('@')[0]}! 👋
           </Text>
+          <Text style={[styles.secondaryTitle, { color: colors.text }]}>
+            {receiptsThisWeek} receipts loaded this week
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.icon }]}>
+            member for {getDaysSinceRegistration()} days in {process.env.EXPO_PUBLIC_COMPANY_NAME}
+          </Text>
         </View>
 
-        <Card>
-          <View style={styles.cardContent}>
-            <Calendar size={24} color={colors.icon} />
-            <Text style={[styles.cardText, { color: colors.text }]}>
-              {t('home.memberFor', { days: getDaysSinceRegistration() })}
-            </Text>
-          </View>
-        </Card>
-
-        <View style={{ marginBottom: 24, marginTop: 24 }}>
+        <View style={{ marginBottom: 24, marginTop: 12 }}>
           <ReceiptActivityChart receipts={receipts} />
         </View>
       </ScrollView>
@@ -83,11 +90,21 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 12,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: 'Manrope_700Bold',
+    marginBottom: 8,
+  },
+  secondaryTitle: {
+    fontSize: 20,
+    fontFamily: 'Manrope_600SemiBold',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: 'Manrope_500Medium',
   },
   cardContent: {
     flexDirection: 'row',

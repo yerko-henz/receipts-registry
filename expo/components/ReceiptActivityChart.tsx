@@ -15,7 +15,7 @@ export default function ReceiptActivityChart({ receipts }: Props) {
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
 
-  // Use a system font
+  // Use a system font for chart to ensure numbers appear (Skia limitation with Expo loaded fonts)
   const font = matchFontSkia({
     fontFamily: Platform.select({ ios: "Helvetica", android: "sans-serif", default: "sans-serif" }),
     fontSize: 12,
@@ -224,7 +224,6 @@ export default function ReceiptActivityChart({ receipts }: Props) {
       <View style={[styles.card, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: themeColors.text }]}>Weekly Activity</Text>
-          <Text style={[styles.subtitle, { color: themeColors.icon }]}>Loaded {totalReceipts} receipts this week</Text>
         </View>
         
         <View 

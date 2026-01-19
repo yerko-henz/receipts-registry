@@ -7,9 +7,28 @@ import { useEffect } from 'react'
 import { ThemeProvider, useTheme } from '@/components/ThemeProvider'
 import { View } from 'react-native'
 
+import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold } from '@expo-google-fonts/manrope'
+import * as SplashScreen from 'expo-splash-screen'
+
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
+
 function RootLayoutContent() {
   const router = useRouter()
   const { activeTheme } = useTheme()
+  
+  const [fontsLoaded] = useFonts({
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
@@ -70,6 +89,10 @@ function RootLayoutContent() {
       authSubscription.unsubscribe()
     }
   }, [])
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <>
