@@ -159,7 +159,7 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ items, onSave, onSave
           await onSaveAll();
         } else if (onSave) {
           for (const item of completedItems) {
-            if (item.data) await onSave(item.data);
+            if (item.data) await onSave({ ...item.data, imageUri: item.uri });
           }
         }
       } finally {
@@ -206,7 +206,7 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ items, onSave, onSave
           item.status === 'completed' && item.data ? (
             <ResultItem 
               key={item.id} 
-              data={item.data} 
+              data={{ ...item.data, imageUri: item.uri }}
               onSave={onSave} 
               themeColors={themeColors}
               activeTheme={activeTheme as 'light' | 'dark'}

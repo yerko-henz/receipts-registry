@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, uploadFile } from '../lib/supabase';
 import { Database } from '../lib/types';
 import { ReceiptData } from '@/components/receiptAnalizer/types';
 import { isIntegrityAcceptable } from './receiptIntegrity';
@@ -11,6 +11,7 @@ export type NewReceiptWithItems = {
   date: string;
   category: string;
   tax_amount: number;
+  image_url?: string;
   raw_ai_output: any;
   items: {
     name: string;
@@ -18,6 +19,24 @@ export type NewReceiptWithItems = {
     unitPrice: number;
     quantity: number;
   }[];
+};
+
+export const uploadReceiptImage = async (uri: string) => {
+  const user = (await supabase.auth.getUser()).data.user;
+  if (!user) throw new Error('User not authenticated');
+
+  const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+  const { data, error } = await uploadFile(user.id, filename, uri, 'image/jpeg', 'receipts');
+
+  if (error) throw error;
+  
+  // Construct public URL or path. Since the buckets are usually private or we want the path 
+  // expected by the app, we return the path relative to the bucket or full public URL.
+  // The SQL implies it just stores a text string. Storing the full public URL is usually safest for display.
+  // However, uploadFile returns Key (path).
+  // Let's get the public URL.
+  const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(data.path);
+  return publicUrlData.publicUrl;
 };
 
 export const getReceipts = async () => {
@@ -60,6 +79,18 @@ export const createReceipt = async (params: NewReceiptWithItems) => {
     }
   }
 
+  // Handle image upload if provided
+  let imageUrl = params.image_url;
+  
+  // NOTE: In single create, we expect params.image_url to be passed if it exists 
+  // (e.g. if the caller already uploaded it). 
+  // However, usually the UI passes the URI.
+  // The type NewReceiptWithItems now has image_url. 
+  // If the caller passed a local URI as image_url, we should upload it.
+  if (imageUrl && (imageUrl.startsWith('file://') || imageUrl.startsWith('content://'))) {
+      imageUrl = await uploadReceiptImage(imageUrl) || undefined;
+  }
+
   const { error } = await supabase.rpc('save_receipt_with_items', {
     p_merchant_name: params.merchant_name,
     p_total: params.total,
@@ -67,6 +98,7 @@ export const createReceipt = async (params: NewReceiptWithItems) => {
     p_date: params.date,
     p_category: params.category,
     p_tax_amount: params.tax_amount,
+    p_image_url: imageUrl,
     p_raw_ai_output: params.raw_ai_output,
     p_items: params.items,
   });
@@ -82,8 +114,27 @@ export const createReceipts = async (receipts: ReceiptData[]) => {
     }
   }
 
-  const { error } = await supabase.rpc('save_receipts_batch', {
-    p_receipts: receipts as any,
+  // Upload images for all receipts having imageUri
+  const receiptsToSave = await Promise.all(receipts.map(async (r) => {
+      let imageUrl = r.imageUri;
+      if (imageUrl && (imageUrl.startsWith('file://') || imageUrl.startsWith('content://'))) {
+          try {
+             imageUrl = await uploadReceiptImage(imageUrl) || undefined;
+          } catch (e) {
+              console.error(`Failed to upload image for receipt ${r.merchantName}:`, e);
+              // Proceed without image if upload fails? Or fail? 
+              // Let's proceed without image to avoid blocking the whole batch, but log it.
+              imageUrl = undefined;
+          }
+      }
+      return {
+          ...r,
+          imageUrl: imageUrl
+      };
+  }));
+
+  const { error } = await supabase.rpc('batch_save_receipts', {
+    p_receipts: receiptsToSave as any,
   });
 
   if (error) throw error;

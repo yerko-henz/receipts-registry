@@ -16,6 +16,7 @@ export interface ReceiptData {
   category: string;
   taxRate?: number;
   integrityScore?: number;
+  imageUri?: string;
 }
 
 export interface ProcessedReceipt {

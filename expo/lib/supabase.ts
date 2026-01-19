@@ -27,7 +27,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 })
 
-export async function uploadFile(userId: string, filename: string, uri: string, mimeType?: string) {
+export async function uploadFile(userId: string, filename: string, uri: string, mimeType?: string, bucket: string = 'files') {
   filename = filename.replace(/[^0-9a-zA-Z!\-_.*'()]/g, '_')
   filename = `${userId}/${filename}`
   
@@ -35,7 +35,7 @@ export async function uploadFile(userId: string, filename: string, uri: string, 
   const arrayBuffer = await response.arrayBuffer()
   const fileData = new Uint8Array(arrayBuffer)
   
-  return supabase.storage.from('files').upload(filename, fileData, {
+  return supabase.storage.from(bucket).upload(filename, fileData, {
     contentType: mimeType || 'application/octet-stream',
     upsert: false,
   })

@@ -30,9 +30,9 @@ const App: React.FC = () => {
   const fetchReceipts = useReceiptsStore((state) => state.fetchReceipts);
 
   // We can derive the analysis state expected by the UI from the store state
-  const [analysis, setAnalysis] = useState<AnalysisState>({
-    items: scannerItems
-  });
+  // const [analysis, setAnalysis] = useState<AnalysisState>({
+  //   items: scannerItems
+  // });
 
   const pickImage = async () => {
     try {
@@ -75,6 +75,7 @@ const App: React.FC = () => {
         date: data.date,
         category: data.category || 'Other',
         tax_amount: data.taxAmount || 0,
+        image_url: data.imageUri,
         raw_ai_output: data,
         items: data.items.map(item => {
           const quantity = item.quantity || 1;
@@ -104,7 +105,7 @@ const App: React.FC = () => {
     if (completedItems.length === 0) return;
 
     try {
-      const resultsToSave = completedItems.map(i => i.data!);
+      const resultsToSave = completedItems.map(i => ({ ...i.data!, imageUri: i.uri }));
       await createReceipts(resultsToSave);
       
       // Refresh global list
@@ -140,7 +141,7 @@ const App: React.FC = () => {
             </View>
             <Text style={[styles.headerTitle, { color: colors.text }]}>ReceiptScan AI</Text>
           </View>
-          {(analysis.items.length > 0) && (
+          {(scannerItems.length > 0) && (
             <TouchableOpacity onPress={resetScanner} style={styles.newScanButton}>
               <RefreshCw size={14} color="#4f46e5" />
               <Text style={styles.newScanText}>Scan New</Text>
@@ -150,7 +151,7 @@ const App: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {analysis.items.length === 0 ? (
+        {scannerItems.length === 0 ? (
           <View style={styles.landingContainer}>
             <View style={styles.heroTextContainer}>
               <Text style={[styles.heroTitle, { color: colors.text }]}>Digitize your receipts in seconds</Text>
@@ -191,7 +192,7 @@ const App: React.FC = () => {
         ) : (
           <View style={styles.resultsContainer}>
             <ReceiptAnalyzer 
-              items={analysis.items}
+              items={scannerItems}
               onSave={handleSaveReceipt}
               onSaveAll={handleSaveAllResults}
               onRetry={handleRetry}

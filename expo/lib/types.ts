@@ -203,12 +203,13 @@ export type Database = {
           p_date: string
           p_category: string
           p_tax_amount: number
+          p_image_url?: string | null
           p_raw_ai_output: Json
           p_items: Json
         }
         Returns: string
       }
-      save_receipts_batch: {
+      batch_save_receipts: {
         Args: {
           p_receipts: Json
         }
