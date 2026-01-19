@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Database } from './database.types';
+import { Database } from '../lib/types';
 import { ReceiptData } from '@/components/receiptAnalizer/types';
 import { isIntegrityAcceptable } from './receiptIntegrity';
 

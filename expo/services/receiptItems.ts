@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Database } from './database.types';
+import { Database } from '../lib/types';
 
 export type ReceiptItem = Database['public']['Tables']['receipt_items']['Row'];
 
@@ -13,7 +13,7 @@ export const getReceiptItems = async (receiptId: string) => {
   return data;
 };
 
-export const deleteReceiptItem = async (id: string) => {
+export const deleteReceiptItem = async (id: number) => {
   const { error } = await supabase
     .from('receipt_items')
     .delete()

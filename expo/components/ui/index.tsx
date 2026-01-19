@@ -5,7 +5,7 @@ import { ActivityIndicator, View } from 'react-native'
 
 export default function Index() {
   const router = useRouter()
-  const segments = useSegments()
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -25,7 +25,7 @@ export default function Index() {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router])
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

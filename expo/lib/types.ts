@@ -34,6 +34,129 @@ export type Database = {
   }
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+          website: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      receipt_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          quantity: number | null
+          receipt_id: string | null
+          total_price: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          quantity?: number | null
+          receipt_id?: string | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          quantity?: number | null
+          receipt_id?: string | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_items_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      receipts: {
+        Row: {
+          category: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          image_url: string | null
+          merchant_name: string | null
+          raw_ai_output: Json | null
+          tax_amount: number | null
+          total_amount: number | null
+          transaction_date: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          image_url?: string | null
+          merchant_name?: string | null
+          raw_ai_output?: Json | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          transaction_date?: string | null
+          user_id?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          image_url?: string | null
+          merchant_name?: string | null
+          raw_ai_output?: Json | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          transaction_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       todo_list: {
         Row: {
           created_at: string
@@ -72,7 +195,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      save_receipt_with_items: {
+        Args: {
+          p_merchant_name: string
+          p_total: number
+          p_currency: string
+          p_date: string
+          p_category: string
+          p_tax_amount: number
+          p_raw_ai_output: Json
+          p_items: Json
+        }
+        Returns: string
+      }
+      save_receipts_batch: {
+        Args: {
+          p_receipts: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

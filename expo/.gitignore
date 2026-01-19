@@ -43,3 +43,7 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Lint reports
+lint_output.txt
+lint_report.txt

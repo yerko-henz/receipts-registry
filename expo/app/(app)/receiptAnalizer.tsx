@@ -2,15 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
-import { Image } from 'expo-image';
-import { Camera, Upload, RefreshCw, ShoppingBag, Percent, Banknote, ScanLine } from 'lucide-react-native';
+import { Upload, RefreshCw, ShoppingBag, Percent, Banknote, ScanLine } from 'lucide-react-native';
 
 import { ReceiptAnalyzer } from '@/components/receiptAnalizer/ReceiptAnalyzer';
 import { ReceiptData, AnalysisState } from '@/components/receiptAnalizer/types';
-import { analyzeReceipt } from '@/services/processReceipt';
-import { createReceipt, createReceipts } from '@/services/receipts';
-import { isIntegrityAcceptable } from '@/services/receiptIntegrity';
+import { createReceipts } from '@/services/receipts';
 import { useScannerStore } from '@/store/useScannerStore';
 import { useReceiptsStore } from '@/store/useReceiptsStore';
 
@@ -34,11 +30,9 @@ const App: React.FC = () => {
   const fetchReceipts = useReceiptsStore((state) => state.fetchReceipts);
 
   // We can derive the analysis state expected by the UI from the store state
-  const analysis: AnalysisState = {
+  const [analysis, setAnalysis] = useState<AnalysisState>({
     items: scannerItems
-  };
-
-  const [lastAssets, setLastAssets] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  });
 
   const pickImage = async () => {
     try {
@@ -61,7 +55,7 @@ const App: React.FC = () => {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setLastAssets(result.assets);
+
         processImages(result.assets);
       }
     } catch (e) {

@@ -3,14 +3,14 @@ import { initReactI18next } from 'react-i18next'
 import * as Localization from 'expo-localization'
 import { storage } from './storage'
 
-import en from '../locales/en.json'
-import pl from '../locales/pl.json'
-import zh from '../locales/zh.json'
+const en = require('../locales/en.json')
+const pl = require('../locales/pl.json')
+const zh = require('../locales/zh.json')
 
-const deviceLanguage = Localization.locale?.split('-')[0] || 'en'
+const deviceLanguage = Localization.getLocales?.()?.[0]?.languageCode || 'en'
 
 i18n.use(initReactI18next).init({
-  compatibilityJSON: 'v3',
+  compatibilityJSON: 'v3' as any,
   resources: {
     en: { translation: en },
     pl: { translation: pl },

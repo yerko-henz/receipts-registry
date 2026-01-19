@@ -6,7 +6,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/lib/types'
 import { CheckCircle, Plus, Trash2, X } from 'lucide-react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -30,16 +30,7 @@ export default function TasksScreen() {
   const [isUrgent, setIsUrgent] = useState(false)
   const [creating, setCreating] = useState(false)
 
-  useEffect(() => {
-    loadUser()
-  }, [])
-
-  useEffect(() => {
-    if (userId) {
-      loadTasks()
-    }
-  }, [filter, userId])
-
+  // loadUser doesn't need to be stable if only called on mount
   async function loadUser() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
@@ -47,7 +38,7 @@ export default function TasksScreen() {
     }
   }
 
-  async function loadTasks() {
+  const loadTasks = useCallback(async () => {
     setLoading(true)
     setError('')
     
@@ -65,11 +56,27 @@ export default function TasksScreen() {
     if (fetchError) {
       setError(fetchError.message)
     } else {
-      setTasks(data || [])
+      setTasks((data as Task[]) || [])
     }
     
     setLoading(false)
-  }
+  }, [filter])
+
+  useEffect(() => {
+    loadUser()
+  }, [])
+
+  useEffect(() => {
+    if (userId) {
+      loadTasks()
+    }
+  }, [filter, userId, loadTasks])
+
+  useEffect(() => {
+    if (userId) {
+      loadTasks()
+    }
+  }, [filter, userId, loadTasks])
 
   async function handleCreateTask() {
     if (!newTaskTitle.trim()) return

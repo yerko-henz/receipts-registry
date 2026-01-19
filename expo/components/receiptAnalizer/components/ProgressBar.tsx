@@ -12,7 +12,7 @@ interface ProgressBarProps {
   color: string;
 }
 
-export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, color }) => {
+export const ProgressBar = ({ progress, color }: ProgressBarProps) => {
   const animatedWidth = useSharedValue(0);
 
   React.useEffect(() => {
@@ -20,7 +20,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, color }) => 
       duration: 500,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
     });
-  }, [progress]);
+  }, [progress, animatedWidth]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${animatedWidth.value}%`,

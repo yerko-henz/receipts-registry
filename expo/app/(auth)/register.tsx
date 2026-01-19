@@ -354,4 +354,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    fontWeight: '500',
+  },
 })

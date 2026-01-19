@@ -7,7 +7,7 @@ import { deleteFile, getFiles, shareFile, supabase, uploadFile } from '@/lib/sup
 import * as Clipboard from 'expo-clipboard'
 import * as DocumentPicker from 'expo-document-picker'
 import { FileIcon, Share2, Trash2 } from 'lucide-react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Alert as RNAlert, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -23,19 +23,9 @@ export default function StorageScreen() {
   const [error, setError] = useState('')
   const [userId, setUserId] = useState<string>('')
 
-  useEffect(() => {
-    loadUser()
-  }, [])
 
-  async function loadUser() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      setUserId(user.id)
-      loadFiles(user.id)
-    }
-  }
 
-  async function loadFiles(uid: string) {
+  const loadFiles = useCallback(async (uid: string) => {
     setLoading(true)
     setError('')
     
@@ -48,7 +38,19 @@ export default function StorageScreen() {
     }
     
     setLoading(false)
-  }
+  }, [])
+
+  const loadUser = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setUserId(user.id)
+      loadFiles(user.id)
+    }
+  }, [loadFiles])
+
+  useEffect(() => {
+    loadUser()
+  }, [loadUser])
 
   async function handleUpload() {
     try {

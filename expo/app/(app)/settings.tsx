@@ -39,7 +39,6 @@ export default function SettingsScreen() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
-  const [emailSent, setEmailSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -128,7 +127,7 @@ export default function SettingsScreen() {
     setError('')
     setSuccess('')
     setVerificationCode('')
-    setEmailSent(false)
+    // setEmailSent(false)
     
     // Automatically send verification email when modal opens
     await sendVerificationEmail()
@@ -148,7 +147,7 @@ export default function SettingsScreen() {
     if (sendError) {
       setError(sendError.message)
     } else {
-      setEmailSent(true)
+      // setEmailSent(true)
       setResendCooldown(60) // Start 60 second cooldown
       setSuccess(t('settings.verificationEmailSent', { defaultValue: 'Verification email sent!' }))
     }
