@@ -49,7 +49,7 @@ export default function SettingsScreen() {
   // Moved inside component to handle dynamic visibility based on state (e.g., user email status)
   const settingsConfig: SettingConfig[] = [
     { id: 'userDetails', visible: true, order: 1 },
-    { id: 'verifyEmail', visible: !user?.email_confirmed_at, order: 2 },
+    { id: 'verifyEmail', visible: !!user && !user.email_confirmed_at, order: 2 },
     { id: 'changePassword', visible: true, order: 3 },
     { id: 'mfa', visible: false, order: 4 },
     { id: 'language', visible: false, order: 5 },
