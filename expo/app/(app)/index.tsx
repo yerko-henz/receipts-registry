@@ -3,7 +3,9 @@ import ReceiptActivityChart from '@/components/ReceiptActivityChart'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { supabase } from '@/lib/supabase'
-import { getReceiptsByUserId, Receipt } from '@/services/receipts'
+// import { getReceiptsByUserId, Receipt } from '@/services/receipts' // Services now used via store
+import { useGlobalStore } from '@/store/useGlobalStore'
+import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { Calendar, User } from 'lucide-react-native'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
@@ -15,30 +17,17 @@ export default function HomeScreen() {
   const { t } = useTranslation()
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
-  const [user, setUser] = useState<any>(null)
-  const [receipts, setReceipts] = useState<Receipt[]>([])
-
-  // Initial user fetch
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
-  }, [])
+  const user = useGlobalStore((state) => state.user)
+  const receipts = useReceiptsStore((state) => state.receipts)
+  const fetchReceipts = useReceiptsStore((state) => state.fetchReceipts)
 
   // Refetch receipts when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      if (user?.id) {
-        getReceiptsByUserId(user.id)
-          .then((data) => {
-            console.log(`[Home] Fetched ${data?.length} receipts for user ${user.id}`)
-            setReceipts(data || [])
-          })
-          .catch((err) => {
-            console.error('[Home] Failed to fetch receipts:', err)
-          })
-      }
-    }, [user?.id])
+      fetchReceipts()
+        .then(() => console.log(`[Home] Fetched receipts`))
+        .catch((err) => console.error('[Home] Failed to fetch receipts:', err))
+    }, [fetchReceipts])
   )
 
   const receiptsThisWeek = receipts.filter(r => {

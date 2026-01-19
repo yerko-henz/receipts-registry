@@ -1,5 +1,6 @@
 import '@/lib/i18n'
 import { supabase } from '@/lib/supabase'
+import { useGlobalStore } from '@/store/useGlobalStore'
 import * as Linking from 'expo-linking'
 import { Stack, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
@@ -75,6 +76,9 @@ function RootLayoutContent() {
 
     // Listen for auth state changes (e.g. session expiration or manual logout)
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Sync with global store
+      useGlobalStore.getState().setSession(session);
+
       if (event === 'SIGNED_OUT') {
         router.replace('/(auth)/login')
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
