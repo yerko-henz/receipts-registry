@@ -41,6 +41,9 @@
     "privacyPolicy": "Privacy Policy",
     "mustAcceptTerms": "You must accept the Terms of Service and Privacy Policy to register"
   },
+  "common": {
+    "or": "OR"
+  },
   "home": {
     "welcome": "Welcome",
     "memberFor": "Member for {{days}} days",
@@ -125,8 +128,7 @@
     "userId": "User ID",
     "languages": {
       "english": "English",
-      "polish": "Polski",
-      "chinese": "中文 (简体)"
+      "spanish": "Español"
     }
   }
 }

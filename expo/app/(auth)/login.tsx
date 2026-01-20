@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { GoogleSigninButton } from '@/components/GoogleSigninButton'
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
 export default function LoginScreen() {
   const { t, i18n } = useTranslation()
@@ -58,11 +59,8 @@ export default function LoginScreen() {
   }
 
   const getLanguageDisplay = () => {
-    switch (i18n.language) {
-      case 'pl': return 'Polski'
-      case 'zh': return '中文'
-      default: return 'English'
-    }
+    const currentLang = SUPPORTED_LANGUAGES.find(l => l.code === i18n.language)
+    return currentLang ? t(currentLang.i18nKey) : 'English'
   }
 
   return (
@@ -155,50 +153,23 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={[
-                styles.languageOption,
-                i18n.language === 'en' && { backgroundColor: colors.tint }
-              ]}
-              onPress={() => handleChangeLanguage('en')}
-            >
-              <Text style={[
-                styles.languageOptionText,
-                { color: i18n.language === 'en' ? '#fff' : colors.text }
-              ]}>
-                {t('settings.languages.english')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.languageOption,
-                i18n.language === 'pl' && { backgroundColor: colors.tint }
-              ]}
-              onPress={() => handleChangeLanguage('pl')}
-            >
-              <Text style={[
-                styles.languageOptionText,
-                { color: i18n.language === 'pl' ? '#fff' : colors.text }
-              ]}>
-                {t('settings.languages.polish')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.languageOption,
-                i18n.language === 'zh' && { backgroundColor: colors.tint }
-              ]}
-              onPress={() => handleChangeLanguage('zh')}
-            >
-              <Text style={[
-                styles.languageOptionText,
-                { color: i18n.language === 'zh' ? '#fff' : colors.text }
-              ]}>
-                {t('settings.languages.chinese')}
-              </Text>
-            </TouchableOpacity>
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[
+                  styles.languageOption,
+                  i18n.language === lang.code && { backgroundColor: colors.tint }
+                ]}
+                onPress={() => handleChangeLanguage(lang.code)}
+              >
+                <Text style={[
+                  styles.languageOptionText,
+                  { color: i18n.language === lang.code ? '#fff' : colors.text }
+                ]}>
+                  {t(lang.i18nKey)}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </SafeAreaView>
       </Modal>
