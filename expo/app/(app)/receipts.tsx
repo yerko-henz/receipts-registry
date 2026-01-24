@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
+import { Receipt } from '@/services/receipts'
 import { format } from 'date-fns'
 import { useFocusEffect } from 'expo-router'
 import { ArrowUpRight, Calendar, Store, Tag } from 'lucide-react-native'
@@ -27,7 +28,7 @@ export default function ReceiptsScreen() {
     }, [fetchReceipts])
   )
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = ({ item }: { item: Receipt }) => (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.cardHeader}>
         <View style={styles.merchantContainer}>
@@ -41,7 +42,7 @@ export default function ReceiptsScreen() {
         </View>
         <View style={styles.amountContainer}>
           <Text style={[styles.amount, { color: colors.text }]}>
-            {item.currency} {item.total?.toFixed(2)}
+            {item.currency} {(item.total_amount ?? 0).toFixed(2)}
           </Text>
         </View>
       </View>
@@ -55,7 +56,7 @@ export default function ReceiptsScreen() {
             {item.transaction_date ? format(new Date(item.transaction_date), 'MMM d, yyyy') : 'No date'}
           </Text>
         </View>
-        {item.tax_amount > 0 && (
+        {(item.tax_amount ?? 0) > 0 && (
           <View style={styles.footerItem}>
             <Tag size={14} color={colors.icon} />
             <Text style={[styles.date, { color: colors.icon }]}>
