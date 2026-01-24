@@ -9,8 +9,9 @@
     "build:android": "npm run clean:android && npx expo run:android",
     "web": "expo start --web",
     "lint": "expo lint",
-    "clean:android": "adb kill-server && adb devices",
-    "android": "adb reverse tcp:8081 tcp:8081 && npm run clean:android && npx expo start --localhost --android",
+    "clean:android": "npm run kill:adb && adb devices",
+    "kill:adb": "taskkill /F /IM adb.exe || echo 'adb not running'",
+    "android": "npm run clean:android && npx expo start --localhost --android",
     "test": "jest"
   },
   "jest": {
@@ -31,6 +32,7 @@
     "@react-navigation/native": "^7.1.8",
     "@shopify/react-native-skia": "2.2.12",
     "@supabase/supabase-js": "^2.58.0",
+    "date-fns": "^4.1.0",
     "expo": "~54.0.10",
     "expo-clipboard": "~8.0.7",
     "expo-constants": "~18.0.9",

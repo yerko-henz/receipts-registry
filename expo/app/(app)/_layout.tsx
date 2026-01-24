@@ -30,9 +30,18 @@ export default function AppLayout() {
       },
     },
     {
+      name: 'receipts',
+      visible: true,
+      order: 2,
+      options: {
+        title: 'Receipts',
+        tabBarIcon: ({ color, size }) => <ListTodo size={size} color={color} />,
+      },
+    },
+    {
       name: 'receiptAnalizer',
       visible: true, 
-      order: 2, 
+      order: 3, 
       options: {
         title: 'Analyzer',
         tabBarIcon: ({ color, size }) => <ScanLine size={size} color={color} />,
@@ -41,7 +50,7 @@ export default function AppLayout() {
     {
       name: 'settings',
       visible: true, // Always visible
-      order: 3, 
+      order: 4, 
       options: {
         title: t('app.settings'),
         tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
@@ -50,7 +59,7 @@ export default function AppLayout() {
     {
       name: 'storage',
       visible: false, 
-      order: 4,
+      order: 5,
       options: {
         title: t('app.storage'),
         tabBarIcon: ({ color, size }) => <FolderOpen size={size} color={color} />,
@@ -59,7 +68,7 @@ export default function AppLayout() {
     {
       name: 'tasks',
       visible: false, 
-      order: 5,
+      order: 6,
       options: {
         title: t('app.tasks'),
         tabBarIcon: ({ color, size }) => <ListTodo size={size} color={color} />,
