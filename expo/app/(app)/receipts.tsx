@@ -5,7 +5,8 @@ import { format } from 'date-fns'
 import { useFocusEffect } from 'expo-router'
 import { ArrowUpRight, Calendar, Store, Tag } from 'lucide-react-native'
 import { useCallback, useState } from 'react'
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native'
+import { RefreshControl, StyleSheet, Text, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function ReceiptsScreen() {
@@ -75,7 +76,7 @@ export default function ReceiptsScreen() {
         </Text>
       </View>
 
-      <FlatList
+      <FlashList
         data={receipts}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
