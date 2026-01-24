@@ -39,25 +39,83 @@ export const uploadReceiptImage = async (uri: string) => {
   return publicUrlData.publicUrl;
 };
 
+export const signReceiptImages = async (receipts: Receipt[]) => {
+  if (receipts.length === 0) return receipts;
+
+  // 1. Extract valid paths from image_url
+  // Expecting URL like: specified_supabase_url/storage/v1/object/public/receipts/USER_ID/FILENAME
+  // OR already a path: USER_ID/FILENAME
+  const pathsToSign: { path: string; receiptIndex: number }[] = [];
+  
+  receipts.forEach((r, index) => {
+      if (!r.image_url) return;
+      
+      let path = r.image_url;
+      // If it contains the full supabase URL, try to extract relative path
+      // This regex looks for /receipts/ and takes everything after
+      const match = path.match(/\/receipts\/(.+)$/);
+      if (match && match[1]) {
+          path = match[1];
+      }
+      
+      // If it's already a relative path (doesn't start with http), usage is fine
+      // But verify it doesn't have leading slash if supabase doesn't like it.
+      // Usually storage.from('receipts').createSignedUrls expects "folder/file.ext"
+      
+      pathsToSign.push({ path, receiptIndex: index });
+  });
+
+  if (pathsToSign.length === 0) return receipts;
+
+  // 2. Batch create signed URLs (expires in 1 hour usually enough for session)
+  // supabase.storage.createSignedUrls takes array of paths
+  const { data, error } = await supabase
+      .storage
+      .from('receipts')
+      .createSignedUrls(pathsToSign.map(p => p.path), 60 * 60);
+
+  if (error || !data) {
+      console.error('Error signing URLs:', error);
+      return receipts; // Return original URLs as fallback
+  }
+
+  // 3. Map back to receipts
+  // data is array of { error: string|null, path: string, signedUrl: string }
+  // Order should match input array
+  const newReceipts = [...receipts];
+  
+  data.forEach((item, i) => {
+      if (item.signedUrl) {
+          const receiptIndex = pathsToSign[i].receiptIndex;
+          newReceipts[receiptIndex] = {
+              ...newReceipts[receiptIndex],
+              image_url: item.signedUrl
+          };
+      }
+  });
+
+  return newReceipts;
+}
+
 export const getReceipts = async () => {
   const { data, error } = await supabase
     .from('receipts')
-    .select('*')
+    .select('*, receipt_items(*)')
     .order('transaction_date', { ascending: false });
 
   if (error) throw error;
-  return data;
+  return signReceiptImages(data);
 };
 
 export const getReceiptsByUserId = async (userId: string) => {
   const { data, error } = await supabase
     .from('receipts')
-    .select('*')
+    .select('*, receipt_items(*)')
     .eq('user_id', userId)
     .order('transaction_date', { ascending: false });
 
   if (error) throw error;
-  return data;
+  return signReceiptImages(data);
 };
 
 export const getReceiptById = async (id: string) => {
@@ -68,7 +126,10 @@ export const getReceiptById = async (id: string) => {
     .single();
 
   if (error) throw error;
-  return data;
+  
+  // Sign the single receipt
+  const signed = await signReceiptImages([data]);
+  return signed[0];
 };
 
 export const createReceipt = async (params: NewReceiptWithItems) => {
