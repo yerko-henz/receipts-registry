@@ -117,26 +117,50 @@ export default function ReceiptsUnifiedScreen() {
     return filteredReceipts.reduce((sum, r) => sum + (r.total_amount ?? 0), 0)
   }, [filteredReceipts])
 
+  const itemRefs = useRef<Record<string, View | null>>({})
+  const scrollY = useRef(0)
+  const listContainerRef = useRef<View>(null)
+
   const toggleExpand = (id: string) => {
     const isExpanding = expandedId !== id
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedId(isExpanding ? id : null);
 
     if (isExpanding) {
-        // Find index to scroll to
-        const index = groupedData.findIndex(item => typeof item !== 'string' && item.id === id)
-        if (index !== -1) {
-            // Slight delay to allow layout animation to start/finish? 
-            // Often better to scroll immediately or after a small tick
-            setTimeout(() => {
-                flashListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 }) 
-                // viewPosition 0.5 means center of screen, usually friendlier
-            }, 100)
-        }
+        // Wait for layout animation to finish and new layout to settle
+        setTimeout(() => {
+            const itemRef = itemRefs.current[id];
+            
+            if (itemRef && listContainerRef.current) {
+                // Measure item position relative to the screen
+                itemRef.measure((x, y, width, height, pageX, pageY) => {
+                    // Measure list container position relative to the screen
+                    listContainerRef.current?.measure((lx, ly, lWidth, lHeight, listPageX, listPageY) => {
+                        // Calculate where the item is relative to the list's viewport top
+                        const relativeY = pageY - listPageY;
+                        
+                        // Current scroll position
+                        const currentScroll = scrollY.current;
+                        
+                        // We want to scroll so that relativeY becomes 0 (top of list)
+                        // New Offset = Current Offset + Relative Position
+                        const targetOffset = currentScroll + relativeY;
+                        
+                        flashListRef.current?.scrollToOffset({ offset: targetOffset, animated: true });
+                    })
+                })
+            } else {
+                 // Fallback if refs aren't ready (e.g. item scrolled out of view immediately?)
+                 const index = groupedData.findIndex(item => typeof item !== 'string' && item.id === id)
+                 if (index !== -1) {
+                    flashListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 }) 
+                 }
+            }
+        }, 350) // slightly larger than animation duration (300ms)
     }
   }
 
-  const renderItem = ({ item }: { item: string | Receipt }) => {
+  const renderItem = useCallback(({ item }: { item: string | Receipt }) => {
     if (typeof item === 'string') {
       return (
         <View style={styles.sectionHeader}>
@@ -147,13 +171,13 @@ export default function ReceiptsUnifiedScreen() {
 
     const isExpanded = expandedId === item.id;
     const hasImage = !!item.image_url;
-    // Debug image URL
-    if (hasImage) {
-        console.log(`[Receipt ${item.id}] Image URL:`, item.image_url)
-    }
 
     return (
       <Pressable 
+        ref={(el) => {
+            // @ts-ignore
+            itemRefs.current[item.id] = el
+        }}
         style={[
             styles.card, 
             { backgroundColor: colors.card, borderColor: isExpanded ? colors.tint : colors.border }
@@ -263,7 +287,7 @@ export default function ReceiptsUnifiedScreen() {
       </Pressable>
     )
 
-  }
+  }, [expandedId, colors, dateMode])
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -348,30 +372,37 @@ export default function ReceiptsUnifiedScreen() {
           </View>
       </View>
 
-      <FlashList
-        ref={flashListRef}
-        data={groupedData}
-        renderItem={renderItem}
-        getItemType={(item) => (typeof item === 'string' ? 'header' : 'row')}
-        estimatedItemSize={85}
-        keyExtractor={(item, index) => (typeof item === 'string' ? `header-${item}` : item.id)}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tint} />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <View style={[styles.emptyIconContainer, { backgroundColor: colors.card }]}>
-              <Store size={48} color={colors.icon} />
-            </View>
-            <Text style={[styles.emptyText, { color: colors.text }]}>No receipts found</Text>
-            <Text style={[styles.emptySubtext, { color: colors.icon }]}>
-               Try adjusting your filters
-            </Text>
-          </View>
-        }
-      />
+      <View style={{ flex: 1 }} ref={listContainerRef} collapsable={false}>
+          <FlashList
+            ref={flashListRef}
+            data={groupedData}
+            extraData={expandedId}
+            renderItem={renderItem}
+            getItemType={(item) => (typeof item === 'string' ? 'header' : 'row')}
+            estimatedItemSize={85}
+            keyExtractor={(item, index) => (typeof item === 'string' ? `header-${item}` : item.id)}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            onScroll={(e) => {
+                scrollY.current = e.nativeEvent.contentOffset.y;
+            }}
+            scrollEventThrottle={16}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tint} />
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <View style={[styles.emptyIconContainer, { backgroundColor: colors.card }]}>
+                  <Store size={48} color={colors.icon} />
+                </View>
+                <Text style={[styles.emptyText, { color: colors.text }]}>No receipts found</Text>
+                <Text style={[styles.emptySubtext, { color: colors.icon }]}>
+                   Try adjusting your filters
+                </Text>
+              </View>
+            }
+          />
+      </View>
 
        {/* Global Modal for Image View */}
        <Modal visible={!!modalReceipt} transparent={true} animationType="fade" onRequestClose={() => setModalReceipt(null)}>
