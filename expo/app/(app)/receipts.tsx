@@ -5,7 +5,7 @@ import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { Receipt } from '@/services/receipts'
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { ArrowUpRight, Calendar, Store, Tag, TrendingUp, Filter, Search, ChevronDown, ChevronUp, Image as ImageIcon, Trash2 } from 'lucide-react-native'
+import { Store, Search, ChevronDown, ChevronUp, Image as ImageIcon, Trash2, TrendingUp } from 'lucide-react-native'
 import { useCallback, useMemo, useState, useRef } from 'react'
 import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
@@ -36,7 +36,7 @@ export default function ReceiptsUnifiedScreen() {
   // Date Mode State
   const [dateMode, setDateMode] = useState<'transaction' | 'created'>('transaction')
 
-  const flashListRef = useRef<FlashList<string | Receipt>>(null)
+  const flashListRef = useRef<any>(null)
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -381,6 +381,7 @@ export default function ReceiptsUnifiedScreen() {
             extraData={expandedId}
             renderItem={renderItem}
             getItemType={(item) => (typeof item === 'string' ? 'header' : 'row')}
+            // @ts-ignore
             estimatedItemSize={85}
             keyExtractor={(item, index) => (typeof item === 'string' ? `header-${item}` : item.id)}
             contentContainerStyle={styles.listContent}
@@ -606,21 +607,7 @@ const styles = StyleSheet.create({
       fontSize: 14,
       fontFamily: 'Manrope_600SemiBold',
   },
-  imageBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 10,
-      marginTop: 16,
-      borderWidth: 1,
-      borderRadius: 10,
-      borderStyle: 'dashed',
-      gap: 8,
-  },
-  imageBtnText: {
-      fontSize: 13,
-      fontFamily: 'Manrope_600SemiBold',
-  },
+
   actionButton: {
       marginTop: 12,
       paddingVertical: 10,
@@ -758,3 +745,4 @@ const styles = StyleSheet.create({
       fontFamily: 'Manrope_700Bold',
   },
 })
+

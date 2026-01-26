@@ -18,6 +18,7 @@ export const Colors = {
     tabIconSelected: tintColorLight,
     card: '#ffffff',
     border: '#e2e8f0',
+    notification: '#ef4444',
   },
   dark: {
     text: '#ECEDEE',
@@ -28,6 +29,7 @@ export const Colors = {
     tabIconSelected: tintColorDark,
     card: '#292929',
     border: '#3E3E3E',
+    notification: '#ff453a',
   },
 
 };

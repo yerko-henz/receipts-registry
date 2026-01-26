@@ -136,7 +136,7 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
 
   // Determine max value for Y axis domain from FINAL data
   const maxCount = Math.max(...finalData.map(d => d.count));
-  const totalReceipts = finalData.reduce((sum, d) => sum + d.count, 0);
+
   
   // Create ticks:
   // For small day ranges (e.g. 2 days), we want exactly 'days' number of ticks.
@@ -172,7 +172,6 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
           Animated.timing(fadeAnim, {
               toValue: 1,
               duration: 200,
-              useNativeDriver: true,
               useNativeDriver: true,
           }),
           Animated.timing(slideAnim, {

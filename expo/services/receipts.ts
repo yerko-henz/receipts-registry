@@ -3,7 +3,9 @@ import { Database } from '../lib/types';
 import { ReceiptData } from '@/components/receiptAnalizer/types';
 import { isIntegrityAcceptable } from './receiptIntegrity';
 
-export type Receipt = Database['public']['Tables']['receipts']['Row'];
+export type Receipt = Database['public']['Tables']['receipts']['Row'] & {
+  receipt_items?: Database['public']['Tables']['receipt_items']['Row'][];
+};
 export type NewReceiptWithItems = {
   merchant_name: string;
   total: number;
