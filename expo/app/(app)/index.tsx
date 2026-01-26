@@ -4,10 +4,12 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useGlobalStore } from '@/store/useGlobalStore'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { useFocusEffect } from 'expo-router'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+
+const DAYS_TO_SHOW = 3;
 
 export default function HomeScreen() {
   const { t } = useTranslation()
@@ -26,14 +28,14 @@ export default function HomeScreen() {
     }, [fetchReceipts])
   )
 
-  const receiptsThisWeek = receipts.filter(r => {
+  const receiptsLoadedCount = receipts.filter(r => {
     const rawDate = (r as any).created_at || r.transaction_date;
     if (!rawDate) return false;
     const date = new Date(rawDate);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= 7;
+    return diffDays <= (DAYS_TO_SHOW - 1); // 0 to 6 is 7 days
   }).length;
 
   const getDaysSinceRegistration = () => {
@@ -52,7 +54,7 @@ export default function HomeScreen() {
             {t('home.welcome')}, {user?.email?.split('@')[0]}! 👋
           </Text>
           <Text style={[styles.secondaryTitle, { color: colors.text }]}>
-            {receiptsThisWeek} receipts loaded this week
+            {receiptsLoadedCount} receipts in the last {DAYS_TO_SHOW} days
           </Text>
           <Text style={[styles.subtitle, { color: colors.icon }]}>
             member for {getDaysSinceRegistration()} days in {process.env.EXPO_PUBLIC_COMPANY_NAME}
@@ -60,7 +62,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={{ marginBottom: 24, marginTop: 12 }}>
-          <ReceiptActivityChart receipts={receipts} />
+          <ReceiptActivityChart receipts={receipts} days={DAYS_TO_SHOW} />
         </View>
       </ScrollView>
     </SafeAreaView>

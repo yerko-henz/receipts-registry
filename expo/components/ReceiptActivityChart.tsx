@@ -9,9 +9,10 @@ import { Colors } from '@/constants/theme';
 
 interface Props {
   receipts: Receipt[];
+  days?: number;
 }
 
-export default function ReceiptActivityChart({ receipts }: Props) {
+export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
 
@@ -24,40 +25,38 @@ export default function ReceiptActivityChart({ receipts }: Props) {
 
   // Compute final data from receipts
   const finalData = useMemo(() => {
-    // Dynamic Reference Date: Today
-    // We adjust to noon to ensure date math is safe from timezone shifts
+    // Helper to get local YYYY-MM-DD
+    const toLocalISOString = (date: Date) => {
+        const offset = date.getTimezoneOffset() * 60000;
+        const localDate = new Date(date.getTime() - offset);
+        return localDate.toISOString().split('T')[0];
+    };
+
     const now = new Date();
-    const REF_DATE_STR = now.toISOString().split('T')[0];
+    const REF_DATE_STR = toLocalISOString(now);
     
-    // Generate last 7 days keys (YYYY-MM-DD)
-    const last7Days: string[] = [];
-    const refDate = new Date(REF_DATE_STR + 'T12:00:00'); 
+    // Generate last N days keys (YYYY-MM-DD) in Local Time
+    const lastNDays: string[] = [];
     
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(refDate);
-      d.setDate(d.getDate() - i);
-      last7Days.push(d.toISOString().split('T')[0]);
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(now.getDate() - i);
+      lastNDays.push(toLocalISOString(d));
     }
 
     // Initialize counts
     const counts: Record<string, number> = {};
-    last7Days.forEach(day => {
+    lastNDays.forEach(day => {
       counts[day] = 0;
     });
 
     // Aggregate receipts
     receipts.forEach(r => {
-      // User requested to use created_at (upload date) instead of transaction_date
       const rawDate = (r as any).created_at || r.transaction_date;
       if (rawDate) {
-        // Safe extraction of date part
-        let dateKey = '';
-        if (rawDate.includes('T')) {
-           dateKey = rawDate.split('T')[0];
-        } else {
-           // Assume YYYY-MM-DD format if no T
-           dateKey = rawDate;
-        }
+        // Parse receipt date (UTC) to Date object, then convert to Local YYYY-MM-DD
+        const rDate = new Date(rawDate);
+        const dateKey = toLocalISOString(rDate);
 
         if (counts[dateKey] !== undefined) {
           counts[dateKey] += 1;
@@ -66,13 +65,13 @@ export default function ReceiptActivityChart({ receipts }: Props) {
     });
 
     // Format for chart
-    return last7Days.map(dateKey => ({
+    return lastNDays.map(dateKey => ({
       label: getDayName(dateKey),
       count: counts[dateKey],
       isToday: dateKey === REF_DATE_STR,
       dateKey,
     }));
-  }, [receipts]);
+  }, [receipts, days]);
 
   // State for animated chart data
   const [chartData, setChartData] = useState(() => 
@@ -138,7 +137,13 @@ export default function ReceiptActivityChart({ receipts }: Props) {
   const totalReceipts = finalData.reduce((sum, d) => sum + d.count, 0);
   
   // Create ticks:
+  // For small day ranges (e.g. 2 days), we want exactly 'days' number of ticks.
+  // For larger ranges, we cap it at 7 to avoid crowding.
+  const xTickCount = days; 
   const yTickCount = maxCount <= 5 ? (maxCount > 0 ? maxCount + 1 : 2) : 6;
+
+  // Dynamic padding based on number of bars to keep them looking good
+  const horizontalPadding = days <= 3 ? 60 : 20;
 
   // State for Chart Interaction
   const [chartWidth, setChartWidth] = useState(0);
@@ -165,6 +170,7 @@ export default function ReceiptActivityChart({ receipts }: Props) {
           Animated.timing(fadeAnim, {
               toValue: 1,
               duration: 200,
+              useNativeDriver: true,
               useNativeDriver: true,
           }),
           Animated.timing(slideAnim, {
@@ -196,11 +202,10 @@ export default function ReceiptActivityChart({ receipts }: Props) {
   const handleChartPress = (x: number) => {
     if (chartWidth === 0) return;
     
-    // Account for domainPadding (20px left)
-    const padding = 20;
-    const chartContentWidth = chartWidth - (padding * 2);
+    // Account for domainPadding
+    const chartContentWidth = chartWidth - (horizontalPadding * 2);
     
-    let adjustedX = x - padding;
+    let adjustedX = x - horizontalPadding;
 
     if (adjustedX < 0 && adjustedX > -20) adjustedX = 0;
     if (adjustedX > chartContentWidth && adjustedX < chartContentWidth + 20) adjustedX = chartContentWidth - 1;
@@ -209,8 +214,8 @@ export default function ReceiptActivityChart({ receipts }: Props) {
         return;
     }
 
-    const slotWidth = chartContentWidth / 7;
-    const index = Math.min(Math.max(Math.floor(adjustedX / slotWidth), 0), 6);
+    const slotWidth = chartContentWidth / finalData.length;
+    const index = Math.min(Math.max(Math.floor(adjustedX / slotWidth), 0), finalData.length - 1);
 
     if (index >= 0 && index < finalData.length) {
       const item = finalData[index];
@@ -237,10 +242,10 @@ export default function ReceiptActivityChart({ receipts }: Props) {
             xKey="label"
             yKeys={["count"]}
             domain={{ y: [0, maxCount > 0 ? maxCount : 1] }} 
-            domainPadding={{ left: 20, right: 20, top: 10, bottom: 0 }}
+            domainPadding={{ left: horizontalPadding, right: horizontalPadding, top: 10, bottom: 0 }}
             axisOptions={{
               font,
-              tickCount: { x: 7, y: yTickCount } as any,
+              tickCount: { x: xTickCount, y: yTickCount } as any,
               lineColor: themeColors.border,
               labelColor: themeColors.icon,
               formatXLabel: (val) => val,
