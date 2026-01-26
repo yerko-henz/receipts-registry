@@ -1,15 +1,21 @@
 import { Colors } from '@/constants/theme'
+import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from '@/constants/categories'
 import { useTranslation } from 'react-i18next'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { Receipt } from '@/services/receipts'
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Store, Search, ChevronDown, ChevronUp, Image as ImageIcon, Trash2, TrendingUp } from 'lucide-react-native'
-import { useCallback, useMemo, useState, useRef } from 'react'
-import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert } from 'react-native'
+import { Store, Search, ChevronDown, ChevronUp, Image as ImageIcon, Trash2, TrendingUp, Eye } from 'lucide-react-native'
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
+import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert, ActivityIndicator } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated'
+
+const AnimatedImage = Animated.createAnimatedComponent(Image)
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -32,6 +38,75 @@ export default function ReceiptsUnifiedScreen() {
   
   // Modal State
   const [modalReceipt, setModalReceipt] = useState<Receipt | null>(null)
+  const [imageLoading, setImageLoading] = useState(true)
+
+  const scale = useSharedValue(1)
+  const savedScale = useSharedValue(1)
+  const translateX = useSharedValue(0)
+  const translateY = useSharedValue(0)
+  const savedTranslateX = useSharedValue(0)
+  const savedTranslateY = useSharedValue(0)
+
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((e) => {
+      scale.value = savedScale.value * e.scale
+    })
+    .onEnd(() => {
+      if (scale.value < 1.1) {
+        scale.value = withSpring(1)
+        savedScale.value = 1
+        translateX.value = withSpring(0)
+        savedTranslateX.value = 0
+        translateY.value = withSpring(0)
+        savedTranslateY.value = 0
+      } else {
+        savedScale.value = scale.value
+      }
+    })
+
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+        if (scale.value > 1) {
+            translateX.value = savedTranslateX.value + e.translationX
+            translateY.value = savedTranslateY.value + e.translationY
+        }
+    })
+    .onEnd(() => {
+        savedTranslateX.value = translateX.value
+        savedTranslateY.value = translateY.value
+    })
+
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture)
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { scale: scale.value }
+      ],
+    }
+  })
+  
+  const closeButtonStyle = useAnimatedStyle(() => {
+      return {
+          opacity: withTiming(scale.value > 1.1 ? 0 : 1),
+          // Using pointerEvents to disable clicks when hidden would be ideal but opacity 0 is often sufficient visually. 
+          // However, to be safe, we can move it out of the way or relies on user not clicking invisible button.
+      }
+  })
+
+  useEffect(() => {
+    if (modalReceipt) {
+      setImageLoading(true)
+      scale.value = 1
+      savedScale.value = 1
+      translateX.value = 0
+      translateY.value = 0
+      savedTranslateX.value = 0
+      savedTranslateY.value = 0
+    }
+  }, [modalReceipt])
   
   // Date Mode State
   const [dateMode, setDateMode] = useState<'transaction' | 'created'>('transaction')
@@ -188,15 +263,12 @@ export default function ReceiptsUnifiedScreen() {
       >
         <View style={styles.cardMain}>
             <View style={styles.cardLeft}>
-                {hasImage ? (
-                  <Pressable onPress={() => setModalReceipt(item)} style={[styles.thumbnailContainer, { backgroundColor: colors.background }]}>
-                    <Image source={{ uri: item.image_url! }} style={styles.thumbnail} />
-                  </Pressable>
-                ) : (
-                  <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
-                      <Store size={20} color={colors.icon} />
-                  </View>
-                )}
+                <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
+                    {(() => {
+                        const CategoryIcon = item.category ? CATEGORY_ICONS[item.category] || DEFAULT_CATEGORY_ICON : DEFAULT_CATEGORY_ICON
+                        return <CategoryIcon size={20} color={colors.icon} />
+                    })()}
+                </View>
                 
                 <View style={styles.textContainer}>
                     <Text style={[styles.merchantName, { color: colors.text }]}>
@@ -264,18 +336,17 @@ export default function ReceiptsUnifiedScreen() {
                     </View>
                 )}
 
-                 {/* Actions */}
                  <View style={styles.actionsRow}>
                     {hasImage && (
                         <Pressable 
-                            style={[styles.imageBtn, { borderColor: colors.border }]}
+                            style={[styles.actionBtn, { borderColor: colors.border }]}
                             onPress={() => setModalReceipt(item)}
                         >
-                            <ImageIcon size={14} color={colors.text} />
-                            <Text style={[styles.imageBtnText, { color: colors.text }]}>{t('receipts.viewImage')}</Text>
+                            <Eye size={14} color={colors.text} />
+                            <Text style={[styles.actionBtnText, { color: colors.text }]}>{t('receipts.viewReceipt', { defaultValue: 'View Receipt' })}</Text>
                         </Pressable>
                     )}
-                    
+
                     <Pressable 
                         style={[styles.deleteBtn, { backgroundColor: colors.notification + '15' }]}
                         onPress={() => handleDelete(item.id)}
@@ -411,12 +482,28 @@ export default function ReceiptsUnifiedScreen() {
        <Modal visible={!!modalReceipt} transparent={true} animationType="fade" onRequestClose={() => setModalReceipt(null)}>
             <View style={styles.modalContainer}>
                 <Pressable style={styles.modalCloseArea} onPress={() => setModalReceipt(null)} />
-                <View style={styles.modalContent}>
-                    {modalReceipt?.image_url && <Image source={{ uri: modalReceipt.image_url }} style={styles.fullImage} resizeMode="contain" />}
-                    <Pressable style={styles.closeButton} onPress={() => setModalReceipt(null)}>
-                        <Text style={styles.closeButtonText}>{t('settings.close')}</Text>
-                    </Pressable>
-                </View>
+                <GestureHandlerRootView style={{ width: '100%', height: '100%' }}>
+                    <View style={styles.modalContent}>
+                        {imageLoading && (
+                            <View style={styles.loaderContainer}>
+                                <ActivityIndicator size="large" color={colors.tint} />
+                            </View>
+                        )}
+                        {modalReceipt?.image_url && (
+                            <GestureDetector gesture={composedGesture}>
+                                <AnimatedImage 
+                                    source={{ uri: modalReceipt.image_url }} 
+                                    style={[styles.fullImage, animatedStyle]} 
+                                    resizeMode="contain" 
+                                    onLoadEnd={() => setImageLoading(false)}
+                                />
+                            </GestureDetector>
+                        )}
+                        <AnimatedPressable style={[styles.closeButton, closeButtonStyle]} onPress={() => setModalReceipt(null)}>
+                            <Text style={styles.closeButtonText}>{t('settings.close')}</Text>
+                        </AnimatedPressable>
+                    </View>
+                </GestureHandlerRootView>
             </View>
         </Modal>
 
@@ -712,37 +799,40 @@ const styles = StyleSheet.create({
       fontFamily: 'Manrope_700Bold',
   },
   actionsRow: {
-      flexDirection: 'row',
+      flexDirection: 'column',
       gap: 12,
       marginTop: 20,
   },
-  imageBtn: {
-      flex: 1,
+  actionBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 10,
+      paddingVertical: 12,
       borderWidth: 1,
       borderRadius: 10,
-      borderStyle: 'dashed',
       gap: 8,
   },
-  imageBtnText: {
-      fontSize: 13,
+  actionBtnText: {
+      fontSize: 14,
       fontFamily: 'Manrope_600SemiBold',
   },
   deleteBtn: {
-      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 10,
+      paddingVertical: 12,
       borderRadius: 10,
       gap: 8,
   },
   deleteBtnText: {
       fontSize: 13,
       fontFamily: 'Manrope_700Bold',
+  },
+  loaderContainer: {
+      ...StyleSheet.absoluteFillObject,
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1,
   },
 })
 

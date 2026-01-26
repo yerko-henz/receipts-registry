@@ -150,6 +150,7 @@
     "noReceipts": "No se encontraron recibos",
     "adjustFilters": "Intenta ajustar tus filtros",
     "viewImage": "Ver Imagen",
+    "viewReceipt": "Ver Recibo",
     "delete": "Eliminar",
     "deleteTitle": "Eliminar Recibo",
     "deleteConfirm": "¿Estás seguro de que quieres eliminar este recibo? Esto no se puede deshacer.",

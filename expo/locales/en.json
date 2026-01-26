@@ -150,6 +150,7 @@
     "noReceipts": "No receipts found",
     "adjustFilters": "Try adjusting your filters",
     "viewImage": "View Image",
+    "viewReceipt": "View Receipt",
     "delete": "Delete",
     "deleteTitle": "Delete Receipt",
     "deleteConfirm": "Are you sure you want to delete this receipt? This cannot be undone.",
