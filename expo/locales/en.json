@@ -47,13 +47,17 @@
   "home": {
     "welcome": "Welcome",
     "memberFor": "Member for {{days}} days",
-    "email": "Email"
+    "email": "Email",
+    "recentReceipts": "{{count}} receipts in the last {{days}} days",
+    "memberSince": "member for {{days}} days in {{company}}"
   },
   "app": {
     "home": "Home",
     "storage": "Storage",
     "tasks": "Tasks",
     "settings": "Settings",
+    "receipts": "Receipts",
+    "scanner": "Scanner",
     "welcome": "Welcome",
     "loading": "Loading..."
   },
@@ -130,5 +134,58 @@
       "english": "English",
       "spanish": "Español"
     }
+  },
+  "chart": {
+    "weeklyActivity": "Weekly Activity",
+    "noReceiptsOnDay": "No receipts uploaded on this day.",
+    "unknownMerchant": "Unknown Merchant",
+    "uncategorized": "Uncategorized"
+  },
+  "receipts": {
+    "title": "Receipts",
+    "itemsFound": "items found",
+    "searchPlaceholder": "Search merchant...",
+    "receiptDate": "Receipt Date",
+    "uploadDate": "Upload Date",
+    "noReceipts": "No receipts found",
+    "adjustFilters": "Try adjusting your filters",
+    "viewImage": "View Image",
+    "delete": "Delete",
+    "deleteTitle": "Delete Receipt",
+    "deleteConfirm": "Are you sure you want to delete this receipt? This cannot be undone.",
+    "deleteError": "Failed to delete receipt",
+    "uploaded": "Uploaded",
+    "tax": "Tax",
+    "items": "Items",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "filters": {
+      "All": "All",
+      "Food": "Food",
+      "Transport": "Transport",
+      "Utilities": "Utilities",
+      "Entertainment": "Entertainment",
+      "Shopping": "Shopping"
+    }
+  },
+  "scanner": {
+    "title": "ReceiptScan AI",
+    "scanNew": "Scan New",
+    "heroTitle": "Digitize your receipts in seconds",
+    "heroSubtitle": "Our advanced AI extracts items, prices, and taxes with high precision. Just upload images to get started.",
+    "uploadTitle": "Upload Receipts",
+    "uploadSubtitle": "Tap to select from Gallery",
+    "bulkProcessing": "Bulk Processing",
+    "bulkProcessingDesc": "Upload multiple receipts at once and process them in parallel.",
+    "taxDetection": "Tax & VAT Detection",
+    "taxDetectionDesc": "Automatically calculates tax components for each receipt.",
+    "historyTracking": "History Tracking",
+    "historyTrackingDesc": "Save records directly to your account for easy tracking.",
+    "permissionDenied": "Permission Denied",
+    "permissionMessage": "Sorry, we need camera roll permissions to make this work!",
+    "pickImageError": "Failed to pick image",
+    "saveSuccess": "receipt saved successfully!",
+    "saveAllSuccess": "All receipts have been saved successfully.",
+    "saveError": "Failed to save receipt"
   }
 }

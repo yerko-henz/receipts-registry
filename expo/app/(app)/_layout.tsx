@@ -34,7 +34,7 @@ export default function AppLayout() {
       visible: true,
       order: 2,
       options: {
-        title: 'Receipts',
+        title: t('app.receipts'),
         tabBarIcon: ({ color, size }) => <ListTodo size={size} color={color} />,
       },
     },
@@ -43,7 +43,7 @@ export default function AppLayout() {
       visible: true, 
       order: 4, 
       options: {
-        title: 'Analyzer',
+        title: t('app.scanner'),
         tabBarIcon: ({ color, size }) => <ScanLine size={size} color={color} />,
       },
     },

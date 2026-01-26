@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/components/ThemeProvider';
 
 const App: React.FC = () => {
+  const { t } = useTranslation();
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -40,7 +42,7 @@ const App: React.FC = () => {
       if (Platform.OS !== 'web') {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+          Alert.alert(t('scanner.permissionDenied'), t('scanner.permissionMessage'));
           return;
         }
       }
@@ -60,7 +62,7 @@ const App: React.FC = () => {
       }
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'Failed to pick image');
+      Alert.alert('Error', t('scanner.pickImageError'));
     }
   };
 
@@ -89,14 +91,14 @@ const App: React.FC = () => {
         }),
       });
 
-      Alert.alert('Success', `${data.merchantName} receipt saved successfully!`);
-      Alert.alert('Success', `${data.merchantName} receipt saved successfully!`);
+      Alert.alert('Success', `${data.merchantName} ${t('scanner.saveSuccess')}`);
+
       // Since transient state is now in store, we might want to remove this specific item?
       // For now, no action needed on scanner store as per user preference to keep it manually controllable.
       
     } catch (err: any) {
       console.error(err);
-      Alert.alert('Error', 'Failed to save receipt: ' + (err.message || 'Unknown error'));
+      Alert.alert('Error', t('scanner.saveError') + ': ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -111,7 +113,7 @@ const App: React.FC = () => {
       // Refresh global list
       await fetchReceipts();
 
-      Alert.alert("Success", "All receipts have been saved successfully.");
+      Alert.alert("Success", t('scanner.saveAllSuccess'));
       resetScanner();
     } catch (err: any) {
       console.error(err);
@@ -139,12 +141,12 @@ const App: React.FC = () => {
             <View style={styles.logoIcon}>
               <ScanLine color="#ffffff" size={20} />
             </View>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>ReceiptScan AI</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>{t('scanner.title')}</Text>
           </View>
           {(scannerItems.length > 0) && (
             <TouchableOpacity onPress={resetScanner} style={styles.newScanButton}>
               <RefreshCw size={14} color="#4f46e5" />
-              <Text style={styles.newScanText}>Scan New</Text>
+              <Text style={styles.newScanText}>{t('scanner.scanNew')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -154,9 +156,9 @@ const App: React.FC = () => {
         {scannerItems.length === 0 ? (
           <View style={styles.landingContainer}>
             <View style={styles.heroTextContainer}>
-              <Text style={[styles.heroTitle, { color: colors.text }]}>Digitize your receipts in seconds</Text>
+              <Text style={[styles.heroTitle, { color: colors.text }]}>{t('scanner.heroTitle')}</Text>
               <Text style={[styles.heroSubtitle, { color: colors.icon }]}>
-                Our advanced AI extracts items, prices, and taxes with high precision. Just upload images to get started.
+                {t('scanner.heroSubtitle')}
               </Text>
             </View>
             
@@ -164,30 +166,11 @@ const App: React.FC = () => {
               <View style={styles.uploadIconCircle}>
                 <Upload color="#4f46e5" size={40} />
               </View>
-              <Text style={[styles.uploadTitle, { color: colors.text }]}>Upload Receipts</Text>
-              <Text style={styles.uploadSubtitle}>Tap to select from Gallery</Text>
+              <Text style={[styles.uploadTitle, { color: colors.text }]}>{t('scanner.uploadTitle')}</Text>
+              <Text style={styles.uploadSubtitle}>{t('scanner.uploadSubtitle')}</Text>
             </TouchableOpacity>
 
-            <View style={styles.featuresGrid}>
-              <FeatureCard 
-                icon={<ShoppingBag color={colors.text} size={24} />}
-                title="Bulk Processing" 
-                desc="Upload multiple receipts at once and process them in parallel."
-                colors={colors}
-              />
-              <FeatureCard 
-                icon={<Percent color={colors.text} size={24} />}
-                title="Tax & VAT Detection" 
-                desc="Automatically calculates tax components for each receipt."
-                colors={colors}
-              />
-              <FeatureCard 
-                icon={<Banknote color={colors.text} size={24} />}
-                title="History Tracking" 
-                desc="Save records directly to your account for easy tracking."
-                colors={colors}
-              />
-            </View>
+
           </View>
         ) : (
           <View style={styles.resultsContainer}>
@@ -420,13 +403,5 @@ const styles = StyleSheet.create({
 
 export default App;
 
-const FeatureCard = ({ icon, title, desc, colors }: { icon: React.ReactNode, title: string, desc: string, colors: any }) => (
-  <View style={[styles.featureCard, { borderColor: colors.border }]}>
-    <View style={styles.featureIconContainer}>
-      {icon}
-    </View>
-    <Text style={[styles.featureTitle, { color: colors.text }]}>{title}</Text>
-    <Text style={[styles.featureDesc, { color: colors.icon }]}>{desc}</Text>
-  </View>
-);
+
 

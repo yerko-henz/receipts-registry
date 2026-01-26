@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, Platform, Modal, Pressable, Animated } from 'react-native';
 // @ts-ignore - victory-native types might be tricky or missing in this setup
 import { CartesianChart, Bar } from 'victory-native';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
+  const { t, i18n } = useTranslation();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
 
@@ -66,12 +68,12 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
 
     // Format for chart
     return lastNDays.map(dateKey => ({
-      label: getDayName(dateKey),
+      label: getDayName(dateKey, i18n.language),
       count: counts[dateKey],
       isToday: dateKey === REF_DATE_STR,
       dateKey,
     }));
-  }, [receipts, days]);
+  }, [receipts, days, i18n.language]);
 
   // State for animated chart data
   const [chartData, setChartData] = useState(() => 
@@ -228,7 +230,7 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
     <>
       <View style={[styles.card, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: themeColors.text }]}>Weekly Activity</Text>
+          <Text style={[styles.title, { color: themeColors.text }]}>{t('chart.weeklyActivity')}</Text>
         </View>
         
         <View 
@@ -322,15 +324,17 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
 
                 {selectedReceipts.length === 0 ? (
                     <Text style={{ color: themeColors.icon, textAlign: 'center', marginVertical: 20 }}>
-                        No receipts uploaded on this day.
+                        {t('chart.noReceiptsOnDay')}
                     </Text>
                 ) : (
                     <View>
                         {selectedReceipts.map((r, i) => (
                             <View key={r.id || i} style={[styles.receiptItem, { borderBottomColor: themeColors.border }]}>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.receiptMerchant, { color: themeColors.text }]}>{r.merchant_name || 'Unknown Merchant'}</Text>
-                                    <Text style={[styles.receiptCategory, { color: themeColors.icon }]}>{r.category || 'Uncategorized'}</Text>
+                                    <Text style={[styles.receiptMerchant, { color: themeColors.text }]}>{r.merchant_name || t('chart.unknownMerchant')}</Text>
+                                    <Text style={[styles.receiptCategory, { color: themeColors.icon }]}>
+                                        {r.category ? t(`receipts.filters.${r.category}`, { defaultValue: r.category }) : t('chart.uncategorized')}
+                                    </Text>
                                 </View>
                                 <Text style={[styles.receiptAmount, { color: themeColors.text }]}>
                                     {r.currency} {r.total_amount?.toFixed(2)}
@@ -347,10 +351,10 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
 }
 
 // Helper to get formatted day name
-const getDayName = (dateStr: string) => {
-  const date = new Date(dateStr + 'T12:00:00'); // Noon to avoid timezone shifts
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  return days[date.getDay()];
+const getDayName = (dateStr: string, language: string = 'en') => {
+  const date = new Date(dateStr + 'T12:00:00');
+  // Simple localized day name
+  return date.toLocaleDateString(language, { weekday: 'short' });
 };
 
 const styles = StyleSheet.create({

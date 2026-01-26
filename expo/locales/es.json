@@ -47,13 +47,17 @@
   "home": {
     "welcome": "Bienvenido",
     "memberFor": "Miembro por {{days}} días",
-    "email": "Correo"
+    "email": "Correo",
+    "recentReceipts": "{{count}} recibos en los últimos {{days}} días",
+    "memberSince": "miembro por {{days}} días en {{company}}"
   },
   "app": {
     "home": "Inicio",
     "storage": "Archivos",
     "tasks": "Tareas",
     "settings": "Ajustes",
+    "receipts": "Recibos",
+    "scanner": "Escáner",
     "welcome": "Bienvenido",
     "loading": "Cargando..."
   },
@@ -130,5 +134,58 @@
       "english": "English",
       "spanish": "Español"
     }
+  },
+  "chart": {
+    "weeklyActivity": "Actividad Semanal",
+    "noReceiptsOnDay": "No hay recibos subidos en este día.",
+    "unknownMerchant": "Comercio Desconocido",
+    "uncategorized": "Sin Categoría"
+  },
+  "receipts": {
+    "title": "Recibos",
+    "itemsFound": "artículos encontrados",
+    "searchPlaceholder": "Buscar comercio...",
+    "receiptDate": "Fecha del Recibo",
+    "uploadDate": "Fecha de Subida",
+    "noReceipts": "No se encontraron recibos",
+    "adjustFilters": "Intenta ajustar tus filtros",
+    "viewImage": "Ver Imagen",
+    "delete": "Eliminar",
+    "deleteTitle": "Eliminar Recibo",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este recibo? Esto no se puede deshacer.",
+    "deleteError": "Error al eliminar el recibo",
+    "uploaded": "Subido",
+    "tax": "Impuesto",
+    "items": "Artículos",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "filters": {
+      "All": "Todos",
+      "Food": "Comida",
+      "Transport": "Transporte",
+      "Utilities": "Servicios",
+      "Entertainment": "Entretenimiento",
+      "Shopping": "Compras"
+    }
+  },
+  "scanner": {
+    "title": "Escáner IA",
+    "scanNew": "Escanear Nuevo",
+    "heroTitle": "Digitaliza tus recibos en segundos",
+    "heroSubtitle": "Nuestra IA avanzada extrae artículos, precios e impuestos con alta precisión. Solo sube imágenes para comenzar.",
+    "uploadTitle": "Subir Recibos",
+    "uploadSubtitle": "Toca para seleccionar de la Galería",
+    "bulkProcessing": "Procesamiento Masivo",
+    "bulkProcessingDesc": "Sube múltiples recibos a la vez y procésalos en paralelo.",
+    "taxDetection": "Detección de Impuestos",
+    "taxDetectionDesc": "Calcula automáticamente los componentes de impuestos para cada recibo.",
+    "historyTracking": "Seguimiento de Historial",
+    "historyTrackingDesc": "Guarda registros directamente en tu cuenta para un fácil seguimiento.",
+    "permissionDenied": "Permiso Denegado",
+    "permissionMessage": "¡Lo siento, necesitamos permisos de la galería para que esto funcione!",
+    "pickImageError": "Error al seleccionar imagen",
+    "saveSuccess": "¡recibo guardado exitosamente!",
+    "saveAllSuccess": "Todos los recibos han sido guardados exitosamente.",
+    "saveError": "Error al guardar el recibo"
   }
 }

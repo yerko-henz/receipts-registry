@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const DAYS_TO_SHOW = 3;
+const DAYS_TO_SHOW = 7;
 
 export default function HomeScreen() {
   const { t } = useTranslation()
@@ -54,10 +54,10 @@ export default function HomeScreen() {
             {t('home.welcome')}, {user?.email?.split('@')[0]}! 👋
           </Text>
           <Text style={[styles.secondaryTitle, { color: colors.text }]}>
-            {receiptsLoadedCount} receipts in the last {DAYS_TO_SHOW} days
+            {t('home.recentReceipts', { count: receiptsLoadedCount, days: DAYS_TO_SHOW })}
           </Text>
           <Text style={[styles.subtitle, { color: colors.icon }]}>
-            member for {getDaysSinceRegistration()} days in {process.env.EXPO_PUBLIC_COMPANY_NAME}
+            {t('home.memberSince', { days: getDaysSinceRegistration(), company: process.env.EXPO_PUBLIC_COMPANY_NAME })}
           </Text>
         </View>
 

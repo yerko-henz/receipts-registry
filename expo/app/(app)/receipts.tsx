@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme'
+import { useTranslation } from 'react-i18next'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { Receipt } from '@/services/receipts'
@@ -6,7 +7,7 @@ import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { ArrowUpRight, Calendar, Store, Tag, TrendingUp, Filter, Search, ChevronDown, ChevronUp, Image as ImageIcon, Trash2 } from 'lucide-react-native'
 import { useCallback, useMemo, useState, useRef } from 'react'
-import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal } from 'react-native'
+import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -17,10 +18,11 @@ if (Platform.OS === 'android') {
 }
 
 export default function ReceiptsUnifiedScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
-  const { receipts, fetchReceipts, isLoading } = useReceiptsStore()
+  const { receipts, fetchReceipts, isLoading, removeReceipt } = useReceiptsStore()
   const [refreshing, setRefreshing] = useState(false)
   
   // Dashboard State (Filters)
@@ -44,22 +46,22 @@ export default function ReceiptsUnifiedScreen() {
 
   const handleDelete = (id: string) => {
     Alert.alert(
-      'Delete Receipt',
-      'Are you sure you want to delete this receipt? This cannot be undone.',
+      t('receipts.deleteTitle'),
+      t('receipts.deleteConfirm'),
       [
         { text: 'Cancel', style: 'cancel' },
         { 
           text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await removeReceipt(id)
-            } catch (e) {
-               console.error(e)
-               Alert.alert('Error', 'Failed to delete receipt')
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await removeReceipt(id)
+                } catch (e) {
+                   console.error(e)
+                   Alert.alert('Error', t('receipts.deleteError'))
+                }
+              }
             }
-          }
-        }
       ]
     )
   }
@@ -93,8 +95,8 @@ export default function ReceiptsUnifiedScreen() {
       const date = parseISO(dateString)
       let title = format(date, 'MMMM d, yyyy')
       
-      if (isToday(date)) title = 'Today'
-      else if (isYesterday(date)) title = 'Yesterday'
+      if (isToday(date)) title = t('receipts.today')
+      else if (isYesterday(date)) title = t('receipts.yesterday')
 
       const existingGroup = groups.find(g => g.title === title)
       if (existingGroup) {
@@ -198,11 +200,11 @@ export default function ReceiptsUnifiedScreen() {
                 
                 <View style={styles.textContainer}>
                     <Text style={[styles.merchantName, { color: colors.text }]}>
-                    {item.merchant_name || 'Unknown Merchant'}
+                    {item.merchant_name || t('chart.unknownMerchant')}
                     </Text>
                     <View style={styles.categoryRow}>
                         <Text style={[styles.category, { color: colors.icon }]}>
-                            {item.category || 'Uncategorized'}
+                            {item.category ? t(`receipts.filters.${item.category}`, { defaultValue: item.category }) : t('chart.uncategorized')}
                         </Text>
                     </View>
                 </View>
@@ -219,14 +221,14 @@ export default function ReceiptsUnifiedScreen() {
             <View style={[styles.expandedContent, { borderTopColor: colors.border }]}>
                 {/* Date Fields */}
                 <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.icon }]}>Receipt Date</Text>
+                    <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.receiptDate')}</Text>
                     <Text style={[styles.detailValue, { color: colors.text }]}>
                         {item.transaction_date ? format(new Date(item.transaction_date), 'MMM d, yyyy') : 'N/A'}
                     </Text>
                 </View>
                 {dateMode === 'created' && (
                      <View style={styles.detailRow}>
-                        <Text style={[styles.detailLabel, { color: colors.icon }]}>Uploaded</Text>
+                        <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.uploaded')}</Text>
                         <Text style={[styles.detailValue, { color: colors.text }]}>
                             {format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}
                         </Text>
@@ -234,7 +236,7 @@ export default function ReceiptsUnifiedScreen() {
                 )}
                 
                 <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.icon }]}>Tax</Text>
+                    <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.tax')}</Text>
                     <Text style={[styles.detailValue, { color: colors.text }]}>
                         {item.currency} {(item.tax_amount ?? 0).toFixed(2)}
                     </Text>
@@ -243,7 +245,7 @@ export default function ReceiptsUnifiedScreen() {
                 {/* Items List */}
                 {item.receipt_items && item.receipt_items.length > 0 && (
                     <View style={styles.itemsSection}>
-                        <Text style={[styles.itemsHeader, { color: colors.icon }]}>Items</Text>
+                        <Text style={[styles.itemsHeader, { color: colors.icon }]}>{t('receipts.items')}</Text>
                         {item.receipt_items.map((rItem: any, idx: number) => (
                             <View key={idx} style={styles.itemRow}>
                                 <View style={styles.itemInfo}>
@@ -270,7 +272,7 @@ export default function ReceiptsUnifiedScreen() {
                             onPress={() => setModalReceipt(item)}
                         >
                             <ImageIcon size={14} color={colors.text} />
-                            <Text style={[styles.imageBtnText, { color: colors.text }]}>View Image</Text>
+                            <Text style={[styles.imageBtnText, { color: colors.text }]}>{t('receipts.viewImage')}</Text>
                         </Pressable>
                     )}
                     
@@ -279,7 +281,7 @@ export default function ReceiptsUnifiedScreen() {
                         onPress={() => handleDelete(item.id)}
                     >
                         <Trash2 size={14} color={colors.notification} />
-                        <Text style={[styles.deleteBtnText, { color: colors.notification }]}>Delete</Text>
+                        <Text style={[styles.deleteBtnText, { color: colors.notification }]}>{t('receipts.delete')}</Text>
                     </Pressable>
                  </View>
             </View>
@@ -294,9 +296,9 @@ export default function ReceiptsUnifiedScreen() {
       {/* Header with Total */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <View>
-             <Text style={[styles.headerTitle, { color: colors.text }]}>Receipts</Text>
+             <Text style={[styles.headerTitle, { color: colors.text }]}>{t('receipts.title')}</Text>
              <Text style={[styles.headerSubtitle, { color: colors.icon }]}>
-                {filteredReceipts.length} items found
+                {filteredReceipts.length} {t('receipts.itemsFound')}
              </Text>
         </View>
         <View style={styles.headerRight}>
@@ -315,7 +317,7 @@ export default function ReceiptsUnifiedScreen() {
           <View style={[styles.searchBar, { backgroundColor: colors.card }]}>
               <Search size={20} color={colors.icon} />
               <TextInput 
-                  placeholder="Search merchant..." 
+                  placeholder={t('receipts.searchPlaceholder')}
                   placeholderTextColor={colors.icon}
                   style={[styles.searchInput, { color: colors.text }]}
                   value={searchQuery}
@@ -345,7 +347,7 @@ export default function ReceiptsUnifiedScreen() {
                         styles.filterText, 
                         { color: activeFilter === filter ? '#FFF' : colors.text }
                     ]}>
-                        {filter}
+                        {t(`receipts.filters.${filter}`, { defaultValue: filter })}
                     </Text>
                 </Pressable>
             ))}
@@ -358,7 +360,7 @@ export default function ReceiptsUnifiedScreen() {
                 onPress={() => setDateMode('transaction')}
              >
                 <Text style={[styles.sortBtnText, { color: dateMode === 'transaction' ? colors.tint : colors.icon }]}>
-                    Receipt Date
+                    {t('receipts.receiptDate')}
                 </Text>
              </Pressable>
              <Pressable 
@@ -366,7 +368,7 @@ export default function ReceiptsUnifiedScreen() {
                 onPress={() => setDateMode('created')}
              >
                 <Text style={[styles.sortBtnText, { color: dateMode === 'created' ? colors.tint : colors.icon }]}>
-                    Upload Date
+                    {t('receipts.uploadDate')}
                 </Text>
              </Pressable>
           </View>
@@ -395,9 +397,9 @@ export default function ReceiptsUnifiedScreen() {
                 <View style={[styles.emptyIconContainer, { backgroundColor: colors.card }]}>
                   <Store size={48} color={colors.icon} />
                 </View>
-                <Text style={[styles.emptyText, { color: colors.text }]}>No receipts found</Text>
+                <Text style={[styles.emptyText, { color: colors.text }]}>{t('receipts.noReceipts')}</Text>
                 <Text style={[styles.emptySubtext, { color: colors.icon }]}>
-                   Try adjusting your filters
+                   {t('receipts.adjustFilters')}
                 </Text>
               </View>
             }
@@ -411,7 +413,7 @@ export default function ReceiptsUnifiedScreen() {
                 <View style={styles.modalContent}>
                     {modalReceipt?.image_url && <Image source={{ uri: modalReceipt.image_url }} style={styles.fullImage} resizeMode="contain" />}
                     <Pressable style={styles.closeButton} onPress={() => setModalReceipt(null)}>
-                        <Text style={styles.closeButtonText}>Close</Text>
+                        <Text style={styles.closeButtonText}>{t('settings.close')}</Text>
                     </Pressable>
                 </View>
             </View>
