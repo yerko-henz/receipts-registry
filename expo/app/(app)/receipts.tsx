@@ -2,19 +2,39 @@ import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { Receipt } from '@/services/receipts'
-import { format } from 'date-fns'
-import { useFocusEffect } from 'expo-router'
-import { ArrowUpRight, Calendar, Store, Tag } from 'lucide-react-native'
-import { useCallback, useState } from 'react'
-import { RefreshControl, StyleSheet, Text, View } from 'react-native'
+import { format, isToday, isYesterday, parseISO } from 'date-fns'
+import { useFocusEffect, useRouter } from 'expo-router'
+import { ArrowUpRight, Calendar, Store, Tag, TrendingUp, Filter, Search, ChevronDown, ChevronUp, Image as ImageIcon, Trash2 } from 'lucide-react-native'
+import { useCallback, useMemo, useState, useRef } from 'react'
+import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-export default function ReceiptsScreen() {
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
+
+export default function ReceiptsUnifiedScreen() {
+  const router = useRouter()
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
   const { receipts, fetchReceipts, isLoading } = useReceiptsStore()
   const [refreshing, setRefreshing] = useState(false)
+  
+  // Dashboard State (Filters)
+  const [activeFilter, setActiveFilter] = useState('All')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  
+  // Modal State
+  const [modalReceipt, setModalReceipt] = useState<Receipt | null>(null)
+  
+  // Date Mode State
+  const [dateMode, setDateMode] = useState<'transaction' | 'created'>('transaction')
+
+  const flashListRef = useRef<FlashList<string | Receipt>>(null)
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -22,65 +42,319 @@ export default function ReceiptsScreen() {
     setRefreshing(false)
   }, [fetchReceipts])
 
+  const handleDelete = (id: string) => {
+    Alert.alert(
+      'Delete Receipt',
+      'Are you sure you want to delete this receipt? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeReceipt(id)
+            } catch (e) {
+               console.error(e)
+               Alert.alert('Error', 'Failed to delete receipt')
+            }
+          }
+        }
+      ]
+    )
+  }
+
   useFocusEffect(
     useCallback(() => {
       fetchReceipts()
     }, [fetchReceipts])
   )
 
-  const renderItem = ({ item }: { item: Receipt }) => (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={styles.cardHeader}>
-        <View style={styles.merchantContainer}>
-          <View style={[styles.iconContainer, { backgroundColor: colors.tint + '20' }]}>
-            <Store size={20} color={colors.tint} />
-          </View>
-          <View>
-            <Text style={[styles.merchantName, { color: colors.text }]}>{item.merchant_name || 'Unknown Merchant'}</Text>
-            <Text style={[styles.category, { color: colors.icon }]}>{item.category || 'Uncategorized'}</Text>
-          </View>
-        </View>
-        <View style={styles.amountContainer}>
-          <Text style={[styles.amount, { color: colors.text }]}>
-            {item.currency} {(item.total_amount ?? 0).toFixed(2)}
-          </Text>
-        </View>
-      </View>
+  const filters = ['All', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Shopping']
+
+  // 1. Filter Logic
+  const filteredReceipts = useMemo(() => {
+    return receipts.filter(r => {
+      const matchesFilter = activeFilter === 'All' || (r.category && r.category.includes(activeFilter))
+      const matchesSearch = searchQuery === '' || 
+                            (r.merchant_name && r.merchant_name.toLowerCase().includes(searchQuery.toLowerCase()))
+      return matchesFilter && matchesSearch
+    })
+  }, [receipts, activeFilter, searchQuery])
+
+  // 2. Grouping Logic with Dynamic Date Field
+  const groupedData = useMemo(() => {
+    const groups: { title: string; data: Receipt[] }[] = []
+    
+    filteredReceipts.forEach((receipt) => {
+      const dateString = dateMode === 'transaction' ? receipt.transaction_date : receipt.created_at
+      if (!dateString) return
       
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      const date = parseISO(dateString)
+      let title = format(date, 'MMMM d, yyyy')
       
-      <View style={styles.cardFooter}>
-        <View style={styles.footerItem}>
-          <Calendar size={14} color={colors.icon} />
-          <Text style={[styles.date, { color: colors.icon }]}>
-            {item.transaction_date ? format(new Date(item.transaction_date), 'MMM d, yyyy') : 'No date'}
-          </Text>
+      if (isToday(date)) title = 'Today'
+      else if (isYesterday(date)) title = 'Yesterday'
+
+      const existingGroup = groups.find(g => g.title === title)
+      if (existingGroup) {
+        existingGroup.data.push(receipt)
+      } else {
+        groups.push({ title, data: [receipt] })
+      }
+    })
+    
+    // Flatten for FlashList
+    const flatList: (string | Receipt)[] = []
+    groups.forEach(group => {
+      flatList.push(group.title) // Header
+      flatList.push(...group.data) // Items
+    })
+    return flatList
+  }, [filteredReceipts, dateMode])
+
+  const totalSpent = useMemo(() => {
+    return filteredReceipts.reduce((sum, r) => sum + (r.total_amount ?? 0), 0)
+  }, [filteredReceipts])
+
+  const toggleExpand = (id: string) => {
+    const isExpanding = expandedId !== id
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedId(isExpanding ? id : null);
+
+    if (isExpanding) {
+        // Find index to scroll to
+        const index = groupedData.findIndex(item => typeof item !== 'string' && item.id === id)
+        if (index !== -1) {
+            // Slight delay to allow layout animation to start/finish? 
+            // Often better to scroll immediately or after a small tick
+            setTimeout(() => {
+                flashListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 }) 
+                // viewPosition 0.5 means center of screen, usually friendlier
+            }, 100)
+        }
+    }
+  }
+
+  const renderItem = ({ item }: { item: string | Receipt }) => {
+    if (typeof item === 'string') {
+      return (
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.icon }]}>{item}</Text>
         </View>
-        {(item.tax_amount ?? 0) > 0 && (
-          <View style={styles.footerItem}>
-            <Tag size={14} color={colors.icon} />
-            <Text style={[styles.date, { color: colors.icon }]}>
-              Tax: {item.currency} {item.tax_amount?.toFixed(2)}
-            </Text>
-          </View>
+      )
+    }
+
+    const isExpanded = expandedId === item.id;
+    const hasImage = !!item.image_url;
+    // Debug image URL
+    if (hasImage) {
+        console.log(`[Receipt ${item.id}] Image URL:`, item.image_url)
+    }
+
+    return (
+      <Pressable 
+        style={[
+            styles.card, 
+            { backgroundColor: colors.card, borderColor: isExpanded ? colors.tint : colors.border }
+        ]}
+        onPress={() => toggleExpand(item.id)}
+      >
+        <View style={styles.cardMain}>
+            <View style={styles.cardLeft}>
+                {hasImage ? (
+                  <Pressable onPress={() => setModalReceipt(item)} style={[styles.thumbnailContainer, { backgroundColor: colors.background }]}>
+                    <Image source={{ uri: item.image_url! }} style={styles.thumbnail} />
+                  </Pressable>
+                ) : (
+                  <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
+                      <Store size={20} color={colors.icon} />
+                  </View>
+                )}
+                
+                <View style={styles.textContainer}>
+                    <Text style={[styles.merchantName, { color: colors.text }]}>
+                    {item.merchant_name || 'Unknown Merchant'}
+                    </Text>
+                    <View style={styles.categoryRow}>
+                        <Text style={[styles.category, { color: colors.icon }]}>
+                            {item.category || 'Uncategorized'}
+                        </Text>
+                    </View>
+                </View>
+            </View>
+            <View style={styles.cardRight}>
+                 <Text style={[styles.amount, { color: colors.text }]}>
+                    {item.currency} {(item.total_amount ?? 0).toFixed(2)}
+                 </Text>
+                 {isExpanded ? <ChevronUp size={16} color={colors.icon} /> : <ChevronDown size={16} color={colors.icon} />}
+            </View>
+        </View>
+
+        {isExpanded && (
+            <View style={[styles.expandedContent, { borderTopColor: colors.border }]}>
+                {/* Date Fields */}
+                <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.icon }]}>Receipt Date</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>
+                        {item.transaction_date ? format(new Date(item.transaction_date), 'MMM d, yyyy') : 'N/A'}
+                    </Text>
+                </View>
+                {dateMode === 'created' && (
+                     <View style={styles.detailRow}>
+                        <Text style={[styles.detailLabel, { color: colors.icon }]}>Uploaded</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>
+                            {format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}
+                        </Text>
+                    </View>
+                )}
+                
+                <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.icon }]}>Tax</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>
+                        {item.currency} {(item.tax_amount ?? 0).toFixed(2)}
+                    </Text>
+                </View>
+
+                {/* Items List */}
+                {item.receipt_items && item.receipt_items.length > 0 && (
+                    <View style={styles.itemsSection}>
+                        <Text style={[styles.itemsHeader, { color: colors.icon }]}>Items</Text>
+                        {item.receipt_items.map((rItem: any, idx: number) => (
+                            <View key={idx} style={styles.itemRow}>
+                                <View style={styles.itemInfo}>
+                                    <Text style={[styles.itemName, { color: colors.text }]}>
+                                        {rItem.description || rItem.name || 'Item'}
+                                    </Text>
+                                    <Text style={[styles.itemQty, { color: colors.icon }]}>
+                                        {rItem.quantity} x {item.currency}{(rItem.unit_price ?? 0).toFixed(2)}
+                                    </Text>
+                                </View>
+                                <Text style={[styles.itemTotal, { color: colors.text }]}>
+                                    {item.currency}{(rItem.total_price ?? 0).toFixed(2)}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
+
+                 {/* Actions */}
+                 <View style={styles.actionsRow}>
+                    {hasImage && (
+                        <Pressable 
+                            style={[styles.imageBtn, { borderColor: colors.border }]}
+                            onPress={() => setModalReceipt(item)}
+                        >
+                            <ImageIcon size={14} color={colors.text} />
+                            <Text style={[styles.imageBtnText, { color: colors.text }]}>View Image</Text>
+                        </Pressable>
+                    )}
+                    
+                    <Pressable 
+                        style={[styles.deleteBtn, { backgroundColor: colors.notification + '15' }]}
+                        onPress={() => handleDelete(item.id)}
+                    >
+                        <Trash2 size={14} color={colors.notification} />
+                        <Text style={[styles.deleteBtnText, { color: colors.notification }]}>Delete</Text>
+                    </Pressable>
+                 </View>
+            </View>
         )}
-      </View>
-    </View>
-  )
+      </Pressable>
+    )
+
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Receipts</Text>
-        <Text style={[styles.subtitle, { color: colors.icon }]}>
-          {receipts.length} total receipts
-        </Text>
+      {/* Header with Total */}
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <View>
+             <Text style={[styles.headerTitle, { color: colors.text }]}>Receipts</Text>
+             <Text style={[styles.headerSubtitle, { color: colors.icon }]}>
+                {filteredReceipts.length} items found
+             </Text>
+        </View>
+        <View style={styles.headerRight}>
+             <View style={[styles.totalBadge, { backgroundColor: colors.tint + '20' }]}>
+                 <TrendingUp size={16} color={colors.tint} />
+                 <Text style={[styles.totalAmount, { color: colors.tint }]}>
+                    ${totalSpent.toFixed(2)}
+                 </Text>
+             </View>
+        </View>
+      </View>
+
+      {/* Controls Container */}
+      <View style={styles.controlsContainer}>
+          {/* Search */}
+          <View style={[styles.searchBar, { backgroundColor: colors.card }]}>
+              <Search size={20} color={colors.icon} />
+              <TextInput 
+                  placeholder="Search merchant..." 
+                  placeholderTextColor={colors.icon}
+                  style={[styles.searchInput, { color: colors.text }]}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+              />
+          </View>
+          
+          {/* Filters */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.filterContainer}
+          >
+            {filters.map(filter => (
+                <Pressable 
+                    key={filter} 
+                    style={[
+                        styles.filterChip, 
+                        { 
+                            backgroundColor: activeFilter === filter ? colors.tint : colors.card,
+                            borderColor: activeFilter === filter ? colors.tint : colors.border
+                        }
+                    ]}
+                    onPress={() => setActiveFilter(filter)}
+                >
+                    <Text style={[
+                        styles.filterText, 
+                        { color: activeFilter === filter ? '#FFF' : colors.text }
+                    ]}>
+                        {filter}
+                    </Text>
+                </Pressable>
+            ))}
+          </ScrollView>
+
+          {/* Sort Toggles */}
+          <View style={[styles.sortContainer, { borderColor: colors.border }]}>
+             <Pressable 
+                style={[styles.sortBtn, dateMode === 'transaction' && { backgroundColor: colors.card }]}
+                onPress={() => setDateMode('transaction')}
+             >
+                <Text style={[styles.sortBtnText, { color: dateMode === 'transaction' ? colors.tint : colors.icon }]}>
+                    Receipt Date
+                </Text>
+             </Pressable>
+             <Pressable 
+                style={[styles.sortBtn, dateMode === 'created' && { backgroundColor: colors.card }]}
+                onPress={() => setDateMode('created')}
+             >
+                <Text style={[styles.sortBtnText, { color: dateMode === 'created' ? colors.tint : colors.icon }]}>
+                    Upload Date
+                </Text>
+             </Pressable>
+          </View>
       </View>
 
       <FlashList
-        data={receipts}
+        ref={flashListRef}
+        data={groupedData}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        getItemType={(item) => (typeof item === 'string' ? 'header' : 'row')}
+        estimatedItemSize={85}
+        keyExtractor={(item, index) => (typeof item === 'string' ? `header-${item}` : item.id)}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -93,11 +367,25 @@ export default function ReceiptsScreen() {
             </View>
             <Text style={[styles.emptyText, { color: colors.text }]}>No receipts found</Text>
             <Text style={[styles.emptySubtext, { color: colors.icon }]}>
-              Scanned receipts will appear here
+               Try adjusting your filters
             </Text>
           </View>
         }
       />
+
+       {/* Global Modal for Image View */}
+       <Modal visible={!!modalReceipt} transparent={true} animationType="fade" onRequestClose={() => setModalReceipt(null)}>
+            <View style={styles.modalContainer}>
+                <Pressable style={styles.modalCloseArea} onPress={() => setModalReceipt(null)} />
+                <View style={styles.modalContent}>
+                    {modalReceipt?.image_url && <Image source={{ uri: modalReceipt.image_url }} style={styles.fullImage} resizeMode="contain" />}
+                    <Pressable style={styles.closeButton} onPress={() => setModalReceipt(null)}>
+                        <Text style={styles.closeButtonText}>Close</Text>
+                    </Pressable>
+                </View>
+            </View>
+        </Modal>
+
     </SafeAreaView>
   )
 }
@@ -109,92 +397,211 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'transparent', // Can add border if needed
   },
-  title: {
-    fontSize: 32,
+  headerTitle: {
+    fontSize: 28,
     fontFamily: 'Manrope_700Bold',
-    marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: 'Manrope_500Medium',
+  headerSubtitle: {
+       fontSize: 14,
+       fontFamily: 'Manrope_500Medium',
+       marginTop: 2,
+  },
+  headerRight: {
+      alignItems: 'flex-end',
+  },
+  totalBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      gap: 6,
+  },
+  totalAmount: {
+      fontSize: 16,
+      fontFamily: 'Manrope_700Bold',
+  },
+  controlsContainer: {
+     paddingTop: 12,
+  },
+  searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 12,
+      gap: 10,
+      marginHorizontal: 20,
+      marginBottom: 12,
+  },
+  searchInput: {
+      flex: 1,
+      fontFamily: 'Manrope_500Medium',
+      fontSize: 16,
+  },
+  filterContainer: {
+      paddingHorizontal: 20,
+      gap: 8,
+      paddingBottom: 12,
+  },
+  filterChip: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1,
+  },
+  filterText: {
+      fontFamily: 'Manrope_600SemiBold',
+      fontSize: 14,
+  },
+  sortContainer: {
+      flexDirection: 'row',
+      marginHorizontal: 20,
+      marginBottom: 8,
+      borderRadius: 12,
+      backgroundColor: 'rgba(0,0,0,0.03)',
+      padding: 4,
+  },
+  sortBtn: {
+      flex: 1,
+      paddingVertical: 8,
+      alignItems: 'center',
+      borderRadius: 8,
+  },
+  sortBtnText: {
+      fontSize: 13,
+      fontFamily: 'Manrope_600SemiBold',
   },
   listContent: {
     padding: 16,
-    paddingBottom: 100, // Space for tab bar
+    paddingBottom: 100,
+  },
+  sectionHeader: {
+    marginTop: 16,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: 'Manrope_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   card: {
+    marginBottom: 10,
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    overflow: 'hidden',
   },
-  cardHeader: {
+  cardMain: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    padding: 16,
   },
-  merchantContainer: {
+  cardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 14,
+  },
+  thumbnailContainer: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  thumbnail: {
+      width: '100%',
+      height: '100%',
+  },
+  textContainer: {
+    justifyContent: 'center',
+    flex: 1,
   },
   merchantName: {
     fontSize: 16,
-    fontFamily: 'Manrope_700Bold',
+    fontFamily: 'Manrope_600SemiBold',
     marginBottom: 2,
+  },
+  categoryRow: {
+      flexDirection: 'row',
   },
   category: {
     fontSize: 12,
     fontFamily: 'Manrope_500Medium',
   },
-  amountContainer: {
-    alignItems: 'flex-end',
+  cardRight: {
+      alignItems: 'flex-end',
+      gap: 4,
   },
   amount: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Manrope_800ExtraBold',
   },
-  divider: {
-    height: 1,
-    width: '100%',
-    marginBottom: 12,
-    opacity: 0.5,
+  expandedContent: {
+      padding: 16,
+      paddingTop: 0,
+      borderTopWidth: 1,
   },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  detailRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 12,
   },
-  footerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  detailLabel: {
+      fontSize: 14,
+      fontFamily: 'Manrope_500Medium',
   },
-  date: {
-    fontSize: 12,
-    fontFamily: 'Manrope_600SemiBold',
+  detailValue: {
+      fontSize: 14,
+      fontFamily: 'Manrope_600SemiBold',
+  },
+  imageBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 10,
+      marginTop: 16,
+      borderWidth: 1,
+      borderRadius: 10,
+      borderStyle: 'dashed',
+      gap: 8,
+  },
+  imageBtnText: {
+      fontSize: 13,
+      fontFamily: 'Manrope_600SemiBold',
+  },
+  actionButton: {
+      marginTop: 12,
+      paddingVertical: 10,
+      borderRadius: 10,
+      alignItems: 'center',
+  },
+  actionButtonText: {
+      fontFamily: 'Manrope_700Bold',
+      fontSize: 14,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 100,
+    paddingTop: 80,
   },
   emptyIconContainer: {
     width: 80,
@@ -212,6 +619,109 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     fontFamily: 'Manrope_500Medium',
-    textAlign: 'center',
+  },
+  
+  // Modal
+  modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.9)',
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  modalCloseArea: {
+      ...StyleSheet.absoluteFillObject,
+  },
+  modalContent: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+  },
+  fullImage: {
+      width: '100%',
+      height: '80%',
+      borderRadius: 8,
+  },
+  closeButton: {
+      position: 'absolute',
+      top: 50,
+      right: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      borderRadius: 20,
+  },
+  closeButtonText: {
+      color: '#FFF',
+      fontFamily: 'Manrope_600SemiBold',
+  },
+  itemsSection: {
+      marginTop: 16,
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  itemsHeader: {
+      fontSize: 12,
+      fontFamily: 'Manrope_700Bold',
+      textTransform: 'uppercase',
+      marginBottom: 8,
+      letterSpacing: 0.5,
+  },
+  itemRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 4,
+  },
+  itemInfo: {
+      flex: 1,
+      marginRight: 12,
+  },
+  itemName: {
+      fontSize: 14,
+      fontFamily: 'Manrope_600SemiBold',
+  },
+  itemQty: {
+      fontSize: 12,
+      fontFamily: 'Manrope_500Medium',
+  },
+  itemTotal: {
+      fontSize: 14,
+      fontFamily: 'Manrope_700Bold',
+  },
+  actionsRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 20,
+  },
+  imageBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 10,
+      borderWidth: 1,
+      borderRadius: 10,
+      borderStyle: 'dashed',
+      gap: 8,
+  },
+  imageBtnText: {
+      fontSize: 13,
+      fontFamily: 'Manrope_600SemiBold',
+  },
+  deleteBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 10,
+      borderRadius: 10,
+      gap: 8,
+  },
+  deleteBtnText: {
+      fontSize: 13,
+      fontFamily: 'Manrope_700Bold',
   },
 })

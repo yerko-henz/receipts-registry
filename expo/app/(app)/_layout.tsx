@@ -30,36 +30,12 @@ export default function AppLayout() {
       },
     },
     {
-      name: 'receipts-unified',
+      name: 'receipts',
       visible: true,
       order: 2,
       options: {
         title: 'Receipts',
         tabBarIcon: ({ color, size }) => <ListTodo size={size} color={color} />,
-      },
-    },
-    {
-      name: 'receipts',
-      visible: false, // Legacy
-      order: 99,
-      options: {
-        href: null,
-      },
-    },
-    {
-      name: 'receipts-timeline',
-      visible: false,
-      order: 99,
-      options: {
-        href: null,
-      },
-    },
-    {
-      name: 'receipts-dashboard',
-      visible: false,
-      order: 99,
-      options: {
-        href: null,
       },
     },
     {
