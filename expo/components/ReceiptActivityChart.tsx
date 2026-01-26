@@ -263,7 +263,7 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
                   <Bar
                      points={points.count}
                      chartBounds={chartBounds}
-                     color={themeColors.icon}
+                     color={themeColors.secondary}
                      roundedCorners={{ topLeft: 6, topRight: 6 }}
                      barWidth={24}
                      opacity={0.5}

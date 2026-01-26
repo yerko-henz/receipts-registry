@@ -138,15 +138,15 @@ const App: React.FC = () => {
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
-            <View style={styles.logoIcon}>
+            <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
               <ScanLine color="#ffffff" size={20} />
             </View>
             <Text style={[styles.headerTitle, { color: colors.text }]}>{t('scanner.title')}</Text>
           </View>
           {(scannerItems.length > 0) && (
             <TouchableOpacity onPress={resetScanner} style={styles.newScanButton}>
-              <RefreshCw size={14} color="#4f46e5" />
-              <Text style={styles.newScanText}>{t('scanner.scanNew')}</Text>
+              <RefreshCw size={14} color={colors.primary} />
+              <Text style={[styles.newScanText, { color: colors.primary }]}>{t('scanner.scanNew')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -164,7 +164,7 @@ const App: React.FC = () => {
             
             <TouchableOpacity onPress={pickImage} style={[styles.uploadCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.uploadIconCircle}>
-                <Upload color="#4f46e5" size={40} />
+                <Upload color={colors.primary} size={40} />
               </View>
               <Text style={[styles.uploadTitle, { color: colors.text }]}>{t('scanner.uploadTitle')}</Text>
               <Text style={styles.uploadSubtitle}>{t('scanner.uploadSubtitle')}</Text>
@@ -229,7 +229,6 @@ const styles = StyleSheet.create({
   logoIcon: {
     width: 40,
     height: 40,
-    backgroundColor: '#4f46e5',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -249,7 +248,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   newScanText: {
-    color: '#4f46e5',
     fontWeight: '600',
     fontSize: 14,
   },

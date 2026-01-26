@@ -17,13 +17,17 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, isSaving }
 
   const dynamicStyles = StyleSheet.create({
     actionButtonTextSecondary: {
-        color: themeColors.text,
+        color: '#ffffff',
     },
     actionButtonSecondary: {
-        backgroundColor: activeTheme === 'dark' ? '#333' : '#f1f5f9',
+        backgroundColor: themeColors.secondary,
     },
     actionsContainer: {
         backgroundColor: themeColors.card,
+    },
+    actionButtonPrimary: {
+        backgroundColor: themeColors.primary,
+        shadowColor: themeColors.primary,
     }
   });
 
@@ -31,11 +35,11 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, isSaving }
     <View style={styles.actionsWrapper}>
       <View style={[styles.actionsContainer, dynamicStyles.actionsContainer]}>
         <TouchableOpacity style={[styles.actionButtonSecondary, dynamicStyles.actionButtonSecondary]}>
-          <Download size={20} color={themeColors.text} style={{ marginRight: 8 }} />
+          <Download size={20} color="#ffffff" style={{ marginRight: 8 }} />
           <Text style={[styles.actionButtonTextSecondary, dynamicStyles.actionButtonTextSecondary]}>Export CSV</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.actionButtonPrimary, isSaving && styles.actionButtonDisabled]}
+          style={[styles.actionButtonPrimary, dynamicStyles.actionButtonPrimary, isSaving && styles.actionButtonDisabled]}
           onPress={onSave}
           disabled={isSaving}
         >
@@ -76,13 +80,11 @@ const styles = StyleSheet.create({
   },
   actionButtonPrimary: {
     flex: 1,
-    backgroundColor: '#4f46e5',
     padding: 16,
     borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#4f46e5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

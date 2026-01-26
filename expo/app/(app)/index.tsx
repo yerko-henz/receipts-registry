@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const DAYS_TO_SHOW = 7;
+const DAYS_TO_SHOW = 9;
 
 export default function HomeScreen() {
   const { t } = useTranslation()

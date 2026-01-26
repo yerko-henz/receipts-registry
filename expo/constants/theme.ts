@@ -5,12 +5,16 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#4f46e5';
-const tintColorDark = '#398cc6ff';
+const tintColorLight = '#1ab8a0';
+const tintColorDark = '#1ab8a0';
 
 export const Colors = {
+  primary: '#1ab8a0',
+  secondary: '#f9874b',
   light: {
-    text: '#1e293b',
+    primary: '#1ab8a0',
+    secondary: '#f9874b',
+    text: '#1e293b', // Keeping light theme text readable on light background
     background: '#f8fafc',
     tint: tintColorLight,
     icon: '#64748b',
@@ -21,14 +25,16 @@ export const Colors = {
     notification: '#ef4444',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
+    primary: '#1ab8a0',
+    secondary: '#f9874b',
+    text: '#d8d9d3',
+    background: '#131516',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
-    card: '#292929',
-    border: '#3E3E3E',
+    card: '#1C1E1F', // Slightly lighter than background for card distinction
+    border: '#2A2C2E',
     notification: '#ff453a',
   },
 
