@@ -39,7 +39,9 @@
     "termsOfService": "Terms of Service",
     "and": "and",
     "privacyPolicy": "Privacy Policy",
-    "mustAcceptTerms": "You must accept the Terms of Service and Privacy Policy to register"
+    "mustAcceptTerms": "You must accept the Terms of Service and Privacy Policy to register",
+    "code": "Verification Code",
+    "invalidCode": "Please enter a valid code"
   },
   "common": {
     "or": "OR"
@@ -133,7 +135,21 @@
     "languages": {
       "english": "English",
       "spanish": "Español"
-    }
+    },
+    "theme": "Theme",
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "verifyEmail": "Verify Email",
+    "emailNotVerified": "Email not verified",
+    "verificationEmailSent": "Verification email sent!",
+    "emailVerified": "Email verified successfully!",
+    "verifyEmailDescription": "We've sent a verification code to your email. Enter it below to verify your email.",
+    "verifyCode": "Verify Code",
+    "resendCode": "Resend Code",
+    "resendCodeWithTimer": "Resend Code ({{seconds}}s)"
   },
   "chart": {
     "weeklyActivity": "Weekly Activity",
@@ -171,6 +187,7 @@
   },
   "scanner": {
     "title": "ReceiptScan AI",
+    "scanYourReceipt": "Scan your receipt",
     "scanNew": "Scan New",
     "heroTitle": "Digitize your receipts in seconds",
     "heroSubtitle": "Our advanced AI extracts items, prices, and taxes with high precision. Just upload images to get started.",

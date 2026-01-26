@@ -5,6 +5,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { Receipt } from '@/services/receipts'
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
+import { enUS, es } from 'date-fns/locale'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Store, Search, ChevronDown, ChevronUp, Image as ImageIcon, Trash2, TrendingUp, Eye } from 'lucide-react-native'
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
@@ -113,6 +114,11 @@ export default function ReceiptsUnifiedScreen() {
 
   const flashListRef = useRef<any>(null)
 
+  // Auto-scroll to top when filters change
+  useEffect(() => {
+    flashListRef.current?.scrollToOffset({ offset: 0, animated: true })
+  }, [activeFilter, searchQuery, dateMode])
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     await fetchReceipts()
@@ -159,6 +165,10 @@ export default function ReceiptsUnifiedScreen() {
     })
   }, [receipts, activeFilter, searchQuery])
 
+  // Get the appropriate locale for date formatting
+  const { i18n } = useTranslation()
+  const dateLocale = i18n.language === 'es' ? es : enUS
+
   // 2. Grouping Logic with Dynamic Date Field
   const groupedData = useMemo(() => {
     const groups: { title: string; data: Receipt[] }[] = []
@@ -168,7 +178,7 @@ export default function ReceiptsUnifiedScreen() {
       if (!dateString) return
       
       const date = parseISO(dateString)
-      let title = format(date, 'MMMM d, yyyy')
+      let title = format(date, 'MMMM d, yyyy', { locale: dateLocale })
       
       if (isToday(date)) title = t('receipts.today')
       else if (isYesterday(date)) title = t('receipts.yesterday')
@@ -285,7 +295,7 @@ export default function ReceiptsUnifiedScreen() {
                  <Text style={[styles.amount, { color: colors.text }]}>
                     {item.currency} {(item.total_amount ?? 0).toFixed(2)}
                  </Text>
-                 {isExpanded ? <ChevronUp size={16} color={colors.icon} /> : <ChevronDown size={16} color={colors.icon} />}
+                 {isExpanded ? <ChevronUp size={18} color={colors.icon} /> : <ChevronDown size={18} color={colors.icon} />}
             </View>
         </View>
 
@@ -668,8 +678,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Manrope_500Medium',
   },
   cardRight: {
-      alignItems: 'flex-end',
-      gap: 4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
   },
   amount: {
     fontSize: 16,

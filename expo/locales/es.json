@@ -39,7 +39,9 @@
     "termsOfService": "Términos de servicio",
     "and": "y",
     "privacyPolicy": "Política de privacidad",
-    "mustAcceptTerms": "Debes aceptar los Términos de servicio y la Política de privacidad para registrarte"
+    "mustAcceptTerms": "Debes aceptar los Términos de servicio y la Política de privacidad para registrarte",
+    "code": "Código de verificación",
+    "invalidCode": "Por favor ingresa un código válido"
   },
   "common": {
     "or": "O"
@@ -133,7 +135,21 @@
     "languages": {
       "english": "English",
       "spanish": "Español"
-    }
+    },
+    "theme": "Tema",
+    "themes": {
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Oscuro"
+    },
+    "verifyEmail": "Verificar correo",
+    "emailNotVerified": "Correo no verificado",
+    "verificationEmailSent": "¡Correo de verificación enviado!",
+    "emailVerified": "¡Correo verificado exitosamente!",
+    "verifyEmailDescription": "Hemos enviado un código de verificación a tu correo. Ingrésalo a continuación para verificar tu correo.",
+    "verifyCode": "Verificar código",
+    "resendCode": "Reenviar código",
+    "resendCodeWithTimer": "Reenviar código ({{seconds}}s)"
   },
   "chart": {
     "weeklyActivity": "Actividad Semanal",
@@ -171,6 +187,7 @@
   },
   "scanner": {
     "title": "Escáner IA",
+    "scanYourReceipt": "Escanea tu recibo",
     "scanNew": "Escanear Nuevo",
     "heroTitle": "Digitaliza tus recibos en segundos",
     "heroSubtitle": "Nuestra IA avanzada extrae artículos, precios e impuestos con alta precisión. Solo sube imágenes para comenzar.",

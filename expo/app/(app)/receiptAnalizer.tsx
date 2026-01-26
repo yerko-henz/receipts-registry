@@ -135,21 +135,17 @@ const App: React.FC = () => {
       />
       
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <View style={styles.headerContent}>
-          <View style={styles.logoContainer}>
-            <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
-              <ScanLine color="#ffffff" size={20} />
-            </View>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>{t('scanner.title')}</Text>
-          </View>
-          {(scannerItems.length > 0) && (
-            <TouchableOpacity onPress={resetScanner} style={styles.newScanButton}>
-              <RefreshCw size={14} color={colors.primary} />
-              <Text style={[styles.newScanText, { color: colors.primary }]}>{t('scanner.scanNew')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('scanner.scanYourReceipt')}</Text>
+        {(scannerItems.length > 0) && (
+          <TouchableOpacity 
+            onPress={resetScanner} 
+            style={[styles.newScanButton, { backgroundColor: colors.tint + '20' }]}
+          >
+            <RefreshCw size={14} color={colors.tint} />
+            <Text style={[styles.newScanText, { color: colors.tint }]}>{t('scanner.scanNew')}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -163,11 +159,11 @@ const App: React.FC = () => {
             </View>
             
             <TouchableOpacity onPress={pickImage} style={[styles.uploadCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.uploadIconCircle}>
-                <Upload color={colors.primary} size={40} />
+              <View style={[styles.uploadIconCircle, { backgroundColor: colors.tint + '20' }]}>
+                <Upload color={colors.tint} size={40} />
               </View>
               <Text style={[styles.uploadTitle, { color: colors.text }]}>{t('scanner.uploadTitle')}</Text>
-              <Text style={styles.uploadSubtitle}>{t('scanner.uploadSubtitle')}</Text>
+              <Text style={[styles.uploadSubtitle, { color: colors.icon }]}>{t('scanner.uploadSubtitle')}</Text>
             </TouchableOpacity>
 
 
@@ -191,64 +187,40 @@ const App: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 40,
   },
   
-  // Header
+  // Header - matching receipts page design
   header: {
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    // Shadow for iOS/Android
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    zIndex: 10,
-  },
-  headerContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    maxWidth: 900, // Max width constraint
-    alignSelf: 'center',
-    width: '100%',
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  logoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderBottomWidth: 1,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1e293b',
+    fontSize: 28,
+    fontFamily: 'Manrope_700Bold',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Manrope_500Medium',
+    marginTop: 2,
   },
   newScanButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#eef2ff',
-    paddingHorizontal: 16,
+    gap: 6,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
   newScanText: {
-    fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold',
     fontSize: 14,
   },
 
@@ -296,7 +268,6 @@ const styles = StyleSheet.create({
   uploadIconCircle: {
     width: 80,
     height: 80,
-    backgroundColor: '#e0e7ff',
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
@@ -304,13 +275,11 @@ const styles = StyleSheet.create({
   },
   uploadTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#334155',
+    fontFamily: 'Manrope_600SemiBold',
     marginBottom: 4,
   },
   uploadSubtitle: {
     fontSize: 14,
-    color: '#94a3b8',
   },
 
   // Features
