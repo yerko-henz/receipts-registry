@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, StyleSheet, Platform, Modal, Pressable, Animated } from 'react-native';
+import { View, Text, StyleSheet, Platform, Modal, Pressable, Animated, TouchableWithoutFeedback } from 'react-native';
 // @ts-ignore - victory-native types might be tricky or missing in this setup
 import { CartesianChart, Bar } from 'victory-native';
 import { matchFont as matchFontSkia } from '@shopify/react-native-skia';
@@ -9,12 +9,13 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { toLocalISOString, getLastNDaysKeys } from '@/lib/date';
 
+import { DayData } from '@/lib/date';
+
 interface Props {
-  receipts: Receipt[];
-  days?: number;
+  data: DayData[];
 }
 
-export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
+export default function ReceiptActivityChart({ data }: Props) {
   const { t, i18n } = useTranslation();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -26,42 +27,8 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
     fontWeight: "normal",
   });
 
-  // Compute final data from receipts
-  const finalData = useMemo(() => {
-    const now = new Date();
-    const REF_DATE_STR = toLocalISOString(now);
-    
-    // Generate last N days keys (YYYY-MM-DD) in Local Time
-    const lastNDays = getLastNDaysKeys(days);
-
-    // Initialize counts
-    const counts: Record<string, number> = {};
-    lastNDays.forEach(day => {
-      counts[day] = 0;
-    });
-
-    // Aggregate receipts
-    receipts.forEach(r => {
-      const rawDate = (r as any).created_at || r.transaction_date;
-      if (rawDate) {
-        // Parse receipt date (UTC) to Date object, then convert to Local YYYY-MM-DD
-        const rDate = new Date(rawDate);
-        const dateKey = toLocalISOString(rDate);
-
-        if (counts[dateKey] !== undefined) {
-          counts[dateKey] += 1;
-        }
-      }
-    });
-
-    // Format for chart
-    return lastNDays.map(dateKey => ({
-      label: getDayName(dateKey, i18n.language),
-      count: counts[dateKey],
-      isToday: dateKey === REF_DATE_STR,
-      dateKey,
-    }));
-  }, [receipts, days, i18n.language]);
+  // Rename data prop to finalData for internal consistency with existing logic (or just use data)
+  const finalData = data;
 
   // State for animated chart data
   const [chartData, setChartData] = useState(() => 
@@ -129,11 +96,14 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
   // Create ticks:
   // For small day ranges (e.g. 2 days), we want exactly 'days' number of ticks.
   // For larger ranges, we cap it at 7 to avoid crowding.
-  const xTickCount = days; 
+  // For small day ranges (e.g. 2 days), we want exactly 'days' number of ticks.
+  // For larger ranges, we cap it at 7 to avoid crowding.
+  const xTickCount = data.length; 
   const yTickCount = maxCount <= 5 ? (maxCount > 0 ? maxCount + 1 : 2) : 6;
 
   // Dynamic padding based on number of bars to keep them looking good
-  const horizontalPadding = days <= 3 ? 60 : 20;
+  // Dynamic padding based on number of bars to keep them looking good
+  const horizontalPadding = data.length <= 3 ? 60 : 20;
 
   // State for Chart Interaction
   const [chartWidth, setChartWidth] = useState(0);
@@ -145,14 +115,11 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   // Filter receipts for the selected date
+  // Filter receipts for the selected date
   const selectedReceipts = useMemo(() => {
     if (!selectedDate) return [];
-    return receipts.filter(r => {
-      const rawDate = (r as any).created_at || r.transaction_date;
-      if (!rawDate) return false;
-      return rawDate.startsWith(selectedDate);
-    });
-  }, [selectedDate, receipts]);
+    return data.find(d => d.dateKey === selectedDate)?.receipts || [];
+  }, [selectedDate, data]);
 
   const selectedTotal = useMemo(() => {
     return selectedReceipts.reduce((sum, r) => sum + (r.total_amount || 0), 0);
@@ -235,7 +202,7 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
         >
           <CartesianChart
             data={chartData}
-            xKey="label"
+            xKey="dayName"
             yKeys={["count"]}
             domain={{ y: [0, maxCount > 0 ? maxCount : 1] }} 
             domainPadding={{ left: horizontalPadding, right: horizontalPadding, top: 10, bottom: 0 }}
@@ -276,10 +243,12 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
           </CartesianChart>
 
           {/* Absolute Overlay for Interaction */}
-          <Pressable 
-            style={[StyleSheet.absoluteFill, { zIndex: 10 }]}
+          {/* Absolute Overlay for Interaction */}
+          <TouchableWithoutFeedback 
             onPress={(e) => handleChartPress(e.nativeEvent.locationX)}
-          />
+          >
+            <View style={[StyleSheet.absoluteFill, { zIndex: 10 }]} />
+          </TouchableWithoutFeedback>
         </View>
       </View>
 

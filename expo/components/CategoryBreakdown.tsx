@@ -7,21 +7,21 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Receipt } from '@/services/receipts';
 import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from '@/constants/categories';
 import { ProgressBar } from '@/components/receiptAnalizer/components/ProgressBar';
-import { filterReceiptsByDays } from '@/lib/date';
+
+import { DayData } from '@/lib/date';
 
 interface Props {
-  receipts: Receipt[];
-  days: number;
+  data: DayData[];
 }
 
-export default function CategoryBreakdown({ receipts, days }: Props) {
+export default function CategoryBreakdown({ data }: Props) {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
   const categoryData = useMemo(() => {
-    // 1. Filter receipts by date range using shared logic
-    const filtered = filterReceiptsByDays(receipts, days);
+    // 1. Flatten receipts from day buckets
+    const filtered = data.flatMap(d => d.receipts);
 
     const totalPeriodSpent = filtered.reduce((sum, r) => sum + (r.total_amount || 0), 0);
 
@@ -33,7 +33,7 @@ export default function CategoryBreakdown({ receipts, days }: Props) {
     });
 
     // 3. Convert to array and sort
-    const data = Object.keys(groups).map(cat => {
+    const dataGroups = Object.keys(groups).map(cat => {
       const amount = groups[cat];
       const percentage = totalPeriodSpent > 0 ? (amount / totalPeriodSpent) * 100 : 0;
       return {
@@ -45,9 +45,9 @@ export default function CategoryBreakdown({ receipts, days }: Props) {
 
     return {
       total: totalPeriodSpent,
-      categories: data.sort((a, b) => b.amount - a.amount),
+      categories: dataGroups.sort((a, b) => b.amount - a.amount),
     };
-  }, [receipts, days]);
+  }, [data]);
 
   if (categoryData.categories.length === 0) return null;
 

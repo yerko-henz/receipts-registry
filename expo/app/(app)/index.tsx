@@ -5,19 +5,20 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useGlobalStore } from '@/store/useGlobalStore'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { useFocusEffect } from 'expo-router'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const DAYS_TO_SHOW = 9;
+import { groupReceiptsByDay } from '@/lib/date'
 
 export default function HomeScreen() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
   const user = useGlobalStore((state) => state.user)
   const receipts = useReceiptsStore((state) => state.receipts)
+  const isLoading = useReceiptsStore((state) => state.isLoading)
   const fetchReceipts = useReceiptsStore((state) => state.fetchReceipts)
 
   // Refetch receipts when screen comes into focus
@@ -29,15 +30,16 @@ export default function HomeScreen() {
     }, [fetchReceipts])
   )
 
-  const receiptsLoadedCount = receipts.filter(r => {
-    const rawDate = (r as any).created_at || r.transaction_date;
-    if (!rawDate) return false;
-    const date = new Date(rawDate);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= (DAYS_TO_SHOW - 1); // 0 to 6 is 7 days
-  }).length;
+  // Compute daily data buckets for the chart and breakdown (Write Once, Read Many)
+  const dailyData = useMemo(() => {
+     const data = groupReceiptsByDay(receipts, i18n.language);
+     console.log('[Home] Daily Data Groups:', JSON.stringify(data, null, 2));
+     return data;
+  }, [receipts, i18n.language]);
+
+  const receiptsLoadedCount = useMemo(() => {
+      return dailyData.reduce((acc, day) => acc + day.count, 0);
+  }, [dailyData]);
 
   const getDaysSinceRegistration = () => {
     if (!user?.created_at) return 0
@@ -45,6 +47,14 @@ export default function HomeScreen() {
     const created = new Date(user.created_at)
     const diffTime = Math.abs(today.getTime() - created.getTime())
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  }
+
+  if (isLoading && receipts.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.tint} />
+      </SafeAreaView>
+    )
   }
 
   return (
@@ -55,7 +65,7 @@ export default function HomeScreen() {
             {t('home.welcome')}, {user?.email?.split('@')[0]}! 👋
           </Text>
           <Text style={[styles.secondaryTitle, { color: colors.text }]}>
-            {t('home.recentReceipts', { count: receiptsLoadedCount, days: DAYS_TO_SHOW })}
+            {t('home.recentReceipts', { count: receiptsLoadedCount, days: dailyData.length })}
           </Text>
           <Text style={[styles.subtitle, { color: colors.icon }]}>
             {t('home.memberSince', { days: getDaysSinceRegistration(), company: process.env.EXPO_PUBLIC_COMPANY_NAME })}
@@ -63,11 +73,11 @@ export default function HomeScreen() {
         </View>
 
         <View style={{ marginBottom: 24, marginTop: 12 }}>
-          <ReceiptActivityChart receipts={receipts} days={DAYS_TO_SHOW} />
+          <ReceiptActivityChart data={dailyData} />
         </View>
 
         <View style={{ marginBottom: 24 }}>
-          <CategoryBreakdown receipts={receipts} days={DAYS_TO_SHOW} />
+          <CategoryBreakdown data={dailyData} />
         </View>
       </ScrollView>
     </SafeAreaView>
