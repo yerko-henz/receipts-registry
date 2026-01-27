@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/theme'
-import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from '@/constants/categories'
+import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories'
 import { useTranslation } from 'react-i18next'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
@@ -275,7 +275,7 @@ export default function ReceiptsUnifiedScreen() {
             <View style={styles.cardLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
                     {(() => {
-                        const CategoryIcon = item.category ? CATEGORY_ICONS[item.category] || DEFAULT_CATEGORY_ICON : DEFAULT_CATEGORY_ICON
+                        const CategoryIcon = item.category ? getCategoryIcon(item.category) : DEFAULT_CATEGORY_ICON
                         return <CategoryIcon size={20} color={colors.icon} />
                     })()}
                 </View>

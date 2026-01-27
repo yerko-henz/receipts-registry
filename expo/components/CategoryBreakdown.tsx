@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Receipt } from '@/services/receipts';
-import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from '@/constants/categories';
+import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories';
 import { ProgressBar } from '@/components/receiptAnalizer/components/ProgressBar';
 
 import { DayData } from '@/lib/date';
@@ -59,7 +59,7 @@ export default function CategoryBreakdown({ data }: Props) {
 
       <View style={styles.list}>
         {categoryData.categories.map((item) => {
-          const Icon = CATEGORY_ICONS[item.category] || DEFAULT_CATEGORY_ICON;
+          const Icon = getCategoryIcon(item.category);
           
           return (
             <View key={item.category} style={styles.itemContainer}>

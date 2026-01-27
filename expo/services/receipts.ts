@@ -1,6 +1,7 @@
 import { supabase, uploadFile } from '../lib/supabase';
 import { Database } from '../lib/types';
 import { ReceiptData } from '@/components/receiptAnalizer/types';
+import { ReceiptCategory } from '@/constants/categories';
 import { isIntegrityAcceptable } from './receiptIntegrity';
 
 export type Receipt = Database['public']['Tables']['receipts']['Row'] & {
@@ -11,7 +12,7 @@ export type NewReceiptWithItems = {
   total: number;
   currency: string;
   date: string;
-  category: string;
+  category: ReceiptCategory;
   tax_amount: number;
   image_url?: string;
   raw_ai_output: any;

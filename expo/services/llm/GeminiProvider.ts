@@ -56,7 +56,7 @@ export class GeminiProvider implements ReceiptAnalysisProvider {
             total: { type: Type.NUMBER },
             category: { 
               type: Type.STRING, 
-              description: "One word: Food, Transport, Shopping, Health, or Other" 
+              description: "Must be exactly one of: Food, Transport, Utilities, Entertainment, Shopping, Health, Other" 
             },
             taxRate: { type: Type.NUMBER, description: "Tax rate as a decimal (e.g., 0.19 for 19%)" },
           },

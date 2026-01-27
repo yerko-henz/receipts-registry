@@ -1,3 +1,5 @@
+import { ReceiptCategory } from "@/constants/categories";
+
 export interface ReceiptItem {
   name: string;
   quantity: number;
@@ -13,7 +15,7 @@ export interface ReceiptData {
   discount?: number;
   total: number;
   currency: string;
-  category: string;
+  category: ReceiptCategory;
   taxRate?: number;
   integrityScore?: number;
   imageUri?: string;
