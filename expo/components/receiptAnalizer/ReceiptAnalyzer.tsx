@@ -1,15 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager, TouchableOpacity, Image } from 'react-native';
 import { AnalysisState, ReceiptData, ProcessedReceipt } from './types';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/components/ThemeProvider';
 import { Save, Download, Loader2 } from 'lucide-react-native';
-import { isIntegrityAcceptable } from '@/services/receiptIntegrity';
 
 // Extracted Components
-import { AnalysisError } from './components/AnalysisError';
-import { AnalysisLoading } from './components/AnalysisLoading';
 import { MerchantHeader } from './components/MerchantHeader';
 import { ItemsTable } from './components/ItemsTable';
 import { SummarySection } from './components/SummarySection';
@@ -147,7 +144,6 @@ export const ReceiptAnalyzer: React.FC<AnalysisState> = ({ items, onSave, onSave
   const [isSavingAll, setIsSavingAll] = React.useState(false);
 
   const completedCount = items.filter(i => i.status === 'completed').length;
-  const processingCount = items.filter(i => i.status === 'processing').length;
 
   const handleSaveAll = async () => {
     const completedItems = items.filter(i => i.status === 'completed' && i.data);
