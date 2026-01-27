@@ -1,4 +1,5 @@
 import ReceiptActivityChart from '@/components/ReceiptActivityChart'
+import CategoryBreakdown from '@/components/CategoryBreakdown'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useGlobalStore } from '@/store/useGlobalStore'
@@ -63,6 +64,10 @@ export default function HomeScreen() {
 
         <View style={{ marginBottom: 24, marginTop: 12 }}>
           <ReceiptActivityChart receipts={receipts} days={DAYS_TO_SHOW} />
+        </View>
+
+        <View style={{ marginBottom: 24 }}>
+          <CategoryBreakdown receipts={receipts} days={DAYS_TO_SHOW} />
         </View>
       </ScrollView>
     </SafeAreaView>

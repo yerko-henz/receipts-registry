@@ -7,6 +7,7 @@ import { matchFont as matchFontSkia } from '@shopify/react-native-skia';
 import { Receipt } from '@/services/receipts';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { toLocalISOString, getLastNDaysKeys } from '@/lib/date';
 
 interface Props {
   receipts: Receipt[];
@@ -27,24 +28,11 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
 
   // Compute final data from receipts
   const finalData = useMemo(() => {
-    // Helper to get local YYYY-MM-DD
-    const toLocalISOString = (date: Date) => {
-        const offset = date.getTimezoneOffset() * 60000;
-        const localDate = new Date(date.getTime() - offset);
-        return localDate.toISOString().split('T')[0];
-    };
-
     const now = new Date();
     const REF_DATE_STR = toLocalISOString(now);
     
     // Generate last N days keys (YYYY-MM-DD) in Local Time
-    const lastNDays: string[] = [];
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(now.getDate() - i);
-      lastNDays.push(toLocalISOString(d));
-    }
+    const lastNDays = getLastNDaysKeys(days);
 
     // Initialize counts
     const counts: Record<string, number> = {};
@@ -166,6 +154,10 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
     });
   }, [selectedDate, receipts]);
 
+  const selectedTotal = useMemo(() => {
+    return selectedReceipts.reduce((sum, r) => sum + (r.total_amount || 0), 0);
+  }, [selectedReceipts]);
+
   const openModal = () => {
       setModalVisible(true);
       Animated.parallel([
@@ -220,8 +212,11 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
 
     if (index >= 0 && index < finalData.length) {
       const item = finalData[index];
-      setSelectedDate(item.dateKey);
-      openModal();
+      // Only open modal if there are receipts
+      if (item.count > 0) {
+        setSelectedDate(item.dateKey);
+        openModal();
+      }
     }
   };
 
@@ -313,9 +308,16 @@ export default function ReceiptActivityChart({ receipts, days = 7 }: Props) {
                 ]}
             >
                 <View style={styles.modalHeader}>
-                    <Text style={[styles.modalTitle, { color: themeColors.text }]}>
-                        {selectedDate ? new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) : ''}
-                    </Text>
+                    <View>
+                        <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+                            {selectedDate ? new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) : ''}
+                        </Text>
+                        {selectedTotal > 0 && (
+                            <Text style={[styles.modalSubtitle, { color: themeColors.tint }]}>
+                                Total: ${selectedTotal.toFixed(2)}
+                            </Text>
+                        )}
+                    </View>
                     <Pressable onPress={closeModal} hitSlop={10}>
                         <Text style={{ color: themeColors.icon, fontSize: 20 }}>✕</Text>
                     </Pressable>
@@ -406,6 +408,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 4,
   },
   receiptItem: {
     flexDirection: 'row',

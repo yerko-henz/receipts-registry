@@ -155,7 +155,8 @@
     "weeklyActivity": "Weekly Activity",
     "noReceiptsOnDay": "No receipts uploaded on this day.",
     "unknownMerchant": "Unknown Merchant",
-    "uncategorized": "Uncategorized"
+    "uncategorized": "Uncategorized",
+    "spendingBreakdown": "Spending Breakdown"
   },
   "receipts": {
     "title": "Receipts",

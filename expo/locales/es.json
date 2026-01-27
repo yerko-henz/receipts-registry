@@ -155,7 +155,8 @@
     "weeklyActivity": "Actividad Semanal",
     "noReceiptsOnDay": "No hay recibos subidos en este día.",
     "unknownMerchant": "Comercio Desconocido",
-    "uncategorized": "Sin Categoría"
+    "uncategorized": "Sin Categoría",
+    "spendingBreakdown": "Desglose de Gastos"
   },
   "receipts": {
     "title": "Recibos",
