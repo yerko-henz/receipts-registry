@@ -19,7 +19,7 @@ export default function TwoFactorScreen() {
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [factors, setFactors] = useState<any[]>([])
+
   const [selectedFactorId, setSelectedFactorId] = useState('')
 
   useEffect(() => {
@@ -27,10 +27,10 @@ export default function TwoFactorScreen() {
   }, [])
 
   async function loadFactors() {
-    const { data, error } = await supabase.auth.mfa.listFactors()
+    const { data } = await supabase.auth.mfa.listFactors()
     if (data) {
       const totpFactors = data.totp || []
-      setFactors(totpFactors)
+
       if (totpFactors.length === 1) {
         setSelectedFactorId(totpFactors[0].id)
       }

@@ -6,7 +6,6 @@ import {
   Dimensions,
   FlatList,
   TouchableOpacity,
-  Image,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native'
@@ -15,10 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
   interpolate,
   Extrapolation,
-  useDerivedValue,
   SharedValue,
 } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
@@ -28,7 +25,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 
 import { getLocales } from 'expo-localization'
 
-const { width, height } = Dimensions.get('window')
+const { width } = Dimensions.get('window')
 
 const SLIDES = [
   {

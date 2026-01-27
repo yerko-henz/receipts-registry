@@ -1,15 +1,15 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, Platform, Modal, Pressable, Animated, TouchableWithoutFeedback } from 'react-native';
 // @ts-ignore - victory-native types might be tricky or missing in this setup
 import { CartesianChart, Bar } from 'victory-native';
 import { matchFont as matchFontSkia } from '@shopify/react-native-skia';
-import { Receipt } from '@/services/receipts';
+
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import { toLocalISOString, getLastNDaysKeys } from '@/lib/date';
-
 import { DayData } from '@/lib/date';
+
+
 import { formatPrice } from '@/lib/currency';
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function ReceiptActivityChart({ data }: Props) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
 
@@ -308,7 +308,7 @@ export default function ReceiptActivityChart({ data }: Props) {
                                     </Text>
                                 </View>
                                 <Text style={[styles.receiptAmount, { color: themeColors.text }]}>
-                                    {formatPrice(r.total_amount || 0, r.currency)}
+                                    {formatPrice(r.total_amount || 0, r.currency || undefined)}
                                 </Text>
                             </View>
                         ))}
@@ -321,12 +321,7 @@ export default function ReceiptActivityChart({ data }: Props) {
   );
 }
 
-// Helper to get formatted day name
-const getDayName = (dateStr: string, language: string = 'en') => {
-  const date = new Date(dateStr + 'T12:00:00');
-  // Simple localized day name
-  return date.toLocaleDateString(language, { weekday: 'short' });
-};
+
 
 const styles = StyleSheet.create({
   card: {

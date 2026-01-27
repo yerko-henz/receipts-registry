@@ -75,7 +75,7 @@ export default function RegisterScreen() {
   const openLink = async (url: string) => {
     try {
       await WebBrowser.openBrowserAsync(url)
-    } catch (error) {
+    } catch {
       // Fallback to Linking if WebBrowser fails
       Linking.openURL(url)
     }

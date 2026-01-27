@@ -4,8 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Receipt } from '@/services/receipts';
-import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories';
+import { getCategoryIcon } from '@/constants/categories';
 import { ProgressBar } from '@/components/receiptAnalizer/components/ProgressBar';
 
 import { DayData } from '@/lib/date';

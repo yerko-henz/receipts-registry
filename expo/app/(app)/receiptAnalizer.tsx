@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { Upload, RefreshCw, ShoppingBag, Percent, Banknote, ScanLine } from 'lucide-react-native';
+import { Upload, RefreshCw } from 'lucide-react-native';
 
 import { ReceiptAnalyzer } from '@/components/receiptAnalizer/ReceiptAnalyzer';
-import { ReceiptData, AnalysisState } from '@/components/receiptAnalizer/types';
+import { ReceiptData } from '@/components/receiptAnalizer/types';
 import { createReceipts } from '@/services/receipts';
 import { useScannerStore } from '@/store/useScannerStore';
 import { useReceiptsStore } from '@/store/useReceiptsStore';

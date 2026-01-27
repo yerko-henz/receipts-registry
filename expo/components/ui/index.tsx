@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { useRouter, useSegments } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 

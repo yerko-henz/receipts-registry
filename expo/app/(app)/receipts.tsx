@@ -1,6 +1,6 @@
 import { Colors } from '@/constants/theme'
 import { formatPrice } from '@/lib/currency'
-import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories'
+import { DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories'
 import { useTranslation } from 'react-i18next'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
@@ -8,8 +8,8 @@ import { useGlobalStore } from '@/store/useGlobalStore'
 import { Receipt } from '@/services/receipts'
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { enUS, es } from 'date-fns/locale'
-import { useFocusEffect, useRouter } from 'expo-router'
-import { Store, Search, ChevronDown, ChevronUp, Image as ImageIcon, Trash2, TrendingUp, Eye } from 'lucide-react-native'
+import { useFocusEffect } from 'expo-router'
+import { Store, Search, ChevronDown, ChevronUp, Trash2, TrendingUp, Eye } from 'lucide-react-native'
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
 import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert, ActivityIndicator } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
@@ -28,10 +28,10 @@ if (Platform.OS === 'android') {
 
 export default function ReceiptsUnifiedScreen() {
   const { t } = useTranslation()
-  const router = useRouter()
+
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
-  const { receipts, fetchReceipts, isLoading, removeReceipt } = useReceiptsStore()
+  const { receipts, fetchReceipts, removeReceipt } = useReceiptsStore()
   const region = useGlobalStore(state => state.region)
   const [refreshing, setRefreshing] = useState(false)
   
@@ -110,7 +110,7 @@ export default function ReceiptsUnifiedScreen() {
       savedTranslateX.value = 0
       savedTranslateY.value = 0
     }
-  }, [modalReceipt])
+  }, [modalReceipt, scale, savedScale, translateX, translateY, savedTranslateX, savedTranslateY])
   
   // Date Mode State
   const [dateMode, setDateMode] = useState<'transaction' | 'created'>('transaction')
@@ -201,7 +201,7 @@ export default function ReceiptsUnifiedScreen() {
       flatList.push(...group.data) // Items
     })
     return flatList
-  }, [filteredReceipts, dateMode])
+  }, [filteredReceipts, dateMode, dateLocale, t])
 
   const totalSpent = useMemo(() => {
     return filteredReceipts.reduce((sum, r) => sum + (r.total_amount ?? 0), 0)
@@ -372,7 +372,7 @@ export default function ReceiptsUnifiedScreen() {
         )}
       </Pressable>
     )
-  }, [expandedId, colors, dateMode, region])
+  }, [expandedId, colors, dateMode, handleDelete, t, toggleExpand])
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
