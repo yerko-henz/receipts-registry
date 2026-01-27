@@ -13,6 +13,7 @@ import { Store, Search, ChevronDown, ChevronUp, Trash2, TrendingUp, Eye } from '
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
 import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert, ActivityIndicator } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
+import { DateRangeFilter } from '@/components/DateRangeFilter'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated'
@@ -25,6 +26,10 @@ if (Platform.OS === 'android') {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
 }
+
+import { ENABLE_TRANSACTION_DATE_FILTER } from '@/constants/featureFlags'
+
+// ... existing code ...
 
 export default function ReceiptsUnifiedScreen() {
   const { t } = useTranslation()
@@ -39,6 +44,10 @@ export default function ReceiptsUnifiedScreen() {
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  
+  // Date Range State
+  const [startDate, setStartDate] = useState<string | null>(null)
+  const [endDate, setEndDate] = useState<string | null>(null)
   
   // Modal State
   const [modalReceipt, setModalReceipt] = useState<Receipt | null>(null)
@@ -95,8 +104,6 @@ export default function ReceiptsUnifiedScreen() {
   const closeButtonStyle = useAnimatedStyle(() => {
       return {
           opacity: withTiming(scale.value > 1.1 ? 0 : 1),
-          // Using pointerEvents to disable clicks when hidden would be ideal but opacity 0 is often sufficient visually. 
-          // However, to be safe, we can move it out of the way or relies on user not clicking invisible button.
       }
   })
 
@@ -111,9 +118,10 @@ export default function ReceiptsUnifiedScreen() {
       savedTranslateY.value = 0
     }
   }, [modalReceipt, scale, savedScale, translateX, translateY, savedTranslateX, savedTranslateY])
-  
-  // Date Mode State
-  const [dateMode, setDateMode] = useState<'transaction' | 'created'>('transaction')
+  // Default to 'created' if the transaction date filter feature is disabled
+  const [dateMode, setDateMode] = useState<'transaction' | 'created'>(
+      ENABLE_TRANSACTION_DATE_FILTER ? 'transaction' : 'created'
+  )
 
   const flashListRef = useRef<any>(null)
 
@@ -164,9 +172,35 @@ export default function ReceiptsUnifiedScreen() {
       const matchesFilter = activeFilter === 'All' || (r.category && r.category.includes(activeFilter))
       const matchesSearch = searchQuery === '' || 
                             (r.merchant_name && r.merchant_name.toLowerCase().includes(searchQuery.toLowerCase()))
-      return matchesFilter && matchesSearch
+      
+      let matchesDate = true
+      if (startDate) {
+          const rDateStr = dateMode === 'transaction' ? r.transaction_date : r.created_at
+          if (rDateStr) {
+              const rDate = parseISO(rDateStr)
+              const start = parseISO(startDate)
+              if (endDate) {
+                  const end = parseISO(endDate)
+                  // Check if within range [start, end]
+                  // compare using date strings or timestamps to be safe with times?
+                  // parseISO returns Date. 
+                  // Let's use simple string comparison for YYYY-MM-DD if data is clean, but timestamps are safer.
+                  // Actually simplest is just simple comparison if we zero out times, but let's use string comparison for YYYY-MM-DD
+                  const rYMD = format(rDate, 'yyyy-MM-dd')
+                  matchesDate = rYMD >= startDate && rYMD <= endDate
+              } else {
+                  // Single day
+                  const rYMD = format(rDate, 'yyyy-MM-dd')
+                  matchesDate = rYMD === startDate
+              }
+          } else {
+              matchesDate = false
+          }
+      }
+
+      return matchesFilter && matchesSearch && matchesDate
     })
-  }, [receipts, activeFilter, searchQuery])
+  }, [receipts, activeFilter, searchQuery, startDate, endDate, dateMode])
 
   // Get the appropriate locale for date formatting
   const { i18n } = useTranslation()
@@ -436,24 +470,37 @@ export default function ReceiptsUnifiedScreen() {
             ))}
           </ScrollView>
 
-          {/* Sort Toggles */}
-          <View style={[styles.sortContainer, { borderColor: colors.border }]}>
-             <Pressable 
-                style={[styles.sortBtn, dateMode === 'transaction' && { backgroundColor: colors.card }]}
-                onPress={() => setDateMode('transaction')}
-             >
-                <Text style={[styles.sortBtnText, { color: dateMode === 'transaction' ? colors.tint : colors.icon }]}>
-                    {t('receipts.receiptDate')}
-                </Text>
-             </Pressable>
-             <Pressable 
-                style={[styles.sortBtn, dateMode === 'created' && { backgroundColor: colors.card }]}
-                onPress={() => setDateMode('created')}
-             >
-                <Text style={[styles.sortBtnText, { color: dateMode === 'created' ? colors.tint : colors.icon }]}>
-                    {t('receipts.uploadDate')}
-                </Text>
-             </Pressable>
+          {/* Sort Toggles - Only show if enabled */}
+          {ENABLE_TRANSACTION_DATE_FILTER && (
+              <View style={[styles.sortContainer, { borderColor: colors.border }]}>
+                 <Pressable 
+                    style={[styles.sortBtn, dateMode === 'transaction' && { backgroundColor: colors.card }]}
+                    onPress={() => setDateMode('transaction')}
+                 >
+                    <Text style={[styles.sortBtnText, { color: dateMode === 'transaction' ? colors.tint : colors.icon }]}>
+                        {t('receipts.receiptDate')}
+                    </Text>
+                 </Pressable>
+                 <Pressable 
+                    style={[styles.sortBtn, dateMode === 'created' && { backgroundColor: colors.card }]}
+                    onPress={() => setDateMode('created')}
+                 >
+                    <Text style={[styles.sortBtnText, { color: dateMode === 'created' ? colors.tint : colors.icon }]}>
+                        {t('receipts.uploadDate')}
+                    </Text>
+                 </Pressable>
+              </View>
+          )}
+          
+          <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+            <DateRangeFilter 
+                startDate={startDate} 
+                endDate={endDate} 
+                onRangeChange={(start, end) => {
+                    setStartDate(start)
+                    setEndDate(end)
+                }} 
+            />
           </View>
       </View>
 
