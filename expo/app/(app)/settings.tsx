@@ -8,8 +8,10 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { storage } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'expo-router'
+import { useGlobalStore } from '@/store/useGlobalStore'
 import { useTheme } from '@/components/ThemeProvider'
-import { ChevronRight, Globe, Key, Mail, Palette, Shield, User } from 'lucide-react-native'
+import { setRegionLocale } from '@/lib/currency'
+import { ChevronRight, Globe, Key, Mail, Palette, Shield, User, MapPin } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal, Alert as RNAlert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
@@ -24,6 +26,15 @@ type SettingConfig = {
   order: number
 }
 
+const REGIONS = [
+  { code: 'en-US', label: 'United States (USD)', currency: 'USD' },
+  { code: 'es-CL', label: 'Chile (CLP)', currency: 'CLP' },
+  { code: 'es-MX', label: 'Mexico (MXN)', currency: 'MXN' },
+  { code: 'es-AR', label: 'Argentina (ARS)', currency: 'ARS' },
+  { code: 'es-CO', label: 'Colombia (COP)', currency: 'COP' },
+  { code: 'es-PE', label: 'Peru (PEN)', currency: 'PEN' },
+]
+
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation()
   const router = useRouter()
@@ -37,6 +48,8 @@ export default function SettingsScreen() {
   const { theme, setTheme } = useTheme()
   const [showLanguageModal, setShowLanguageModal] = useState(false)
   const [showThemeModal, setShowThemeModal] = useState(false)
+  const [showRegionModal, setShowRegionModal] = useState(false)
+  const [region, setRegion] = useState('en-US')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
@@ -54,8 +67,9 @@ export default function SettingsScreen() {
     { id: 'changePassword', visible: true, order: 3 },
     { id: 'mfa', visible: false, order: 4 },
     { id: 'language', visible: true, order: 5 },
-    { id: 'theme', visible: true, order: 6 },
-    { id: 'logout', visible: true, order: 7 },
+    { id: 'region', visible: true, order: 6 },
+    { id: 'theme', visible: true, order: 7 },
+    { id: 'logout', visible: true, order: 8 },
   ]
 
   const isSettingVisible = (settingId: string) => {
@@ -66,7 +80,13 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadUser()
     loadMFAFactors()
+    loadRegion()
   }, [])
+
+  async function loadRegion() {
+      const saved = await storage.getRegion()
+      if (saved) setRegion(saved)
+  }
 
   useEffect(() => {
     let interval: any
@@ -198,6 +218,14 @@ export default function SettingsScreen() {
     setShowThemeModal(false)
   }
 
+  async function handleChangeRegion(reg: string) {
+      await storage.setRegion(reg)
+      setRegionLocale(reg)
+      useGlobalStore.getState().setRegion(reg) // Sync to store
+      setRegion(reg)
+      setShowRegionModal(false)
+  }
+
   async function handleLogout() {
     RNAlert.alert(
       t('auth.logout'),
@@ -325,6 +353,28 @@ export default function SettingsScreen() {
                     </Text>
                     <Text style={[styles.settingSubtext, { color: colors.icon }]}>
                       {SUPPORTED_LANGUAGES.find(l => l.code === i18n.language)?.label || 'English'}
+                    </Text>
+                  </View>
+                </View>
+                <ChevronRight size={20} color={colors.icon} />
+              </View>
+            </Card>
+          </TouchableOpacity>
+        )}
+
+        {/* Region */}
+        {isSettingVisible('region') && (
+          <TouchableOpacity onPress={() => setShowRegionModal(true)}>
+            <Card>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <MapPin size={20} color={colors.icon} />
+                  <View>
+                    <Text style={[styles.settingText, { color: colors.text }]}>
+                      {t('settings.regionCurrency', { defaultValue: 'Region & Currency' })}
+                    </Text>
+                    <Text style={[styles.settingSubtext, { color: colors.icon }]}>
+                      {REGIONS.find(r => r.code === region)?.label || 'United States'}
                     </Text>
                   </View>
                 </View>
@@ -583,6 +633,47 @@ export default function SettingsScreen() {
                   { color: theme === option.value ? '#fff' : colors.text }
                 ]}>
                   {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Region Modal */}
+      <Modal
+        visible={showRegionModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowRegionModal(false)}
+      >
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t('settings.regionCurrency', { defaultValue: 'Region & Currency' })}
+            </Text>
+            <TouchableOpacity onPress={() => setShowRegionModal(false)}>
+              <Text style={{ color: colors.tint }}>
+                {t('settings.close')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            {REGIONS.map((reg) => (
+              <TouchableOpacity
+                key={reg.code}
+                style={[
+                  styles.languageOption,
+                  region === reg.code && { backgroundColor: colors.tint }
+                ]}
+                onPress={() => handleChangeRegion(reg.code)}
+              >
+                <Text style={[
+                  styles.languageText,
+                  { color: region === reg.code ? '#fff' : colors.text }
+                ]}>
+                  {reg.label}
                 </Text>
               </TouchableOpacity>
             ))}

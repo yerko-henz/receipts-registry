@@ -118,6 +118,7 @@
   "settings": {
     "title": "Settings",
     "language": "Language",
+    "regionCurrency": "Region & Currency",
     "changePassword": "Change Password",
     "mfa": "Two-Factor Authentication",
     "userDetails": "User Details",

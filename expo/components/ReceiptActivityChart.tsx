@@ -10,6 +10,7 @@ import { Colors } from '@/constants/theme';
 import { toLocalISOString, getLastNDaysKeys } from '@/lib/date';
 
 import { DayData } from '@/lib/date';
+import { formatPrice } from '@/lib/currency';
 
 interface Props {
   data: DayData[];
@@ -283,7 +284,7 @@ export default function ReceiptActivityChart({ data }: Props) {
                         </Text>
                         {selectedTotal > 0 && (
                             <Text style={[styles.modalSubtitle, { color: themeColors.tint }]}>
-                                Total: ${selectedTotal.toFixed(2)}
+                                Total: {formatPrice(selectedTotal)}
                             </Text>
                         )}
                     </View>
@@ -307,7 +308,7 @@ export default function ReceiptActivityChart({ data }: Props) {
                                     </Text>
                                 </View>
                                 <Text style={[styles.receiptAmount, { color: themeColors.text }]}>
-                                    {r.currency} {r.total_amount?.toFixed(2)}
+                                    {formatPrice(r.total_amount || 0, r.currency)}
                                 </Text>
                             </View>
                         ))}

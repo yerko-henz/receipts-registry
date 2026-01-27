@@ -9,6 +9,7 @@ import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/consta
 import { ProgressBar } from '@/components/receiptAnalizer/components/ProgressBar';
 
 import { DayData } from '@/lib/date';
+import { formatPrice } from '@/lib/currency';
 
 interface Props {
   data: DayData[];
@@ -76,7 +77,7 @@ export default function CategoryBreakdown({ data }: Props) {
                 
                 <View style={styles.right}>
                    <Text style={[styles.amount, { color: colors.text }]}>
-                      ${item.amount.toFixed(2)}
+                      {formatPrice(item.amount)}
                    </Text>
                    <Text style={[styles.percentageText, { color: colors.icon }]}>
                       {item.percentage.toFixed(1)}%

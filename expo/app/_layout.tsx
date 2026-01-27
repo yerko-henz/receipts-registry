@@ -1,6 +1,8 @@
 import '@/lib/i18n'
 import { supabase } from '@/lib/supabase'
 import { useGlobalStore } from '@/store/useGlobalStore'
+import { setRegionLocale } from '@/lib/currency'
+import { storage } from '@/lib/storage'
 import * as Linking from 'expo-linking'
 import { Stack, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
@@ -32,6 +34,14 @@ function RootLayoutContent() {
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
+      
+      // Load saved region
+      storage.getRegion().then(region => {
+          if (region) {
+              setRegionLocale(region);
+              useGlobalStore.getState().setRegion(region); // Sync to store
+          }
+      });
     }
   }, [fontsLoaded]);
 

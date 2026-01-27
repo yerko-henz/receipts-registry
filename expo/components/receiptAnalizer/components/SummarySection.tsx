@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/components/ThemeProvider';
+import { formatPrice } from '@/lib/currency';
 
 interface SummarySectionProps {
   taxAmount?: number;
@@ -22,11 +23,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
   const themeColors = Colors[colorScheme ?? 'light'];
 
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency.replace(/[^A-Z]/g, '') || 'USD',
-      currencyDisplay: 'narrowSymbol'
-    }).format(val).replace('USD', '$');
+    return formatPrice(val, currency);
   };
 
   const dynamicStyles = StyleSheet.create({

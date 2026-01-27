@@ -18,4 +18,12 @@ export const storage = {
   async setTheme(theme: string): Promise<void> {
     await AsyncStorage.setItem('@app_theme', theme)
   },
+
+  async getRegion(): Promise<string | null> {
+    return AsyncStorage.getItem('@app_region')
+  },
+
+  async setRegion(region: string): Promise<void> {
+    await AsyncStorage.setItem('@app_region', region)
+  },
 }

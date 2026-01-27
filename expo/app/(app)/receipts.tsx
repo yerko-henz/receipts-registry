@@ -1,8 +1,10 @@
 import { Colors } from '@/constants/theme'
+import { formatPrice } from '@/lib/currency'
 import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories'
 import { useTranslation } from 'react-i18next'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
+import { useGlobalStore } from '@/store/useGlobalStore'
 import { Receipt } from '@/services/receipts'
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { enUS, es } from 'date-fns/locale'
@@ -30,6 +32,7 @@ export default function ReceiptsUnifiedScreen() {
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
   const { receipts, fetchReceipts, isLoading, removeReceipt } = useReceiptsStore()
+  const region = useGlobalStore(state => state.region)
   const [refreshing, setRefreshing] = useState(false)
   
   // Dashboard State (Filters)
@@ -293,7 +296,7 @@ export default function ReceiptsUnifiedScreen() {
             </View>
             <View style={styles.cardRight}>
                  <Text style={[styles.amount, { color: colors.text }]}>
-                    {item.currency} {(item.total_amount ?? 0).toFixed(2)}
+                    {formatPrice(item.total_amount ?? 0)}
                  </Text>
                  {isExpanded ? <ChevronUp size={18} color={colors.icon} /> : <ChevronDown size={18} color={colors.icon} />}
             </View>
@@ -320,7 +323,7 @@ export default function ReceiptsUnifiedScreen() {
                 <View style={styles.detailRow}>
                     <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.tax')}</Text>
                     <Text style={[styles.detailValue, { color: colors.text }]}>
-                        {item.currency} {(item.tax_amount ?? 0).toFixed(2)}
+                        {formatPrice(item.tax_amount ?? 0)}
                     </Text>
                 </View>
 
@@ -335,11 +338,11 @@ export default function ReceiptsUnifiedScreen() {
                                         {rItem.description || rItem.name || 'Item'}
                                     </Text>
                                     <Text style={[styles.itemQty, { color: colors.icon }]}>
-                                        {rItem.quantity} x {item.currency}{(rItem.unit_price ?? 0).toFixed(2)}
+                                        {rItem.quantity} x {formatPrice(rItem.unit_price ?? 0)}
                                     </Text>
                                 </View>
                                 <Text style={[styles.itemTotal, { color: colors.text }]}>
-                                    {item.currency}{(rItem.total_price ?? 0).toFixed(2)}
+                                    {formatPrice(rItem.total_price ?? 0)}
                                 </Text>
                             </View>
                         ))}
@@ -369,8 +372,7 @@ export default function ReceiptsUnifiedScreen() {
         )}
       </Pressable>
     )
-
-  }, [expandedId, colors, dateMode])
+  }, [expandedId, colors, dateMode, region])
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -386,7 +388,7 @@ export default function ReceiptsUnifiedScreen() {
              <View style={[styles.totalBadge, { backgroundColor: colors.tint + '20' }]}>
                  <TrendingUp size={16} color={colors.tint} />
                  <Text style={[styles.totalAmount, { color: colors.tint }]}>
-                    ${totalSpent.toFixed(2)}
+                    {formatPrice(totalSpent)}
                  </Text>
              </View>
         </View>
@@ -459,7 +461,7 @@ export default function ReceiptsUnifiedScreen() {
           <FlashList
             ref={flashListRef}
             data={groupedData}
-            extraData={expandedId}
+            extraData={[expandedId, region]}
             renderItem={renderItem}
             getItemType={(item) => (typeof item === 'string' ? 'header' : 'row')}
             // @ts-ignore
