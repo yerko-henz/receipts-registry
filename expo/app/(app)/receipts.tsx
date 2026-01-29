@@ -9,14 +9,17 @@ import { Receipt } from '@/services/receipts'
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { enUS, es } from 'date-fns/locale'
 import { useFocusEffect } from 'expo-router'
-import { Store, Search, ChevronDown, ChevronUp, Trash2, TrendingUp, Eye } from 'lucide-react-native'
+import { Store, Search, ChevronDown, ChevronUp, Trash2, TrendingUp, Eye, RefreshCw } from 'lucide-react-native'
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
-import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert, ActivityIndicator } from 'react-native'
+import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert, ActivityIndicator, Linking } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { DateRangeFilter } from '@/components/DateRangeFilter'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated'
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { syncReceiptsToSheet } from '@/services/google-sheets';
 
 const AnimatedImage = Animated.createAnimatedComponent(Image)
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -38,7 +41,28 @@ export default function ReceiptsUnifiedScreen() {
   const colors = Colors[colorScheme ?? 'light']
   const { receipts, fetchReceipts, removeReceipt } = useReceiptsStore()
   const region = useGlobalStore(state => state.region)
+
+
   const [refreshing, setRefreshing] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [sheetId, setSheetId] = useState<string | null>(null)
+  const [lastExport, setLastExport] = useState<string | null>(null)
+
+  // Load Saved Sheet State
+  useEffect(() => {
+    AsyncStorage.multiGet(['google_sheet_id', 'last_export_date']).then(([[_, id], [__, date]]) => {
+      if (id) setSheetId(id)
+      if (date) setLastExport(date)
+    })
+  }, [])
+  
+  const hasUnsyncedChanges = useMemo(() => {
+      if (receipts.length === 0) return false;
+      if (!lastExport) return true; // Have receipts but never exported -> Unsynced
+      
+      // If we have receipts newer than last export
+      return receipts.some(r => r.created_at > lastExport);
+  }, [receipts, lastExport])
   
   // Dashboard State (Filters)
   const [activeFilter, setActiveFilter] = useState('All')
@@ -156,6 +180,55 @@ export default function ReceiptsUnifiedScreen() {
             }
       ]
     )
+  }
+
+
+  const handleExport = async () => {
+    if (filteredReceipts.length === 0) {
+      Alert.alert(t('common.error'), t('receipts.noReceiptsToExport'))
+      return
+    }
+
+    try {
+      setExporting(true)
+      const result = await syncReceiptsToSheet(filteredReceipts, lastExport, t)
+      
+      // Save State
+      await AsyncStorage.multiSet([
+          ['google_sheet_id', result.spreadsheetId],
+          ['last_export_date', result.timestamp]
+      ])
+      setSheetId(result.spreadsheetId)
+      setLastExport(result.timestamp)
+
+      if (result.syncedCount === 0) {
+          Alert.alert(
+            t('common.info', { defaultValue: 'Info' }),
+            t('receipts.alreadySynced', { defaultValue: 'All receipts are already synced.' }),
+            [{ text: 'OK' }]
+          )
+      } else {
+          Alert.alert(
+            t('common.success'),
+            t('receipts.exportSuccess'),
+            [
+              { text: t('receipts.openSheet'), onPress: () => Linking.openURL(result.url) },
+              { text: 'OK', style: 'cancel' }
+            ]
+          )
+      }
+    } catch (error: any) {
+      console.error(error)
+      Alert.alert(t('receipts.exportError'), error.message || 'Could not export to Google Sheets')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleOpenSheet = () => {
+      if (sheetId) {
+          Linking.openURL(`https://docs.google.com/spreadsheets/d/${sheetId}`)
+      }
   }
 
   useFocusEffect(
@@ -419,11 +492,72 @@ export default function ReceiptsUnifiedScreen() {
              </Text>
         </View>
         <View style={styles.headerRight}>
-             <View style={[styles.totalBadge, { backgroundColor: colors.tint + '20' }]}>
-                 <TrendingUp size={16} color={colors.tint} />
-                 <Text style={[styles.totalAmount, { color: colors.tint }]}>
-                    {formatPrice(totalSpent)}
-                 </Text>
+             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <View style={[styles.totalBadge, { backgroundColor: colors.tint + '20' }]}>
+                    <TrendingUp size={16} color={colors.tint} />
+                    <Text style={[styles.totalAmount, { color: colors.tint }]}>
+                        {formatPrice(totalSpent)}
+                    </Text>
+                </View>
+
+                <Pressable 
+                  style={({pressed}) => {
+                    let bg = colors.card;
+                    
+                    if (hasUnsyncedChanges) {
+                         bg = colors.notification; // Red for unsynced
+                    } else if (sheetId) {
+                         bg = colors.tint + '20'; // Light Green/Tint for synced
+                    }
+
+                    return {
+                        padding: 8,
+                        borderRadius: 20,
+                        backgroundColor: bg,
+                        opacity: pressed || exporting ? 0.7 : 1,
+                        borderWidth: 1,
+                        borderColor: 'rgba(0,0,0,0.05)',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6
+                    }
+                  }}
+                  onPress={handleExport}
+                  disabled={exporting}
+                >
+                  {exporting ? (
+                    <ActivityIndicator size="small" color={hasUnsyncedChanges ? '#FFF' : colors.tint} />
+                  ) : (
+                    <>
+                        {hasUnsyncedChanges ? (
+                            <>
+                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#FFF' }} />
+                                <RefreshCw size={20} color="#FFF" />
+                            </>
+                        ) : sheetId ? (
+                            <RefreshCw size={20} color={colors.tint} />
+                        ) : (
+                            <RefreshCw size={20} color={colors.text} />
+                        )}
+                    </>
+                  )}
+                </Pressable>
+
+                {sheetId && (
+                    <Pressable 
+                        style={({pressed}) => ({
+                            padding: 8,
+                            borderRadius: 20,
+                            backgroundColor: colors.card,
+                            opacity: pressed ? 0.7 : 1,
+                            borderWidth: 1,
+                            borderColor: 'rgba(0,0,0,0.05)'
+                        })}
+                        onPress={handleOpenSheet}
+                    >
+                         <Eye size={20} color={colors.text} />
+                    </Pressable>
+                )}
              </View>
         </View>
       </View>

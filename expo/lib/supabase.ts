@@ -12,6 +12,10 @@ if (isNativeModuleAvailable && GoogleSignin) {
   try {
     GoogleSignin.configure({
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive.file',
+      ],
     })
   } catch (e) {
     console.warn('GoogleSignin configuration failed:', e)

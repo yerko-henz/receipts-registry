@@ -7,6 +7,7 @@ import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { storage } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
+import { GoogleSignin } from '@/lib/google-signin'
 import { useRouter } from 'expo-router'
 import { useGlobalStore } from '@/store/useGlobalStore'
 import { useTheme } from '@/components/ThemeProvider'
@@ -236,6 +237,14 @@ export default function SettingsScreen() {
           text: t('auth.logout'),
           style: 'destructive',
           onPress: async () => {
+            try {
+              if (GoogleSignin) {
+                await GoogleSignin.signOut()
+              }
+            } catch (error) {
+              console.error('Google Sign-Out Error:', error)
+            }
+            
             await supabase.auth.signOut()
             router.replace('/(auth)/login')
           },
