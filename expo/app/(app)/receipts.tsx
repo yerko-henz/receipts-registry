@@ -485,9 +485,9 @@ export default function ReceiptsUnifiedScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header with Total */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <View>
-             <Text style={[styles.headerTitle, { color: colors.text }]}>{t('receipts.title')}</Text>
-             <Text style={[styles.headerSubtitle, { color: colors.icon }]}>
+        <View style={{ flex: 1, paddingRight: 12 }}>
+             <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{t('receipts.title')}</Text>
+             <Text style={[styles.headerSubtitle, { color: colors.icon }]} numberOfLines={1} adjustsFontSizeToFit>
                 {filteredReceipts.length} {t('receipts.itemsFound')}
              </Text>
         </View>
@@ -993,34 +993,36 @@ const styles = StyleSheet.create({
       fontFamily: 'Manrope_700Bold',
   },
   actionsRow: {
-      flexDirection: 'column',
-      gap: 12,
-      marginTop: 20,
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
   },
   actionBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 12,
-      borderWidth: 1,
-      borderRadius: 10,
-      gap: 8,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderRadius: 10,
+    gap: 8,
   },
   actionBtnText: {
-      fontSize: 14,
-      fontFamily: 'Manrope_600SemiBold',
+    fontSize: 14,
+    fontFamily: 'Manrope_600SemiBold',
   },
   deleteBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 12,
-      borderRadius: 10,
-      gap: 8,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 8,
   },
   deleteBtnText: {
-      fontSize: 13,
-      fontFamily: 'Manrope_700Bold',
+    fontSize: 13,
+    fontFamily: 'Manrope_700Bold',
   },
   loaderContainer: {
       ...StyleSheet.absoluteFillObject,
