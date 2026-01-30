@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Upload, RefreshCw } from 'lucide-react-native';
 
 import { ReceiptAnalyzer } from '@/components/receiptAnalizer/ReceiptAnalyzer';
@@ -28,8 +29,8 @@ const App: React.FC = () => {
   const resetScanner = useScannerStore((state) => state.resetScanner);
   
   // Receipts Store (Persistence)
-  const addNewReceipt = useReceiptsStore((state) => state.addReceipt);
-  const fetchReceipts = useReceiptsStore((state) => state.fetchReceipts);
+  const addNewReceipt = useReceiptsStore((state) => state.actions.addReceipt);
+  const fetchReceipts = useReceiptsStore((state) => state.actions.fetchReceipts);
 
   // We can derive the analysis state expected by the UI from the store state
   // const [analysis, setAnalysis] = useState<AnalysisState>({
@@ -52,13 +53,34 @@ const App: React.FC = () => {
         allowsMultipleSelection: true,
         selectionLimit: 10, 
         allowsEditing: false, 
-        quality: 0.8,
-        base64: true,
+        quality: 0.8, // Initial quality, but we will compress further
+        base64: false, // We will get base64 from manipulator
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
+        // Optimize images before processing
+        const processedAssets = await Promise.all(result.assets.map(async (asset) => {
+            try {
+                const manipResult = await manipulateAsync(
+                    asset.uri,
+                    [{ resize: { width: 1080 } }], // Max width 1080px (maintains aspect ratio)
+                    { compress: 0.7, format: SaveFormat.JPEG, base64: true }
+                );
+                
+                return {
+                    ...asset,
+                    uri: manipResult.uri,
+                    width: manipResult.width,
+                    height: manipResult.height,
+                    base64: manipResult.base64
+                };
+            } catch (e) {
+                console.error("Image manipulation failed for", asset.uri, e);
+                return asset; // Fallback to original if optimization fails
+            }
+        }));
 
-        processImages(result.assets);
+        processImages(processedAssets);
       }
     } catch (e) {
       console.error(e);

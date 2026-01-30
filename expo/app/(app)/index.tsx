@@ -2,10 +2,11 @@ import ReceiptActivityChart from '@/components/ReceiptActivityChart'
 import CategoryBreakdown from '@/components/CategoryBreakdown'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
+import { getReceiptsByUserId, getRecentReceipts } from '@/services/receipts'
 import { useGlobalStore } from '@/store/useGlobalStore'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -19,25 +20,48 @@ export default function HomeScreen() {
   const user = useGlobalStore((state) => state.user)
   const receipts = useReceiptsStore((state) => state.receipts)
   const isLoading = useReceiptsStore((state) => state.isLoading)
-  const fetchReceipts = useReceiptsStore((state) => state.fetchReceipts)
+  const fetchReceipts = useReceiptsStore((state) => state.actions.fetchReceipts)
 
   // Refetch receipts when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      fetchReceipts()
+      fetchReceipts({ reset: true })
         .then(() => console.log(`[Home] Fetched receipts`))
-        .catch((err) => console.error('[Home] Failed to fetch receipts:', err))
+        .catch((err) => console.warn('[Home] Failed to fetch receipts:', err))
     }, [fetchReceipts])
   )
 
-  // Compute daily data buckets for the chart and breakdown (Write Once, Read Many)
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [loadingChart, setLoadingChart] = useState(true);
+  const dateMode = useReceiptsStore((state) => state.filters.dateMode) || 'created';
+
+  // Fetch dedicated chart data
+  useFocusEffect(
+      useCallback(() => {
+          if (!user?.id) return;
+          
+          setLoadingChart(true);
+          getRecentReceipts(user.id, 7)
+              .then(data => {
+                  setChartData(data);
+              })
+              .catch(err => console.warn('[Home] Failed to match chart data:', err))
+              .finally(() => setLoadingChart(false));
+
+      }, [user?.id])
+  );
+
+  // Compute daily data buckets from dedicated chartData
   const dailyData = useMemo(() => {
-     const data = groupReceiptsByDay(receipts, i18n.language);
+     // use chartData instead of receipts
+     const data = groupReceiptsByDay(chartData, i18n.language, dateMode);
      console.log('[Home] Daily Data Groups:', JSON.stringify(data, null, 2));
      return data;
-  }, [receipts, i18n.language]);
+  }, [chartData, i18n.language, dateMode]);
 
   const receiptsLoadedCount = useMemo(() => {
+      // For the subtitle, we might want to show total loaded in chart or total in list?
+      // "X items in last 7 days" -> use chart data
       return dailyData.reduce((acc, day) => acc + day.count, 0);
   }, [dailyData]);
 

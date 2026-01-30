@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, StyleSheet, Platform, Modal, Pressable, Animated, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Platform, Modal, Pressable, Animated, TouchableWithoutFeedback, ScrollView } from 'react-native';
 // @ts-ignore - victory-native types might be tricky or missing in this setup
 import { CartesianChart, Bar } from 'victory-native';
 import { matchFont as matchFontSkia } from '@shopify/react-native-skia';
@@ -298,7 +298,7 @@ export default function ReceiptActivityChart({ data }: Props) {
                         {t('chart.noReceiptsOnDay')}
                     </Text>
                 ) : (
-                    <View>
+                    <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={true}>
                         {selectedReceipts.map((r, i) => (
                             <View key={r.id || i} style={[styles.receiptItem, { borderBottomColor: themeColors.border }]}>
                                 <View style={{ flex: 1 }}>
@@ -312,7 +312,7 @@ export default function ReceiptActivityChart({ data }: Props) {
                                 </Text>
                             </View>
                         ))}
-                    </View>
+                    </ScrollView>
                 )}
             </Animated.View>
         </Animated.View>

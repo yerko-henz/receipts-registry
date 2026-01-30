@@ -3,6 +3,7 @@ import { Database } from '../lib/types';
 import { ReceiptData } from '@/components/receiptAnalizer/types';
 import { ReceiptCategory } from '@/constants/categories';
 import { isIntegrityAcceptable } from './receiptIntegrity';
+import { startOfDay, endOfDay, parseISO } from 'date-fns';
 
 export type Receipt = Database['public']['Tables']['receipts']['Row'] & {
   receipt_items?: Database['public']['Tables']['receipt_items']['Row'][];
@@ -110,15 +111,85 @@ export const getReceipts = async () => {
   return signReceiptImages(data);
 };
 
-export const getReceiptsByUserId = async (userId: string) => {
-  const { data, error } = await supabase
+export type ReceiptFilters = {
+    category?: string;
+    searchQuery?: string;
+    startDate?: string;
+    endDate?: string;
+    dateMode?: 'transaction' | 'created';
+};
+
+export const getReceiptsByUserId = async (
+    userId: string, 
+    page: number = 1, 
+    pageSize: number = 20,
+    filters?: ReceiptFilters
+) => {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  console.log(`[getReceiptsByUserId] Fetching page ${page} for user ${userId} with filters:`, JSON.stringify(filters));
+
+  let query = supabase
     .from('receipts')
-    .select('*, receipt_items(*)')
-    .eq('user_id', userId)
-    .order('transaction_date', { ascending: false });
+    .select('*, receipt_items(*)', { count: 'exact' })
+    .eq('user_id', userId);
+
+  // 1. Category Filter
+  if (filters?.category && filters.category !== 'All') {
+      query = query.eq('category', filters.category);
+  }
+
+  // 2. Search Filter (Merchant Name)
+  if (filters?.searchQuery) {
+      query = query.ilike('merchant_name', `%${filters.searchQuery}%`);
+  }
+
+  // 3. Date Filter
+  if (filters?.startDate) {
+      const dateColumn = filters.dateMode === 'created' ? 'created_at' : 'transaction_date';
+      
+      // Convert local YYYY-MM-DD string to specific UTC timestamps
+      // parseISO interprets YYYY-MM-DD as local start of day by default in date-fns context (usually)
+      // verify input format is YYYY-MM-DD
+      
+      const start = startOfDay(parseISO(filters.startDate));
+      query = query.gte(dateColumn, start.toISOString());
+
+      if (filters.endDate) {
+           const end = endOfDay(parseISO(filters.endDate));
+           query = query.lte(dateColumn, end.toISOString());
+      } else {
+           // If only start date is provided, assume single day selection?
+           // Or assume "From this date"? 
+           // Usually date pickers imply a range or single point. 
+           // If UI sends only startDate, we treat it as THAT DAY only (common receipt filter pattern)
+           // OR "From X onwards". 
+           // Let's assume strict single day if endDate is missing, to match expected "Filter by Date" behavior.
+           const end = endOfDay(parseISO(filters.startDate));
+           query = query.lte(dateColumn, end.toISOString());
+      }
+  }
+
+  const orderBy = filters?.dateMode === 'created' ? 'created_at' : 'transaction_date';
+  
+  // Apply sorting and pagination
+  query = query
+    .order(orderBy, { ascending: false })
+    .range(from, to);
+
+  const { data, error, count } = await query;
 
   if (error) throw error;
-  return signReceiptImages(data);
+  
+  const signedData = await signReceiptImages(data);
+  return { 
+      data: signedData, 
+      count: count,
+      page,
+      pageSize,
+      hasMore: (count || 0) > to + 1
+  };
 };
 
 export const getReceiptById = async (id: string) => {
@@ -133,6 +204,25 @@ export const getReceiptById = async (id: string) => {
   // Sign the single receipt
   const signed = await signReceiptImages([data]);
   return signed[0];
+};
+
+export const getRecentReceipts = async (userId: string, days: number = 7) => {
+  // Calculates start date for filtering
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  const startDateStr = startDate.toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('receipts')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('created_at', startDateStr) // Using created_at since that's the current preference
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  
+  // Note: We don't sign images here to keep it lighter/faster for chart usage
+  return data;
 };
 
 export const createReceipt = async (params: NewReceiptWithItems) => {

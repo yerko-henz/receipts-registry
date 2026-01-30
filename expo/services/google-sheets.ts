@@ -121,6 +121,53 @@ const appendRows = async (spreadsheetId: string, receipts: Receipt[], accessToke
 
 // --- Main Export Function ---
 
+// --- Deduplication Helper ---
+
+const getExistingReceiptIds = async (spreadsheetId: string, accessToken: string, t: TFunction): Promise<Set<string>> => {
+  try {
+    // 1. Fetch Header Row to find 'id' column
+    const headerUrl = `${BASE_URL_SHEETS}/${spreadsheetId}/values/1:1`;
+    const headerRes = await fetch(headerUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    
+    if (!headerRes.ok) return new Set();
+    
+    const headerData = await headerRes.json();
+    const headers = headerData.values?.[0] as string[] || [];
+    
+    // Find column index for 'id'
+    // We look for the translated header or the key. 
+    // Since we write translated headers, we should ideally match that.
+    // But safely, we know our strict column order from SHEET_COLUMNS.
+    // Let's rely on SHEET_COLUMNS layout if we assume the sheet structure hasn't been manually altered by user.
+    // The safest way for "Receipt ID" is checking the last column or matching known keys.
+    
+    // Let's assume standard order for now to avoid complexity of reverse-lookup of translations.
+    // ID is at index 4 (Column E).
+    const idColIndex = SHEET_COLUMNS.findIndex(c => c.key === 'id');
+    if (idColIndex === -1) return new Set();
+
+    // Convert index to A1 notation letter (0 -> A, 4 -> E)
+    const colLetter = String.fromCharCode(65 + idColIndex); // Works for A-Z
+    
+    // 2. Fetch that column
+    const dataUrl = `${BASE_URL_SHEETS}/${spreadsheetId}/values/${colLetter}:${colLetter}?majorDimension=COLUMNS`;
+    const dataRes = await fetch(dataUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    
+    if (!dataRes.ok) return new Set();
+    
+    const colData = await dataRes.json();
+    const ids = colData.values?.[0] || [];
+    
+    // Filter out the header value itself if captured
+    return new Set(ids);
+  } catch (e) {
+    console.warn('Failed to fetch existing IDs for deduplication', e);
+    return new Set();
+  }
+};
+
+// --- Main Export Function ---
+
 export const syncReceiptsToSheet = async (receipts: Receipt[], lastSyncDate: string | null, t: TFunction) => {
   const accessToken = await getAccessToken();
 
@@ -133,33 +180,40 @@ export const syncReceiptsToSheet = async (receipts: Receipt[], lastSyncDate: str
   let spreadsheetId = await findSheet(filename, accessToken);
   const isNewFile = !spreadsheetId;
 
-  // 3. Filter Logic
-  // If file exists, we only want NEW receipts.
-  // If file is NEW (was deleted or first run), we want ALL receipts.
-  let receiptsToExport = receipts;
-  
-  if (!isNewFile && lastSyncDate) {
-      receiptsToExport = receipts.filter(r => r.created_at > lastSyncDate);
-      
-      if (receiptsToExport.length === 0) {
-          // Nothing new to add
-          return {
-              url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
-              spreadsheetId: spreadsheetId!,
-              timestamp: new Date().toISOString(), // Update timestamp to now, confirming we checked
-              syncedCount: 0
-          };
-      }
-  }
-
-  // 4. Create if needed
+  // 4. Create if needed (Moved up to ensure we have an ID for dedupe check)
   if (!spreadsheetId) {
     spreadsheetId = await createSpreadsheet(filename, accessToken);
   }
 
-  // 5. If new, add Headers first
+  // 5. If new, add Headers
   if (isNewFile && spreadsheetId) {
     await appendHeaders(spreadsheetId, accessToken, t);
+  }
+
+  // 3. Filter Logic (Deduplication)
+  let receiptsToExport = receipts;
+  
+  if (spreadsheetId) {
+      // Fetch existing IDs from the sheet to prevent duplicates
+      // This is more robust than relying on lastSyncDate which can be lost on device
+      const existingIds = await getExistingReceiptIds(spreadsheetId, accessToken, t);
+      
+      if (existingIds.size > 0) {
+          receiptsToExport = receipts.filter(r => !existingIds.has(r.id));
+      } else if (!isNewFile && lastSyncDate) {
+           // Fallback to date check if we couldn't read IDs for some reason (rare)
+           // or if sheet is empty but file exists
+           receiptsToExport = receipts.filter(r => r.created_at > lastSyncDate);
+      }
+  }
+
+  if (receiptsToExport.length === 0) {
+      return {
+          url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
+          spreadsheetId: spreadsheetId!,
+          timestamp: new Date().toISOString(),
+          syncedCount: 0
+      };
   }
 
   // 6. Append Data

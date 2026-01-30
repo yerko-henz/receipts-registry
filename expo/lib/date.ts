@@ -1,10 +1,10 @@
 import { Receipt } from '@/services/receipts';
+import { format, subDays, startOfDay, addDays } from 'date-fns';
 
 // Helper to get local YYYY-MM-DD
 export const toLocalISOString = (date: Date): string => {
-    const offset = date.getTimezoneOffset() * 60000;
-    const localDate = new Date(date.getTime() - offset);
-    return localDate.toISOString().split('T')[0];
+    // date-fns format() uses local time by default
+    return format(date, 'yyyy-MM-dd');
 };
 
 export const getLastNDaysKeys = (days: number): string[] => {
@@ -12,9 +12,8 @@ export const getLastNDaysKeys = (days: number): string[] => {
     const lastNDays: string[] = [];
     
     for (let i = days - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(now.getDate() - i);
-      lastNDays.push(toLocalISOString(d));
+      const d = subDays(now, i);
+      lastNDays.push(format(d, 'yyyy-MM-dd'));
     }
     return lastNDays;
 };
@@ -27,7 +26,7 @@ export const filterReceiptsByDays = (receipts: Receipt[], days: number): Receipt
         if (!rawDate) return false;
         
         const rDate = new Date(rawDate);
-        const dateKey = toLocalISOString(rDate);
+        const dateKey = format(rDate, 'yyyy-MM-dd');
         return validKeys.has(dateKey);
     });
 };
@@ -41,17 +40,21 @@ export interface DayData {
     isToday: boolean;
 }
   
-export const groupReceiptsByDay = (receipts: Receipt[], language: string = 'en'): DayData[] => {
+export const groupReceiptsByDay = (receipts: Receipt[], language: string = 'en', dateMode: 'transaction' | 'created' = 'transaction'): DayData[] => {
     const days = 7;
     const now = new Date();
-    const REF_DATE_STR = toLocalISOString(now);
+    const REF_DATE_STR = format(now, 'yyyy-MM-dd');
     const lastNDays = getLastNDaysKeys(days);
       
     // Create map for O(1) access
     const buckets: Record<string, DayData> = {};
       
     lastNDays.forEach(dateKey => {
-         const date = new Date(dateKey + 'T12:00:00');
+         // Create date object for day name formatting. 
+         // Must handle timezone carefully so "2023-01-01" yields "Sun" correctly
+         const [y, m, d] = dateKey.split('-').map(Number);
+         const date = new Date(y, m - 1, d); // Local time construction
+         
          buckets[dateKey] = {
              dateKey,
              dayName: date.toLocaleDateString(language, { weekday: 'short' }),
@@ -63,11 +66,15 @@ export const groupReceiptsByDay = (receipts: Receipt[], language: string = 'en')
     });
       
     receipts.forEach(r => {
-        const rawDate = (r as any).created_at || r.transaction_date;
+        // Respect dateMode for grouping
+        const rawDate = dateMode === 'created' ? r.created_at : (r.transaction_date || r.created_at);
         if (!rawDate) return;
-          
+        
+        // Debug Log for specific investigation
+        // console.log(`[DateDebug] ID: ${r.id} | Mode: ${dateMode} | Raw: ${rawDate}`);
+
         const rDate = new Date(rawDate);
-        const dateKey = toLocalISOString(rDate);
+        const dateKey = format(rDate, 'yyyy-MM-dd'); // Uses local time
           
         if (buckets[dateKey]) {
             buckets[dateKey].receipts.push(r);
