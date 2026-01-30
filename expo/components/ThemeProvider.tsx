@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useColorScheme as useNativeColorScheme } from 'react-native';
+import { useColorScheme as useNativeColorScheme } from '@/hooks/use-native-color-scheme';
 import { storage } from '@/lib/storage';
 
 type Theme = 'light' | 'dark' | 'system';

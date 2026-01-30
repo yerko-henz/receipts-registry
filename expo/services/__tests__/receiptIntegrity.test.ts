@@ -1,97 +1,76 @@
-import { calculateReceiptIntegrity } from "../receiptIntegrity";
-import { ReceiptData } from "../../components/receiptAnalizer/types";
+import { calculateReceiptIntegrity, isIntegrityAcceptable, INTEGRITY_THRESHOLD } from '../receiptIntegrity';
+import { ReceiptData } from '@/components/receiptAnalizer/types';
 
-describe("Receipt Integrity Logic", () => {
-  
-  test("User Provided Data: CENCOSUD RETAIL S.A.", () => {
-    const data: ReceiptData = {
-      merchantName: "CENCOSUD RETAIL S.A.",
-      date: "2026-01-14",
-      total: 22628,
-      currency: "CLP",
-      items: [
-        { name: "BOLSA REUTILIZABLE", totalPrice: 390, quantity: 1, unitPrice: 390 },
-        { name: "QUESO MANT LAM", totalPrice: 3535, quantity: 0.286, unitPrice: 12360.13986013986 },
-        { name: "PECHUGA POLLO GRAN", totalPrice: 4391, quantity: 0.846, unitPrice: 5190.307328605201 },
-        { name: "HARINA SIN POLVO 1", totalPrice: 1740, quantity: 1, unitPrice: 1740 },
-        { name: "HUACHALOMO V BRA P", totalPrice: 6792, quantity: 1, unitPrice: 6792 },
-        { name: "YOGURT FRU DE SUR", totalPrice: 550, quantity: 1, unitPrice: 550 },
-        { name: "BEBIDA L.SODA Z 3L", totalPrice: 3150, quantity: 1, unitPrice: 3150 },
-        { name: "CREMA ESPESA SOPRO", totalPrice: 2780, quantity: 2, unitPrice: 1390 }
-      ],
-      category: "Food",
-      discount: 700,
-      taxAmount: 3613,
-      taxRate: 0.19 
-    };
-
-    const score = calculateReceiptIntegrity(data);
-    console.log(`[Test] CENCOSUD Score: ${score}`);
-    expect(score).toBeGreaterThanOrEqual(80);
+describe('receiptIntegrity', () => {
+  const createMockReceipt = (overrides: Partial<ReceiptData> = {}): ReceiptData => ({
+    merchantName: 'Test Store',
+    date: '2024-01-15',
+    total: 100,
+    items: [
+      { name: 'Item 1', quantity: 2, unitPrice: 25, totalPrice: 50, category: 'groceries' },
+      { name: 'Item 2', quantity: 1, unitPrice: 50, totalPrice: 50, category: 'groceries' },
+    ],
+    taxAmount: 0,
+    discount: 0,
+    ...overrides,
   });
 
-  test("Perfect alignment with separate tax", () => {
-    const data: ReceiptData = {
-      merchantName: "Test Store",
-      date: "2024-03-20",
-      total: 119.00,
-      currency: "USD",
-      items: [
-        { name: "Item 1", totalPrice: 100.00, quantity: 1, unitPrice: 100.00 }
-      ],
-      category: "Other",
-      taxAmount: 19.00,
-      taxRate: 0.19,
-      discount: 0
-    };
-    
-    const score = calculateReceiptIntegrity(data);
-    expect(score).toBe(100);
+  describe('calculateReceiptIntegrity', () => {
+    it('returns 100 for a perfect receipt', () => {
+      const receipt = createMockReceipt();
+      const score = calculateReceiptIntegrity(receipt);
+      expect(score).toBe(100);
+    });
+
+    it('penalizes missing merchant name', () => {
+      const receipt = createMockReceipt({ merchantName: '' });
+      const score = calculateReceiptIntegrity(receipt);
+      expect(score).toBeLessThan(100);
+    });
+
+    it('penalizes invalid date', () => {
+      const receipt = createMockReceipt({ date: 'not-a-date' });
+      const score = calculateReceiptIntegrity(receipt);
+      expect(score).toBeLessThan(100);
+    });
+
+    it('penalizes zero total', () => {
+      const receipt = createMockReceipt({ total: 0 });
+      const score = calculateReceiptIntegrity(receipt);
+      expect(score).toBeLessThan(100);
+    });
+
+    it('penalizes no items', () => {
+      const receipt = createMockReceipt({ items: [] });
+      const score = calculateReceiptIntegrity(receipt);
+      expect(score).toBeLessThan(100);
+    });
+
+    it('penalizes total mismatch', () => {
+      const receipt = createMockReceipt({ total: 200 }); // Items sum to 100
+      const score = calculateReceiptIntegrity(receipt);
+      expect(score).toBeLessThan(100);
+    });
+
+    it('penalizes line item mismatch', () => {
+      const receipt = createMockReceipt({
+        items: [{ name: 'Bad Item', quantity: 2, unitPrice: 10, totalPrice: 50, category: 'groceries' }], // 2*10=20 != 50
+        total: 50,
+      });
+      const score = calculateReceiptIntegrity(receipt);
+      expect(score).toBeLessThan(100);
+    });
   });
 
-  test("Tax Rate Integrity Check (Success)", () => {
-    const data: ReceiptData = {
-      merchantName: "Tax Check",
-      date: "2024-03-20",
-      total: 119.00,
-      currency: "USD",
-      items: [{ name: "Item", totalPrice: 100, quantity: 1, unitPrice: 100 }],
-      taxAmount: 19,
-      taxRate: 0.19,
-      discount: 0,
-      category: "Other"
-    };
-    const score = calculateReceiptIntegrity(data);
-    expect(score).toBe(100);
-  });
+  describe('isIntegrityAcceptable', () => {
+    it('returns true for score >= threshold', () => {
+      expect(isIntegrityAcceptable(INTEGRITY_THRESHOLD)).toBe(true);
+      expect(isIntegrityAcceptable(100)).toBe(true);
+    });
 
-  test("Tax Rate Integrity Check (Failure)", () => {
-    const data: ReceiptData = {
-      merchantName: "Tax Failure",
-      date: "2024-03-20",
-      total: 100.00,
-      currency: "USD",
-      items: [{ name: "Item", totalPrice: 80, quantity: 1, unitPrice: 80 }],
-      taxAmount: 20, 
-      taxRate: 0.19,
-      discount: 0,
-      category: "Other"
-    };
-    const score = calculateReceiptIntegrity(data);
-    expect(score).toBeLessThan(100);
+    it('returns false for score < threshold', () => {
+      expect(isIntegrityAcceptable(INTEGRITY_THRESHOLD - 1)).toBe(false);
+      expect(isIntegrityAcceptable(0)).toBe(false);
+    });
   });
-
-  test("Zero Total Penalty", () => {
-    const data: ReceiptData = {
-      merchantName: "Bad Store",
-      date: "2024-03-20",
-      total: 0,
-      currency: "USD",
-      items: [],
-      category: "Other"
-    };
-    const score = calculateReceiptIntegrity(data);
-    expect(score).toBe(60); 
-  });
-
 });

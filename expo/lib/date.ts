@@ -1,5 +1,5 @@
 import { Receipt } from '@/services/receipts';
-import { format, subDays, startOfDay, addDays } from 'date-fns';
+import { format, subDays, startOfDay, addDays, parseISO } from 'date-fns';
 
 // Helper to get local YYYY-MM-DD
 export const toLocalISOString = (date: Date): string => {
@@ -25,7 +25,7 @@ export const filterReceiptsByDays = (receipts: Receipt[], days: number): Receipt
         const rawDate = r.created_at || r.transaction_date;
         if (!rawDate) return false;
         
-        const rDate = new Date(rawDate);
+        const rDate = parseISO(rawDate);
         const dateKey = format(rDate, 'yyyy-MM-dd');
         return validKeys.has(dateKey);
     });
@@ -73,7 +73,7 @@ export const groupReceiptsByDay = (receipts: Receipt[], language: string = 'en',
         // Debug Log for specific investigation
         // console.log(`[DateDebug] ID: ${r.id} | Mode: ${dateMode} | Raw: ${rawDate}`);
 
-        const rDate = new Date(rawDate);
+        const rDate = parseISO(rawDate);
         const dateKey = format(rDate, 'yyyy-MM-dd'); // Uses local time
           
         if (buckets[dateKey]) {
