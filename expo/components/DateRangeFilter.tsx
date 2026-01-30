@@ -53,7 +53,7 @@ export function DateRangeFilter({ startDate, endDate, onRangeChange }: DateRange
       indicatorColor: colors.tint,
   }), [colors]);
 
-  const onMonthChange = useCallback((month: any) => {
+  const onMonthChange = useCallback((month: DateData) => {
       setCurrentMonth(month.dateString);
   }, []);
 
@@ -76,7 +76,7 @@ export function DateRangeFilter({ startDate, endDate, onRangeChange }: DateRange
   }, [tempStart, tempEnd]);
 
   const markedDates = useMemo(() => {
-    const marks: any = {};
+    const marks: Record<string, { startingDay?: boolean; endingDay?: boolean; color: string; textColor: string }> = {};
     const start = tempStart;
     const end = tempEnd;
 

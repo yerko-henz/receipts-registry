@@ -20,7 +20,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const ResultItem: React.FC<{ 
   data: ReceiptData; 
   onSave?: (data: ReceiptData) => Promise<void>; 
-  themeColors: any;
+  themeColors: typeof Colors.light;
   activeTheme: 'light' | 'dark';
   initiallyExpanded?: boolean;
 }> = ({ data, onSave, themeColors, activeTheme, initiallyExpanded = false }) => {
@@ -78,7 +78,7 @@ const ResultItem: React.FC<{
 
 const ProcessingItem: React.FC<{
   item: ProcessedReceipt;
-  themeColors: any;
+  themeColors: typeof Colors.light;
   activeTheme: 'light' | 'dark';
 }> = ({ item, themeColors, activeTheme }) => {
   const [progress, setProgress] = React.useState(0);

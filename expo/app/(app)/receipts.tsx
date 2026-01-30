@@ -306,9 +306,10 @@ export default function ReceiptsUnifiedScreen() {
             ]
           )
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      Alert.alert(t('receipts.exportError'), error.message || 'Could not export to Google Sheets')
+      const message = error instanceof Error ? error.message : String(error)
+      Alert.alert(t('receipts.exportError'), message || 'Could not export to Google Sheets')
     } finally {
       setExporting(false)
     }
@@ -497,7 +498,7 @@ export default function ReceiptsUnifiedScreen() {
                 {item.receipt_items && item.receipt_items.length > 0 && (
                     <View style={styles.itemsSection}>
                         <Text style={[styles.itemsHeader, { color: colors.icon }]}>{t('receipts.items')}</Text>
-                        {item.receipt_items.map((rItem: any, idx: number) => (
+                        {item.receipt_items.map((rItem: { description?: string | null, name?: string, quantity?: number | null, unit_price?: number | null, total_price?: number | null }, idx: number) => (
                             <View key={idx} style={styles.itemRow}>
                                 <View style={styles.itemInfo}>
                                     <Text style={[styles.itemName, { color: colors.text }]}>

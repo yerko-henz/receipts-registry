@@ -209,7 +209,7 @@ export default function ReceiptActivityChart({ data }: Props) {
             domainPadding={{ left: horizontalPadding, right: horizontalPadding, top: 10, bottom: 0 }}
             axisOptions={{
               font,
-              tickCount: { x: xTickCount, y: yTickCount } as any,
+              tickCount: { x: xTickCount, y: yTickCount },
               lineColor: themeColors.border,
               labelColor: themeColors.icon,
               formatXLabel: (val) => val,

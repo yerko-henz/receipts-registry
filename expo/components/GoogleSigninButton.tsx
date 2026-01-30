@@ -69,7 +69,8 @@ export function GoogleSigninButton() {
       } else {
         throw new Error('No ID token present!')
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string };
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         // user cancelled the login flow
       } else if (error.code === statusCodes.IN_PROGRESS) {
@@ -79,7 +80,8 @@ export function GoogleSigninButton() {
       } else {
         // some other error happened
         console.error(error)
-        Alert.alert('Sign-In Error', error.message || 'An unexpected error occurred during Google Sign-In')
+        const message = error instanceof Error ? error.message : String(error)
+        Alert.alert('Sign-In Error', message || 'An unexpected error occurred during Google Sign-In')
       }
     } finally {
       setLoading(false)

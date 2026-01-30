@@ -43,8 +43,12 @@ export function MFASetup({ onStatusChange }: MFASetupProps) {
       if (error) throw error
       setFactors(data.all || [])
       setLoading(false)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError(t('common.error'))
+      }
       setLoading(false)
     }
   }
@@ -70,8 +74,12 @@ export function MFASetup({ onStatusChange }: MFASetupProps) {
       setQrUri(data.totp.uri)
       setSecret(data.totp.secret)
       setStep('enroll')
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError(t('common.error'))
+      }
       setStep('name')
     } finally {
       setActionInProgress(false)
@@ -96,8 +104,12 @@ export function MFASetup({ onStatusChange }: MFASetupProps) {
       await fetchFactors()
       resetEnrollment()
       onStatusChange?.()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError(t('common.error'))
+      }
     } finally {
       setActionInProgress(false)
     }
@@ -113,8 +125,12 @@ export function MFASetup({ onStatusChange }: MFASetupProps) {
 
       await fetchFactors()
       onStatusChange?.()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError(t('common.error'))
+      }
     } finally {
       setActionInProgress(false)
     }

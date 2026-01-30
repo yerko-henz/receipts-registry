@@ -118,9 +118,10 @@ const App: React.FC = () => {
       // Since transient state is now in store, we might want to remove this specific item?
       // For now, no action needed on scanner store as per user preference to keep it manually controllable.
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      Alert.alert('Error', t('scanner.saveError') + ': ' + (err.message || 'Unknown error'));
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      Alert.alert('Error', t('scanner.saveError') + ': ' + message);
     }
   };
 
@@ -137,9 +138,10 @@ const App: React.FC = () => {
 
       Alert.alert("Success", t('scanner.saveAllSuccess'));
       resetScanner();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      Alert.alert("Error", "Failed to save all receipts: " + (err.message || "Unknown error"));
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      Alert.alert("Error", "Failed to save all receipts: " + message);
     }
   };
 

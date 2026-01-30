@@ -79,12 +79,13 @@ export const useScannerStore = create<ScannerState>((set, get) => ({
           )
         }));
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(`[ScannerStore] Failed to process item ${itemId}:`, err);
+        const message = err instanceof Error ? err.message : 'Analysis failed';
         set((state) => ({
           items: state.items.map(item => 
             item.id === itemId 
-              ? { ...item, status: 'error', error: err.message || 'Analysis failed' } 
+              ? { ...item, status: 'error', error: message } 
               : item
           )
         }));

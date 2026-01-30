@@ -9,7 +9,8 @@ const es = require('../locales/es.json')
 const deviceLanguage = Localization.getLocales?.()?.[0]?.languageCode || 'en'
 
 i18n.use(initReactI18next).init({
-  compatibilityJSON: 'v3' as any,
+  // @ts-ignore
+  compatibilityJSON: 'v3',
   resources: {
     en: { translation: en },
     es: { translation: es },

@@ -16,7 +16,7 @@ export type NewReceiptWithItems = {
   category: ReceiptCategory;
   tax_amount: number;
   image_url?: string;
-  raw_ai_output: any;
+  raw_ai_output: unknown;
   items: {
     name: string;
     totalPrice: number;
@@ -227,9 +227,10 @@ export const getRecentReceipts = async (userId: string, days: number = 7) => {
 
 export const createReceipt = async (params: NewReceiptWithItems) => {
   // Check integrity before saving
-  if (params.raw_ai_output?.integrityScore !== undefined) {
-    if (!isIntegrityAcceptable(params.raw_ai_output.integrityScore)) {
-      throw new Error(`Cannot save: Receipt integrity score (${params.raw_ai_output.integrityScore}) is below acceptable threshold.`);
+  const aiOutput = params.raw_ai_output as { integrityScore?: number } | null;
+  if (aiOutput?.integrityScore !== undefined) {
+    if (!isIntegrityAcceptable(aiOutput.integrityScore)) {
+      throw new Error(`Cannot save: Receipt integrity score (${aiOutput.integrityScore}) is below acceptable threshold.`);
     }
   }
 
@@ -253,7 +254,7 @@ export const createReceipt = async (params: NewReceiptWithItems) => {
     p_category: params.category,
     p_tax_amount: params.tax_amount,
     p_image_url: imageUrl,
-    p_raw_ai_output: params.raw_ai_output,
+    p_raw_ai_output: params.raw_ai_output as Database['public']['Tables']['receipts']['Row']['raw_ai_output'],
     p_items: params.items,
   });
 
@@ -288,7 +289,8 @@ export const createReceipts = async (receipts: ReceiptData[]) => {
   }));
 
   const { error } = await supabase.rpc('batch_save_receipts', {
-    p_receipts: receiptsToSave as any,
+    // @ts-ignore: Complex database type for array parameter
+    p_receipts: receiptsToSave,
   });
 
   if (error) throw error;

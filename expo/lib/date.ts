@@ -22,7 +22,7 @@ export const filterReceiptsByDays = (receipts: Receipt[], days: number): Receipt
     const validKeys = new Set(getLastNDaysKeys(days));
     
     return receipts.filter(r => {
-        const rawDate = (r as any).created_at || r.transaction_date;
+        const rawDate = r.created_at || r.transaction_date;
         if (!rawDate) return false;
         
         const rDate = new Date(rawDate);

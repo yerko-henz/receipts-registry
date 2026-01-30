@@ -9,10 +9,10 @@ const isNativeModuleAvailable =
   Platform.OS !== 'web' && 
   (!!NativeModules.RNGoogleSignin || 
    !!NativeModules.RNGoogleSigninModule || 
-   !!(global as any).RNGoogleSignin);
+   !!(global as unknown as { RNGoogleSignin: boolean }).RNGoogleSignin);
 
-let GoogleSignin: any = null;
-let statusCodes: any = {};
+let GoogleSignin: typeof import('@react-native-google-signin/google-signin').GoogleSignin | null = null;
+let statusCodes: typeof import('@react-native-google-signin/google-signin').statusCodes | Record<string, string> = {};
 
 if (isNativeModuleAvailable) {
   try {

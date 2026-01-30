@@ -61,8 +61,12 @@ export default function TwoFactorScreen() {
       if (verifyError) throw verifyError
 
       router.replace('/(app)')
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('An unexpected error occurred')
+      }
     } finally {
       setLoading(false)
     }

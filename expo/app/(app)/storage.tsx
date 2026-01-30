@@ -76,8 +76,12 @@ export default function StorageScreen() {
         if (uploadError) throw uploadError
 
         await loadFiles(userId)
-    } catch (err: any) {
-        setError(err.message)
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            setError(err.message)
+        } else {
+            setError(t('common.error'))
+        }
     } finally {
         setUploading(false)
     }
@@ -118,9 +122,10 @@ export default function StorageScreen() {
         message: data.signedUrl,
         title: `${t('storage.share')}: ${filename.split('/').pop()}`,
         })
-    } catch (err: any) {
-        if (err.message !== 'User did not share') {
-        setError(err.message || t('storage.shareFailed'))
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err)
+        if (message !== 'User did not share') {
+        setError(message || t('storage.shareFailed'))
         }
     }
     }

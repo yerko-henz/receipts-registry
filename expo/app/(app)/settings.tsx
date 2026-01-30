@@ -90,7 +90,7 @@ export default function SettingsScreen() {
   }
 
   useEffect(() => {
-    let interval: any
+    let interval: ReturnType<typeof setInterval>
     if (resendCooldown > 0) {
       interval = setInterval(() => {
         setResendCooldown((prev) => prev - 1)
@@ -635,7 +635,7 @@ export default function SettingsScreen() {
                   styles.languageOption,
                   theme === option.value && { backgroundColor: colors.tint }
                 ]}
-                onPress={() => handleChangeTheme(option.value as any)}
+                onPress={() => handleChangeTheme(option.value as 'light' | 'dark' | 'system')}
               >
                 <Text style={[
                   styles.languageText,

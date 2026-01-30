@@ -77,7 +77,7 @@ export const useReceiptsStore = create<ReceiptsState>((set, get) => ({
             totalCount: result.count || 0,
             isLoading: false
           }));
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.warn('[ReceiptsStore] Failed to fetch receipts:', error);
           if (typeof error === 'object') {
               try {
@@ -86,7 +86,8 @@ export const useReceiptsStore = create<ReceiptsState>((set, get) => ({
                   // ignore
               }
           }
-          set({ error: error.message || 'Unknown error', isLoading: false });
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          set({ error: message, isLoading: false });
         }
       },
 
@@ -95,7 +96,7 @@ export const useReceiptsStore = create<ReceiptsState>((set, get) => ({
           await createReceipt(data);
           // Refresh list after adding to ensure sort order/filtering correctness
           await get().actions.fetchReceipts({ reset: true });
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error('[ReceiptsStore] Failed to add receipt:', error);
           throw error;
         }
@@ -109,7 +110,7 @@ export const useReceiptsStore = create<ReceiptsState>((set, get) => ({
             receipts: state.receipts.filter((r) => r.id !== id),
             totalCount: state.totalCount - 1
           }));
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error('[ReceiptsStore] Failed to delete receipt:', error);
           throw error;
         }

@@ -10,7 +10,7 @@ import Animated, {
 interface ProgressBarProps {
   progress: number;
   color: string;
-  style?: any;
+  style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
 }
 
 export const ProgressBar = ({ progress, color, style }: ProgressBarProps) => {

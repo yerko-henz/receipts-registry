@@ -80,7 +80,7 @@ const Dot = ({ index, scrollX, color }: { index: number, scrollX: SharedValue<nu
   )
 }
 
-const Pagination = ({ scrollX, colors }: { scrollX: SharedValue<number>, colors: any }) => {
+const Pagination = ({ scrollX, colors }: { scrollX: SharedValue<number>, colors: typeof Colors.light }) => {
   return (
     <View style={styles.pagination}>
       {SLIDES.map((_, index) => (
