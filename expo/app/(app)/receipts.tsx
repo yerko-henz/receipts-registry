@@ -6,6 +6,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useReceiptsStore } from '@/store/useReceiptsStore'
 import { useGlobalStore } from '@/store/useGlobalStore'
 import { Receipt } from '@/services/receipts'
+import { useInfiniteReceipts, useDeleteReceipt } from '@/hooks/queries/useReceipts'
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { enUS, es } from 'date-fns/locale'
 import { useFocusEffect } from 'expo-router'
@@ -43,8 +44,7 @@ export default function ReceiptsUnifiedScreen() {
 
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
-  // Use new store structure
-  const { receipts, actions, isLoading, hasMore, totalCount } = useReceiptsStore()
+  const user = useGlobalStore(state => state.user)
   const region = useGlobalStore(state => state.region)
 
 
@@ -61,14 +61,7 @@ export default function ReceiptsUnifiedScreen() {
     })
   }, [])
   
-  const hasUnsyncedChanges = useMemo(() => {
-      if (receipts.length === 0) return false;
-      if (!lastExport) return true; 
-      return receipts.some(r => r.created_at > lastExport);
-  }, [receipts, lastExport])
-  
   // Dashboard State (Filters)
-  // Local state for UI inputs, synced to store actions
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -77,31 +70,58 @@ export default function ReceiptsUnifiedScreen() {
   const [startDate, setStartDate] = useState<string | null>(null)
   const [endDate, setEndDate] = useState<string | null>(null)
   
-  // Initialize from store to keep sync, default to 'created' (upload date)
-  const storedDateMode = useReceiptsStore((state) => state.filters.dateMode)
-  const [dateMode, setDateMode] = useState<'transaction' | 'created'>(storedDateMode || 'created')
+  const [dateMode, setDateMode] = useState<'transaction' | 'created'>('created')
+  const actions = useReceiptsStore(state => state.actions)
 
-  // Debounced Filter Update
-  const updateFilters = useMemo(
-    () => debounce((filters: any) => {
-        actions.setFilters(filters);
-        actions.fetchReceipts({ reset: true });
-    }, 500),
-    [actions]
-  );
-
-  // Effect to sync local state to store filters
+  // Sync dateMode to store so Dashboard respects it
   useEffect(() => {
-    updateFilters({
-        category: activeFilter,
-        searchQuery: searchQuery,
-        startDate,
-        endDate,
-        dateMode
-    });
-    // Cleanup debounce
-    return () => updateFilters.cancel();
-  }, [activeFilter, searchQuery, startDate, endDate, dateMode, updateFilters])
+      actions.setFilters({ dateMode })
+  }, [dateMode])
+
+  // Debounced Filter State for Query
+  const [debouncedSearch] = useState(() => debounce((val: string) => {
+      // triggers re-render via state update? 
+      // React Query will react to state changes in options. 
+      // We need to keep a separate state for the ACTUAL query param if we want debounce.
+  }, 500));
+  // Proper debounce implies setting a value that is used in the query after a delay.
+  const [querySearch, setQuerySearch] = useState('')
+  
+  useEffect(() => {
+      const handler = setTimeout(() => {
+          setQuerySearch(searchQuery)
+      }, 500)
+      return () => clearTimeout(handler)
+  }, [searchQuery])
+
+  // Queries
+  const { 
+      data, 
+      fetchNextPage, 
+      hasNextPage, 
+      isLoading, 
+      refetch 
+  } = useInfiniteReceipts(user?.id, 20, {
+      category: activeFilter, 
+      searchQuery: querySearch, 
+      startDate: startDate || undefined, // Typescript hygiene
+      endDate: endDate || undefined,
+      dateMode 
+  });
+
+  const deleteReceiptMutation = useDeleteReceipt();
+
+  const receipts = useMemo(() => {
+      return data?.pages.flatMap(p => p.data) || [];
+  }, [data]);
+  
+  const totalCount = data?.pages[0]?.count || 0;
+
+  const hasUnsyncedChanges = useMemo(() => {
+      if (receipts.length === 0) return false;
+      if (!lastExport) return true; 
+      return receipts.some(r => r.created_at > lastExport);
+  }, [receipts, lastExport])
 
 
   // Modal & Gesture Helpers... (omitted for brevity in replacement if unchanged)
@@ -211,15 +231,15 @@ export default function ReceiptsUnifiedScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
-    await actions.fetchReceipts({ reset: true })
+    await refetch()
     setRefreshing(false)
-  }, [actions])
+  }, [refetch])
 
   const onEndReached = useCallback(() => {
-      if (hasMore && !isLoading && !refreshing) {
-          actions.fetchReceipts({ reset: false })
+      if (hasNextPage) {
+          fetchNextPage()
       }
-  }, [hasMore, isLoading, refreshing, actions])
+  }, [hasNextPage, fetchNextPage])
 
   const handleDelete = (id: string) => {
     Alert.alert(
@@ -231,12 +251,11 @@ export default function ReceiptsUnifiedScreen() {
           text: 'Delete', 
               style: 'destructive',
               onPress: async () => {
-                try {
-                  await actions.removeReceipt(id)
-                } catch (e) {
-                   console.error(e)
-                   Alert.alert('Error', t('receipts.deleteError'))
-                }
+                deleteReceiptMutation.mutate(id, {
+                    onError: () => {
+                        Alert.alert('Error', t('receipts.deleteError'))
+                    }
+                })
               }
             }
       ]
@@ -302,12 +321,14 @@ export default function ReceiptsUnifiedScreen() {
   }
 
   // Initial Load
+  // Initial Load (and Refetch on Focus)
   useFocusEffect(
     useCallback(() => {
-      // Refresh on focus? Or just rely on persisted state?
-      // Usually good to refresh to catch up.
-      actions.fetchReceipts({ reset: true })
-    }, [actions])
+        // Refetch on focus if needed, or let Query handle it. 
+        // With useInfiniteQuery, explicit refetch might be too aggressive if data is fresh.
+        // But ensures updates from other screens (e.g. scanner).
+        // refetch(); 
+    }, [])
   )
 
   const filters = ['All', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Shopping']

@@ -129,10 +129,16 @@ function RootLayoutContent() {
   )
 }
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient()
+
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <RootLayoutContent />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <RootLayoutContent />
+      </ThemeProvider>
+    </QueryClientProvider>
   )
 }

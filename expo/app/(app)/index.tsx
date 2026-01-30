@@ -2,9 +2,9 @@ import ReceiptActivityChart from '@/components/ReceiptActivityChart'
 import CategoryBreakdown from '@/components/CategoryBreakdown'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
-import { getReceiptsByUserId, getRecentReceipts } from '@/services/receipts'
+import { useRecentReceipts } from '@/hooks/queries/useReceipts'
 import { useGlobalStore } from '@/store/useGlobalStore'
-import { useReceiptsStore } from '@/store/useReceiptsStore'
+import { useReceiptsStore } from '@/store/useReceiptsStore' // Keep if needed for dateMode? 
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -18,38 +18,19 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
   const user = useGlobalStore((state) => state.user)
-  const receipts = useReceiptsStore((state) => state.receipts)
-  const isLoading = useReceiptsStore((state) => state.isLoading)
-  const fetchReceipts = useReceiptsStore((state) => state.actions.fetchReceipts)
+  // For dateMode, we might want to respect the store setting or just default to created
+  const dateMode = useReceiptsStore((state) => state.filters.dateMode) || 'created';
+
+  const { data: chartData = [], isLoading, refetch } = useRecentReceipts(user?.id, 7);
 
   // Refetch receipts when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      fetchReceipts({ reset: true })
-        .then(() => console.log(`[Home] Fetched receipts`))
-        .catch((err) => console.warn('[Home] Failed to fetch receipts:', err))
-    }, [fetchReceipts])
+        // Optional: refetch() if we want strict freshness on focus. 
+        // Queries usually stale-while-revalidate.
+        // refetch();
+    }, [])
   )
-
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [loadingChart, setLoadingChart] = useState(true);
-  const dateMode = useReceiptsStore((state) => state.filters.dateMode) || 'created';
-
-  // Fetch dedicated chart data
-  useFocusEffect(
-      useCallback(() => {
-          if (!user?.id) return;
-          
-          setLoadingChart(true);
-          getRecentReceipts(user.id, 7)
-              .then(data => {
-                  setChartData(data);
-              })
-              .catch(err => console.warn('[Home] Failed to match chart data:', err))
-              .finally(() => setLoadingChart(false));
-
-      }, [user?.id])
-  );
 
   // Compute daily data buckets from dedicated chartData
   const dailyData = useMemo(() => {
@@ -73,7 +54,7 @@ export default function HomeScreen() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
-  if (isLoading && receipts.length === 0) {
+  if (isLoading && chartData.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.tint} />

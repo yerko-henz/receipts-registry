@@ -12,6 +12,7 @@
     "clean:android": "npm run kill:adb && adb devices",
     "kill:adb": "taskkill /F /IM adb.exe || echo 'adb not running'",
     "start:native:android": "npx expo start --dev-client",
+    "start:fix": "adb -d reverse tcp:8081 tcp:8081 && npx expo start --dev-client",
     "android": "npx expo start --localhost --android",
     "test": "jest",
     "ios": "expo run:ios"
@@ -35,6 +36,7 @@
     "@shopify/flash-list": "2.0.2",
     "@shopify/react-native-skia": "2.2.12",
     "@supabase/supabase-js": "^2.58.0",
+    "@tanstack/react-query": "^5.90.20",
     "date-fns": "^4.1.0",
     "expo": "~54.0.10",
     "expo-clipboard": "~8.0.7",
@@ -44,6 +46,7 @@
     "expo-font": "~14.0.10",
     "expo-haptics": "~15.0.7",
     "expo-image": "~3.0.8",
+    "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.10",
     "expo-linear-gradient": "^15.0.8",
     "expo-linking": "~8.0.8",
@@ -76,6 +79,7 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.23",
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
