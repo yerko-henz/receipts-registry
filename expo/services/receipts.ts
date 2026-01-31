@@ -288,7 +288,7 @@ export const createReceipts = async (receipts: ReceiptData[]) => {
       };
   }));
 
-  const { error } = await supabase.rpc('batch_save_receipts', {
+  const { error } = await supabase.rpc('save_receipts_batch', {
     // @ts-ignore: Complex database type for array parameter
     p_receipts: receiptsToSave,
   });

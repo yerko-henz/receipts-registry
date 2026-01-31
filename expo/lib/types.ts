@@ -209,7 +209,7 @@ export type Database = {
         }
         Returns: string
       }
-      batch_save_receipts: {
+      save_receipts_batch: {
         Args: {
           p_receipts: Json
         }
