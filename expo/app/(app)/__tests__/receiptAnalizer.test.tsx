@@ -1,138 +1,155 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import ReceiptAnalyzerScreen from '../receiptAnalizer';
+import App from '../receiptAnalizer';
+import { useScannerStore } from '@/store/useScannerStore';
+import { useReceiptsStore } from '@/store/useReceiptsStore';
+import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync } from 'expo-image-manipulator';
+import { Alert } from 'react-native';
 
 // Mocks
-jest.mock('@/hooks/use-color-scheme', () => ({
-  useColorScheme: jest.fn().mockReturnValue('light'),
-}));
-
-jest.mock('@/components/ThemeProvider', () => ({
-    useTheme: () => ({ activeTheme: 'light' }),
-}));
-
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ 
-      t: (key: string) => key, 
-      i18n: { language: 'en' } 
-  }),
-}));
-
-jest.mock('react-native-safe-area-context', () => ({
-    SafeAreaView: ({ children }: any) => <>{children}</>,
-}));
-
-jest.mock('expo-image-picker', () => ({
-    requestMediaLibraryPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
-    launchImageLibraryAsync: jest.fn().mockResolvedValue({
-        canceled: false,
-        assets: [{ uri: 'test-uri', width: 100, height: 100 }]
-    }),
-    MediaTypeOptions: { Images: 'Images' },
-}));
-
-jest.mock('expo-image-manipulator', () => ({
-    manipulateAsync: jest.fn().mockResolvedValue({
-        uri: 'manipulated-uri',
-        width: 100,
-        height: 100,
-        base64: 'test-base64'
-    }),
-    SaveFormat: { JPEG: 'jpeg' },
-}));
-
 jest.mock('@react-native-async-storage/async-storage', () => ({
-    multiGet: jest.fn().mockResolvedValue([['google_sheet_id', null], ['last_export_date', null]]),
-    multiSet: jest.fn().mockResolvedValue(null),
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  multiGet: jest.fn(),
+  multiSet: jest.fn(),
 }));
 
-jest.mock('@/services/receipts', () => ({
-    createReceipts: jest.fn().mockResolvedValue(null),
-    uploadReceiptImage: jest.fn().mockResolvedValue('test-url'),
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: jest.fn(),
+      onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
+    },
+  },
 }));
-
-// Store Mocks
-const mockProcessImages = jest.fn();
-const mockResetScanner = jest.fn();
-const mockAddReceipt = jest.fn();
 
 jest.mock('@/store/useScannerStore', () => ({
-    useScannerStore: jest.fn(),
+  useScannerStore: jest.fn(),
 }));
 
 jest.mock('@/store/useReceiptsStore', () => ({
-    useReceiptsStore: (selector: any) => selector({
-        actions: {
-            addReceipt: mockAddReceipt,
-            fetchReceipts: jest.fn(),
-        }
-    }),
+  useReceiptsStore: jest.fn(),
 }));
 
-import { useScannerStore } from '@/store/useScannerStore';
+jest.mock('expo-image-picker', () => ({
+  launchImageLibraryAsync: jest.fn(),
+  requestMediaLibraryPermissionsAsync: jest.fn(),
+  MediaTypeOptions: { Images: 'Images' },
+}));
 
-describe('ReceiptAnalyzerScreen', () => {
+jest.mock('expo-image-manipulator', () => ({
+  manipulateAsync: jest.fn(),
+  SaveFormat: { JPEG: 'jpeg' },
+}));
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: 'en' }
+  }),
+}));
+
+jest.mock('@/hooks/use-color-scheme', () => ({
+  useColorScheme: () => 'light',
+}));
+
+jest.mock('@/components/ThemeProvider', () => ({
+  useTheme: () => ({ activeTheme: 'light' }),
+  ThemeProvider: ({ children }: any) => children,
+}));
+
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: ({ children }: any) => children,
+}));
+
+jest.mock('lucide-react-native', () => {
+    const React = require('react');
+    const { View } = require('react-native');
+    const mockIcon = (props: any) => React.createElement(View, props);
+    return new Proxy({}, {
+        get: () => mockIcon
+    });
+});
+
+jest.mock('@/components/receiptAnalizer/ReceiptAnalyzer', () => ({
+    ReceiptAnalyzer: () => {
+        const React = require('react');
+        const { Text } = require('react-native');
+        return React.createElement(Text, {}, 'ReceiptAnalyzer Component');
+    }
+}));
+
+jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+describe('ReceiptAnalizer Screen', () => {
+  const mockProcessImages = jest.fn();
+  const mockResetScanner = jest.fn();
+  const mockAddReceipt = jest.fn();
+  const mockFetchReceipts = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (useScannerStore as unknown as jest.Mock).mockImplementation((selector) => {
+        const state = { 
+            items: [], 
+            processImages: mockProcessImages, 
+            resetScanner: mockResetScanner 
+        };
+        return selector(state);
+    });
+    (useReceiptsStore as unknown as jest.Mock).mockImplementation((selector) => {
+        const state = { 
+            actions: { 
+                addReceipt: mockAddReceipt, 
+                fetchReceipts: mockFetchReceipts 
+            } 
+        };
+        return selector(state);
+    });
   });
 
-  test('renders landing state correctly', () => {
-    (useScannerStore as unknown as jest.Mock).mockImplementation((selector) => selector({
-        items: [],
-        processImages: mockProcessImages,
-        resetScanner: mockResetScanner,
-    }));
-
-    const { getByText } = render(<ReceiptAnalyzerScreen />);
-    
-    expect(getByText('scanner.scanYourReceipt')).toBeTruthy();
+  it('renders landing state when no items', () => {
+    const { getByText } = render(<App />);
     expect(getByText('scanner.heroTitle')).toBeTruthy();
     expect(getByText('scanner.uploadTitle')).toBeTruthy();
   });
 
-  test('handles image picking', async () => {
-    (useScannerStore as unknown as jest.Mock).mockImplementation((selector) => selector({
-        items: [],
-        processImages: mockProcessImages,
-        resetScanner: mockResetScanner,
-    }));
+  it('calls pickImage when upload card pressed', async () => {
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'test-uri' }]
+    });
+    (manipulateAsync as jest.Mock).mockResolvedValue({
+        uri: 'processed-uri',
+        width: 100,
+        height: 100,
+        base64: 'base64-data'
+    });
 
-    const { getByText } = render(<ReceiptAnalyzerScreen />);
-    const uploadButton = getByText('scanner.uploadTitle');
-    
-    fireEvent.press(uploadButton);
+    const { getByText } = render(<App />);
+    fireEvent.press(getByText('scanner.uploadTitle'));
 
     await waitFor(() => {
-        expect(mockProcessImages).toHaveBeenCalled();
+        expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalled();
+        expect(manipulateAsync).toHaveBeenCalled();
+        expect(mockProcessImages).toHaveBeenCalledWith([expect.objectContaining({ uri: 'processed-uri' })]);
     });
   });
 
-  test('renders results state correctly', () => {
-    const mockItems = [
-        { 
-            id: '1', 
-            status: 'completed', 
-            uri: 'test-uri',
-            data: {
-                merchantName: 'Test Merchant',
-                total: 100,
-                date: '2023-01-01',
-                items: [],
-                currency: 'USD'
-            }
-        }
-    ];
+  it('renders ReceiptAnalyzer when items exist', () => {
+    (useScannerStore as unknown as jest.Mock).mockImplementation((selector) => {
+        const state = { 
+            items: [{ id: '1', uri: 'test', status: 'pending' }], 
+            processImages: mockProcessImages, 
+            resetScanner: mockResetScanner 
+        };
+        return selector(state);
+    });
 
-    (useScannerStore as unknown as jest.Mock).mockImplementation((selector) => selector({
-        items: mockItems,
-        processImages: mockProcessImages,
-        resetScanner: mockResetScanner,
-    }));
-
-    const { getByText } = render(<ReceiptAnalyzerScreen />);
-    
-    expect(getByText('scanner.scanNew')).toBeTruthy(); // Header changes
-    expect(getByText('1 / 1 Completed')).toBeTruthy(); // Results header
-    expect(getByText('Test Merchant')).toBeTruthy(); // Result item
+    const { getByText } = render(<App />);
+    expect(getByText('ReceiptAnalyzer Component')).toBeTruthy();
   });
 });

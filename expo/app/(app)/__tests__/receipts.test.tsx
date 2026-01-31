@@ -1,158 +1,194 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import ReceiptsUnifiedScreen from '../receipts';
+import { useInfiniteReceipts, useDeleteReceipt } from '@/hooks/queries/useReceipts';
+import { useGlobalStore } from '@/store/useGlobalStore';
+import { useReceiptsStore } from '@/store/useReceiptsStore';
+import { syncReceiptsToSheet } from '@/services/google-sheets';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 // Mocks
-jest.mock('@/hooks/use-color-scheme', () => ({
-  useColorScheme: jest.fn().mockReturnValue('light'),
-}));
-
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string, options?: any) => options?.defaultValue || key, i18n: { language: 'en' } }),
-}));
+jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
 jest.mock('expo-router', () => ({
-    useFocusEffect: jest.fn(),
-    useRouter: () => ({ push: jest.fn() }),
+  useFocusEffect: jest.fn(),
 }));
 
-jest.mock('react-native-safe-area-context', () => ({
-    SafeAreaView: ({ children }: any) => <>{children}</>,
+jest.mock('@/hooks/queries/useReceipts', () => ({
+  useInfiniteReceipts: jest.fn(),
+  useDeleteReceipt: jest.fn(),
 }));
 
-// Mock Reanimated
-jest.mock('react-native-reanimated', () => {
-    const Reanimated = require('react-native-reanimated/mock');
-    Reanimated.default.call = () => {};
-    return {
-        ...Reanimated,
-        useSharedValue: jest.fn(() => ({ value: 0 })),
-        useAnimatedStyle: jest.fn(() => ({})),
-        withSpring: jest.fn(),
-        withTiming: jest.fn(),
-        withRepeat: jest.fn(),
-        createAnimatedComponent: (cmp: any) => cmp,
-    };
-});
-
-jest.mock('react-native-gesture-handler', () => ({
-    Gesture: {
-        Pinch: () => ({ onUpdate: jest.fn().mockReturnThis(), onEnd: jest.fn().mockReturnThis() }),
-        Pan: () => ({ onUpdate: jest.fn().mockReturnThis(), onEnd: jest.fn().mockReturnThis() }),
-        Simultaneous: jest.fn(),
-    },
-    GestureDetector: ({ children }: any) => <>{children}</>,
-    GestureHandlerRootView: ({ children }: any) => <>{children}</>,
-}));
-
-jest.mock('@shopify/flash-list', () => {
-    const { FlatList } = require('react-native');
-    return { FlashList: FlatList };
-});
-
-jest.mock('@react-native-async-storage/async-storage', () => ({
-    multiGet: jest.fn().mockResolvedValue([['google_sheet_id', null], ['last_export_date', null]]),
-    multiSet: jest.fn().mockResolvedValue(null),
-}));
-
-// Mock Stores
 jest.mock('@/store/useGlobalStore', () => ({
-    useGlobalStore: (selector: any) => selector({
-        user: { id: 'test-user-id' },
-        region: 'US',
-    }),
+  useGlobalStore: jest.fn(),
 }));
 
 jest.mock('@/store/useReceiptsStore', () => ({
-    useReceiptsStore: (selector: any) => selector({
-        actions: { setFilters: jest.fn() },
-    }),
+  useReceiptsStore: jest.fn(),
 }));
 
-// Mock Queries
-const mockRefetch = jest.fn();
-const mockFetchNextPage = jest.fn();
-
-jest.mock('@/hooks/queries/useReceipts', () => ({
-    useInfiniteReceipts: jest.fn(),
-    useDeleteReceipt: jest.fn(() => ({ mutate: jest.fn() })),
+jest.mock('@/services/google-sheets', () => ({
+  syncReceiptsToSheet: jest.fn(),
 }));
 
-import { useInfiniteReceipts } from '@/hooks/queries/useReceipts';
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  multiGet: jest.fn().mockResolvedValue([['google_sheet_id', null], ['last_export_date', null]]),
+  multiSet: jest.fn(),
+}));
+
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: ({ children }: any) => children,
+}));
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: 'en' }
+  }),
+}));
+
+jest.mock('@/hooks/use-color-scheme', () => ({
+  useColorScheme: () => 'light',
+}));
+
+jest.mock('@/components/ThemeProvider', () => ({
+  useTheme: () => ({ activeTheme: 'light' }),
+}));
 
 jest.mock('@/components/DateRangeFilter', () => ({
-    DateRangeFilter: () => null,
+    DateRangeFilter: 'DateRangeFilter'
+}));
+jest.mock('@shopify/flash-list', () => ({
+    FlashList: (props: any) => {
+        const { ScrollView, View } = require('react-native');
+        const React = require('react');
+        return (
+            <ScrollView>
+                {props.data.map((item: any, index: number) => (
+                    <React.Fragment key={index}>
+                        {props.renderItem({ item, index })}
+                    </React.Fragment>
+                ))}
+                {props.ListEmptyComponent && props.data.length === 0 && props.ListEmptyComponent}
+            </ScrollView>
+        );
+    }
 }));
 
-jest.mock('@/lib/currency', () => ({
-    formatPrice: (amount: number) => `$${amount.toFixed(2)}`,
-}));
+// Mock Lucide Icons (handle any icon name)
+jest.mock('lucide-react-native', () => {
+    const React = require('react');
+    const { View } = require('react-native');
+    const mockIcon = (props: any) => React.createElement(View, props);
+    return new Proxy({}, {
+        get: () => mockIcon
+    });
+});
+
+jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+jest.mock('react-native-gesture-handler', () => {
+    const mockGesture = {
+        onUpdate: jest.fn().mockReturnThis(),
+        onEnd: jest.fn().mockReturnThis(),
+        onStart: jest.fn().mockReturnThis(),
+    };
+    return {
+        Gesture: {
+            Pan: () => mockGesture,
+            Pinch: () => mockGesture,
+            Simultaneous: () => mockGesture,
+        },
+        GestureDetector: ({ children }: any) => children,
+        GestureHandlerRootView: ({ children }: any) => children,
+    };
+});
 
 describe('ReceiptsUnifiedScreen', () => {
+  const mockUser = { id: 'user-123' };
+  const mockReceipts = [
+    { id: '1', merchant_name: 'Store A', total_amount: 50, category: 'Food', created_at: '2023-01-01T10:00:00Z' },
+    { id: '2', merchant_name: 'Store B', total_amount: 30, category: 'Transport', created_at: '2023-01-02T10:00:00Z' },
+  ];
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (useGlobalStore as unknown as jest.Mock).mockImplementation((selector) => {
+        const state = { user: mockUser, region: 'US' };
+        return selector(state);
+    });
+    (useReceiptsStore as unknown as jest.Mock).mockImplementation((selector) => {
+        const state = { filters: { dateMode: 'created' }, actions: { setFilters: jest.fn() } };
+        return selector(state);
+    });
+    (useDeleteReceipt as jest.Mock).mockReturnValue({ mutate: jest.fn() });
   });
 
-  test('renders loading state correctly', () => {
+  it('renders loading state initially', () => {
     (useInfiniteReceipts as jest.Mock).mockReturnValue({
-        data: null,
-        isLoading: true,
-        refetch: mockRefetch,
-        fetchNextPage: mockFetchNextPage,
-        hasNextPage: false,
+      data: undefined,
+      isLoading: true,
+      hasNextPage: false,
+      fetchNextPage: jest.fn(),
+      refetch: jest.fn(),
     });
 
     const { getByTestId, queryByText } = render(<ReceiptsUnifiedScreen />);
-    
-    // ActivityIndicator doesn't have text, but we can check if absence of list or presence of indicator
-    // FlashList (mocked as FlatList) renders EmptyComponent if data is empty/null which has ActivityIndicator
-    // We can check if "No receipts" text is NOT present.
-    expect(queryByText('receipts.noReceipts')).toBeNull();
+    // FlashList is mocked as ScrollView, but it should still render headers etc.
+    expect(queryByText('receipts.title')).toBeTruthy();
   });
 
-  test('renders empty state correctly', () => {
+  it('renders receipts list', async () => {
     (useInfiniteReceipts as jest.Mock).mockReturnValue({
-        data: { pages: [{ data: [], count: 0 }] },
-        isLoading: false,
-        refetch: mockRefetch,
-        fetchNextPage: mockFetchNextPage,
-        hasNextPage: false,
-    });
-
-    const { getByText } = render(<ReceiptsUnifiedScreen />);
-    
-    expect(getByText('receipts.noReceipts')).toBeTruthy();
-  });
-
-  test('renders receipts list correctly', () => {
-    const mockReceipts = [
-        {
-            id: '1',
-            merchant_name: 'Test Merchant',
-            total_amount: 100,
-            transaction_date: '2023-01-01',
-            created_at: '2023-01-01T10:00:00Z',
-            currency: 'USD',
-            category: 'Food',
-        }
-    ];
-
-    (useInfiniteReceipts as jest.Mock).mockReturnValue({
-        data: { pages: [{ data: mockReceipts, count: 1 }] },
-        isLoading: false,
-        refetch: mockRefetch,
-        fetchNextPage: mockFetchNextPage,
-        hasNextPage: false,
+      data: { pages: [{ data: mockReceipts, count: 2 }] },
+      isLoading: false,
+      hasNextPage: false,
+      fetchNextPage: jest.fn(),
+      refetch: jest.fn(),
     });
 
     const { getByText, getAllByText } = render(<ReceiptsUnifiedScreen />);
-    
-    expect(getByText('Test Merchant')).toBeTruthy();
-    // Use regex to be flexible with currency symbol spacing (NBSP)
-    // Expect at least one occurrence (Header total + Item total might both match)
-    const priceElements = getAllByText(/100.00/);
-    expect(priceElements.length).toBeGreaterThan(0);
-    
-    expect(getByText('1 receipts.itemsFound')).toBeTruthy(); // mocked t returns key/default
+
+    expect(getByText('Store A')).toBeTruthy();
+    expect(getByText('Store B')).toBeTruthy();
+    expect(getByText('2 receipts.itemsFound')).toBeTruthy();
+  });
+
+  it('shows empty state when no receipts', () => {
+    (useInfiniteReceipts as jest.Mock).mockReturnValue({
+      data: { pages: [{ data: [], count: 0 }] },
+      isLoading: false,
+      hasNextPage: false,
+      fetchNextPage: jest.fn(),
+      refetch: jest.fn(),
+    });
+
+    const { getByText } = render(<ReceiptsUnifiedScreen />);
+    expect(getByText('receipts.noReceipts')).toBeTruthy();
+  });
+
+  it('opens delete confirmation on long press (or delete icon if expanded)', async () => {
+      (useInfiniteReceipts as jest.Mock).mockReturnValue({
+        data: { pages: [{ data: [mockReceipts[0]], count: 1 }] },
+        isLoading: false,
+        hasNextPage: false,
+        fetchNextPage: jest.fn(),
+        refetch: jest.fn(),
+      });
+
+      const { getByText, queryByText } = render(<ReceiptsUnifiedScreen />);
+      
+      // Expand the first receipt
+      fireEvent.press(getByText('Store A'));
+      
+      // Look for delete button text
+      const deleteBtn = getByText('receipts.delete');
+      fireEvent.press(deleteBtn);
+
+      expect(Alert.alert).toHaveBeenCalledWith(
+          'receipts.deleteTitle',
+          'receipts.deleteConfirm',
+          expect.any(Array)
+      );
   });
 });
