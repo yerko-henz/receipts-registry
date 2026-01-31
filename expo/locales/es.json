@@ -44,7 +44,8 @@
     "invalidCode": "Por favor ingresa un código válido"
   },
   "common": {
-    "or": "O"
+    "or": "O",
+    "error": "Error"
   },
   "home": {
     "welcome": "Bienvenido",
@@ -215,6 +216,42 @@
     "pickImageError": "Error al seleccionar imagen",
     "saveSuccess": "¡recibo guardado exitosamente!",
     "saveAllSuccess": "Todos los recibos han sido guardados exitosamente.",
-    "saveError": "Error al guardar el recibo"
+    "saveError": "Error al guardar el recibo",
+    "couldNotDetectMerchantName": "No se pudo detectar el nombre del comercio",
+    "analysisFailed": "Análisis Fallido",
+    "analyzingReceipt": "Escaneando...",
+    "pleaseTryAgain": "Por favor intenta de nuevo",
+    "tryAgain": "Reintentar",
+    "retryIn": "Reintentar en {{count}}s",
+    "extractingDetails": "Nuestra IA está extrayendo detalles y precios.",
+    "verified": "Verificado",
+    "completed": "Completado",
+    "takingLonger": "tardando más de lo habitual...",
+    "dateNotDetected": "Fecha no detectada",
+    "completedCounts": "{{completed}} / {{total}} Completados",
+    "exportAll": "Exportar Todo",
+    "saveAll": "Guardar Todo",
+    "exportCsv": "Exportar CSV",
+    "saveRecord": "Guardar Registro",
+    "saving": "Guardando...",
+    "qty": "Cant",
+    "description": "Descripción",
+    "price": "Precio",
+    "each": "c/u",
+    "taxIva": "Impuesto/IVA",
+    "discount": "Descuento",
+    "totalAmount": "Monto Total",
+    "processingReceipts": "Procesando {{total}} Recibos",
+    "aiExtracting": "La IA está extrayendo detalles del comercio, fechas y montos.",
+    "left": "RESTANTES",
+    "cancelProcessing": "Cancelar Procesamiento",
+    "review": "Revisar",
+    "receiptsProcessedSuccess": "¡{{count}} Recibos Procesados Exitosamente!",
+    "addedToLedger": "Todos los artículos han sido agregados a tu libro mayor.",
+    "totalValue": "VALOR TOTAL",
+    "topCategory": "CATEGORÍA PRINCIPAL",
+    "unknownDate": "Fecha Desconocida",
+    "unknownMerchant": "Comercio Desconocido",
+    "waiting": "Esperando..."
   }
 }

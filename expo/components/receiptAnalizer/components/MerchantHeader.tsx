@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Calendar, ChevronDown, ChevronUp } from 'lucide-react-native';
@@ -18,6 +19,7 @@ export const MerchantHeader: React.FC<MerchantHeaderProps> = ({
   isExpanded, 
   onToggle
 }) => {
+  const { t } = useTranslation();
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -53,13 +55,13 @@ export const MerchantHeader: React.FC<MerchantHeaderProps> = ({
                   <Text style={[styles.merchantName, dynamicStyles.merchantName]}>{merchantName}</Text>
                   <View style={styles.badgeRow}>
                     <View style={[styles.verifiedBadge, dynamicStyles.verifiedBadge]}>
-                        <Text style={[styles.verifiedText, dynamicStyles.verifiedText]}>Verified</Text>
+                        <Text style={[styles.verifiedText, dynamicStyles.verifiedText]}>{t('scanner.verified')}</Text>
                     </View>
                   </View>
               </View>
               <View style={styles.dateRow}>
                   <Calendar size={16} color={themeColors.icon} />
-                  <Text style={[styles.dateText, dynamicStyles.dateText]}>{date || 'Date not detected'}</Text>
+                  <Text style={[styles.dateText, dynamicStyles.dateText]}>{date || t('scanner.dateNotDetected')}</Text>
               </View>
           </View>
           <View style={styles.accordionIcon}>

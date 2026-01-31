@@ -37,6 +37,8 @@ const App: React.FC = () => {
   //   items: scannerItems
   // });
 
+
+
   const pickImage = async () => {
     try {
       // Request permission
@@ -90,6 +92,41 @@ const App: React.FC = () => {
 
   // Local processImages removed, using store action instead
 
+  const [isBatchSaved, setIsBatchSaved] = React.useState(false);
+
+  // Reset batch saved state when scanner is reset
+  React.useEffect(() => {
+    if (scannerItems.length === 0) {
+      setIsBatchSaved(false);
+    }
+  }, [scannerItems.length]);
+
+  // Auto-save when all items are completed
+  React.useEffect(() => {
+    const allCompleted = scannerItems.length > 0 && scannerItems.every(i => i.status === 'completed' || i.status === 'error');
+    
+    if (allCompleted && !isBatchSaved) {
+       // Check if we have at least one successful item to save
+        const itemsToSave = scannerItems.filter(i => i.status === 'completed' && i.data);
+        
+        if (itemsToSave.length > 0) {
+            const saveBatch = async () => {
+                try {
+                    const resultsToSave = itemsToSave.map(i => ({ ...i.data!, imageUri: i.uri }));
+                    await createReceipts(resultsToSave);
+                    await fetchReceipts();
+                    setIsBatchSaved(true);
+                    // Optional: Show a toast? The Result Header says "Success" so that might be enough.
+                } catch (e) {
+                    console.error("Auto-save failed", e);
+                    Alert.alert(t('common.error'), "Failed to auto-save receipts.");
+                }
+            };
+            saveBatch();
+        }
+    }
+  }, [scannerItems, isBatchSaved]);
+
   const handleSaveReceipt = async (data: ReceiptData) => {
     try {
       await addNewReceipt({
@@ -113,7 +150,7 @@ const App: React.FC = () => {
         }),
       });
 
-      Alert.alert('Success', `${data.merchantName} ${t('scanner.saveSuccess')}`);
+      // Alert.alert('Success', `${data.merchantName} ${t('scanner.saveSuccess')}`);
 
       // Since transient state is now in store, we might want to remove this specific item?
       // For now, no action needed on scanner store as per user preference to keep it manually controllable.
@@ -173,6 +210,7 @@ const App: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+
         {scannerItems.length === 0 ? (
           <View style={styles.landingContainer}>
             <View style={styles.heroTextContainer}>
@@ -199,6 +237,7 @@ const App: React.FC = () => {
               onSave={handleSaveReceipt}
               onSaveAll={handleSaveAllResults}
               onRetry={handleRetry}
+              isSaved={isBatchSaved}
             />
           </View>
         )}

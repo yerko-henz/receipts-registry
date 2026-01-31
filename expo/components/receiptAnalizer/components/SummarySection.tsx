@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/theme';
@@ -18,6 +19,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
   total, 
   currency 
 }) => {
+  const { t } = useTranslation();
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -53,7 +55,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
       {taxAmount !== undefined && (
         <View style={styles.summaryRow}>
           <View style={styles.taxLabelRow}>
-            <Text style={[styles.summaryLabel, dynamicStyles.summaryLabel]}>Tax/IVA</Text>
+            <Text style={[styles.summaryLabel, dynamicStyles.summaryLabel]}>{t('scanner.taxIva')}</Text>
           </View>
           <Text style={[styles.summaryValue, dynamicStyles.summaryValue]}>{formatCurrency(taxAmount)}</Text>
         </View>
@@ -61,13 +63,13 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
 
       {discount !== undefined && discount > 0 && (
         <View style={styles.summaryRow}>
-          <Text style={[styles.summaryLabel, dynamicStyles.summaryLabel]}>Discount</Text>
+          <Text style={[styles.summaryLabel, dynamicStyles.summaryLabel]}>{t('scanner.discount')}</Text>
           <Text style={[styles.summaryValue, styles.discountText]}>-{formatCurrency(discount)}</Text>
         </View>
       )}
 
       <View style={[styles.totalRow, dynamicStyles.totalRow]}>
-        <Text style={[styles.totalLabel, dynamicStyles.totalLabel]}>Total Amount</Text>
+        <Text style={[styles.totalLabel, dynamicStyles.totalLabel]}>{t('scanner.totalAmount')}</Text>
         <Text style={[styles.totalValue, dynamicStyles.totalValue]}>{formatCurrency(total)}</Text>
       </View>
     </View>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ReceiptItem } from '../types';
@@ -12,6 +13,7 @@ interface ItemsTableProps {
 }
 
 export const ItemsTable: React.FC<ItemsTableProps> = ({ items, currency }) => {
+  const { t } = useTranslation();
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -45,9 +47,9 @@ export const ItemsTable: React.FC<ItemsTableProps> = ({ items, currency }) => {
   return (
     <View style={styles.tableContainer}>
       <View style={[styles.tableHeader, dynamicStyles.tableHeader]}>
-        <Text style={[styles.colQty, dynamicStyles.colLabel]}>Qty</Text>
-        <Text style={[styles.colDesc, dynamicStyles.colLabel]}>Description</Text>
-        <Text style={[styles.colPrice, dynamicStyles.colLabel]}>Price</Text>
+        <Text style={[styles.colQty, dynamicStyles.colLabel]}>{t('scanner.qty')}</Text>
+        <Text style={[styles.colDesc, dynamicStyles.colLabel]}>{t('scanner.description')}</Text>
+        <Text style={[styles.colPrice, dynamicStyles.colLabel]}>{t('scanner.price')}</Text>
       </View>
       <View>
         {items.map((item, idx) => (
@@ -57,7 +59,7 @@ export const ItemsTable: React.FC<ItemsTableProps> = ({ items, currency }) => {
               <Text style={[styles.itemName, dynamicStyles.itemName]}>{item.name}</Text>
               {item.unitPrice && item.unitPrice !== item.totalPrice && (
                 <Text style={[styles.itemUnitPrice, dynamicStyles.itemUnitPrice]}>
-                  {formatCurrency(item.unitPrice)} ea.
+                  {formatCurrency(item.unitPrice)} {t('scanner.each')}
                 </Text>
               )}
             </View>

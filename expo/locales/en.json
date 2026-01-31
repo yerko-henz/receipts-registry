@@ -44,7 +44,8 @@
     "invalidCode": "Please enter a valid code"
   },
   "common": {
-    "or": "OR"
+    "or": "OR",
+    "error": "Error"
   },
   "home": {
     "welcome": "Welcome",
@@ -215,6 +216,42 @@
     "pickImageError": "Failed to pick image",
     "saveSuccess": "receipt saved successfully!",
     "saveAllSuccess": "All receipts have been saved successfully.",
-    "saveError": "Failed to save receipt"
+    "saveError": "Failed to save receipt",
+    "couldNotDetectMerchantName": "Could not detect merchant name",
+    "analysisFailed": "Analysis Failed",
+    "analyzingReceipt": "Scanning...",
+    "pleaseTryAgain": "Please try again",
+    "tryAgain": "Try Again",
+    "retryIn": "Retry in {{count}}s",
+    "extractingDetails": "Our AI is extracting item details and prices.",
+    "verified": "Verified",
+    "completed": "Completed",
+    "takingLonger": "taking longer than usual...",
+    "dateNotDetected": "Date not detected",
+    "completedCounts": "{{completed}} / {{total}} Completed",
+    "exportAll": "Export All",
+    "saveAll": "Save All",
+    "exportCsv": "Export CSV",
+    "saveRecord": "Save Record",
+    "saving": "Saving...",
+    "qty": "Qty",
+    "description": "Description",
+    "price": "Price",
+    "each": "ea.",
+    "taxIva": "Tax/IVA",
+    "discount": "Discount",
+    "totalAmount": "Total Amount",
+    "processingReceipts": "Processing {{total}} Receipts",
+    "aiExtracting": "AI is extracting merchant details, dates, and amounts.",
+    "left": "LEFT",
+    "cancelProcessing": "Cancel Processing",
+    "review": "Review",
+    "receiptsProcessedSuccess": "{{count}} Receipts Successfully Processed!",
+    "addedToLedger": "All items have been added to your ledger.",
+    "totalValue": "TOTAL VALUE",
+    "topCategory": "TOP CATEGORY",
+    "unknownDate": "Unknown Date",
+    "unknownMerchant": "Unknown Merchant",
+    "waiting": "Waiting..."
   }
 }

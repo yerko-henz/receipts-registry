@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { AlertCircle, RefreshCw } from 'lucide-react-native';
@@ -12,6 +13,7 @@ interface AnalysisErrorProps {
 }
 
 export const AnalysisError: React.FC<AnalysisErrorProps> = ({ error, retryCountdown, onRetry }) => {
+  const { t } = useTranslation();
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -33,7 +35,7 @@ export const AnalysisError: React.FC<AnalysisErrorProps> = ({ error, retryCountd
     <View style={[styles.errorContainer, dynamicStyles.errorContainer]}>
     <View style={styles.errorHeader}>
         <AlertCircle size={24} color={activeTheme === 'dark' ? '#fca5a5' : '#b91c1c'} />
-        <Text style={[styles.errorTitle, dynamicStyles.errorTitle]}>Analysis Failed</Text>
+        <Text style={[styles.errorTitle, dynamicStyles.errorTitle]}>{t('scanner.analysisFailed')}</Text>
       </View>
       <Text style={[styles.errorMessage, dynamicStyles.errorMessage]}>{error}</Text>
       
@@ -52,7 +54,7 @@ export const AnalysisError: React.FC<AnalysisErrorProps> = ({ error, retryCountd
             styles.retryButtonText, 
             { color: retryCountdown > 0 ? themeColors.icon : themeColors.tint }
           ]}>
-            {retryCountdown > 0 ? `Retry in ${retryCountdown}s` : 'Try Again'}
+            {retryCountdown > 0 ? t('scanner.retryIn', { count: retryCountdown }) : t('scanner.tryAgain')}
           </Text>
         </TouchableOpacity>
       )}

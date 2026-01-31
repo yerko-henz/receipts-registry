@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Download, Save, Loader2 } from 'lucide-react-native';
@@ -11,6 +12,7 @@ interface ActionButtonsProps {
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, isSaving }) => {
+  const { t } = useTranslation();
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -36,7 +38,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, isSaving }
       <View style={[styles.actionsContainer, dynamicStyles.actionsContainer]}>
         <TouchableOpacity style={[styles.actionButtonSecondary, dynamicStyles.actionButtonSecondary]}>
           <Download size={20} color="#ffffff" style={{ marginRight: 8 }} />
-          <Text style={[styles.actionButtonTextSecondary, dynamicStyles.actionButtonTextSecondary]}>Export CSV</Text>
+          <Text style={[styles.actionButtonTextSecondary, dynamicStyles.actionButtonTextSecondary]}>{t('scanner.exportCsv')}</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.actionButtonPrimary, dynamicStyles.actionButtonPrimary, isSaving && styles.actionButtonDisabled]}
@@ -49,7 +51,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, isSaving }
             <Save size={20} color="#ffffff" style={{ marginRight: 8 }} />
           )}
           <Text style={styles.actionButtonTextPrimary}>
-            {isSaving ? 'Saving...' : 'Save Record'}
+            {isSaving ? t('scanner.saving') : t('scanner.saveRecord')}
           </Text>
         </TouchableOpacity>
       </View>

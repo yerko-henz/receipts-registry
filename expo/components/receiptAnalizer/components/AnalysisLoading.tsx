@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/theme';
@@ -10,6 +11,7 @@ interface AnalysisLoadingProps {
 }
 
 export const AnalysisLoading: React.FC<AnalysisLoadingProps> = ({ progress }) => {
+  const { t } = useTranslation();
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -26,9 +28,9 @@ export const AnalysisLoading: React.FC<AnalysisLoadingProps> = ({ progress }) =>
 
   return (
     <View style={[styles.loadingContainer, dynamicStyles.loadingContainer]}>
-      <Text style={[styles.loadingTitle, { color: themeColors.text }]}>Analyzing Receipt...</Text>
+      <Text style={[styles.loadingTitle, { color: themeColors.text }]}>{t('scanner.analyzingReceipt')}</Text>
       <Text style={[styles.loadingSubtitle, { color: themeColors.icon }]}>
-        Our AI is extracting item details and prices.
+        {t('scanner.extractingDetails')}
       </Text>
       
       <ProgressBar 
