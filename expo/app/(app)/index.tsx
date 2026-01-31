@@ -67,7 +67,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
-            {t('home.welcome')}, {user?.email?.split('@')[0]}! 👋
+            {t('home.welcome')}, {user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0]}! 👋
           </Text>
           <Text style={[styles.secondaryTitle, { color: colors.text }]}>
             {t('home.recentReceipts', { count: receiptsLoadedCount, days: dailyData.length })}

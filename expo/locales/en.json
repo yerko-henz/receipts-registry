@@ -54,6 +54,10 @@
     "recentReceipts": "{{count}} receipts in the last {{days}} days",
     "memberSince": "member for {{days}} days in {{company}}"
   },
+  "common": {
+    "success": "Success",
+    "error": "Error"
+  },
   "app": {
     "home": "Home",
     "storage": "Storage",

@@ -1,6 +1,7 @@
 import { GoogleSignin } from '../lib/google-signin';
 import { Receipt } from './receipts';
 import { TFunction } from 'i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL_SHEETS = 'https://sheets.googleapis.com/v4/spreadsheets';
 const BASE_URL_DRIVE = 'https://www.googleapis.com/drive/v3/files';
@@ -17,7 +18,7 @@ const SHEET_COLUMNS = [
 
 const getAccessToken = async () => {
   if (!GoogleSignin) {
-    throw new Error('Google Sign-In is not initialized. Are you running in a Development Build? This feature requires native modules.');
+    throw new Error('Google Sign-In is not initialized. Note: This feature requires native modules.');
   }
   // Ensure user is signed in
   const hasSession = GoogleSignin.hasPreviousSignIn();
@@ -33,15 +34,48 @@ const getAccessToken = async () => {
   return tokens.accessToken;
 };
 
+// Robust fetch helper that handles 401s by retrying once after clearing cache
+const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
+    let token = await getAccessToken();
+    
+    let response = await fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    if (response.status === 401) {
+        console.log('[GoogleSheets] Token expired or invalid, clearing cache and retrying...');
+        if (GoogleSignin) {
+            await GoogleSignin.clearCachedAccessToken(token);
+            // Optionally force a silent sign-in refresh here if needed
+            // await GoogleSignin.signInSilently(); 
+        }
+        
+        // Get fresh token (library should fetch new one)
+        token = await getAccessToken();
+        
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...options.headers,
+                Authorization: `Bearer ${token}`
+            }
+        });
+    }
+
+    return response;
+};
+
 // --- Drive API Helpers ---
 
-const findSheet = async (title: string, accessToken: string): Promise<string | null> => {
+const findSheet = async (title: string): Promise<string | null> => {
   const query = `name = '${title}' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false`;
   const url = `${BASE_URL_DRIVE}?q=${encodeURIComponent(query)}&fields=files(id,name)`;
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const response = await authenticatedFetch(url);
 
   if (!response.ok) {
      // If searches fail, we default to not found
@@ -57,13 +91,10 @@ const findSheet = async (title: string, accessToken: string): Promise<string | n
 
 // --- Sheets API Helpers ---
 
-const createSpreadsheet = async (title: string, accessToken: string): Promise<string> => {
-  const response = await fetch(BASE_URL_SHEETS, {
+const createSpreadsheet = async (title: string): Promise<string> => {
+  const response = await authenticatedFetch(BASE_URL_SHEETS, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       properties: { title },
     }),
@@ -78,22 +109,19 @@ const createSpreadsheet = async (title: string, accessToken: string): Promise<st
   return result.spreadsheetId;
 };
 
-const appendHeaders = async (spreadsheetId: string, accessToken: string, t: TFunction) => {
+const appendHeaders = async (spreadsheetId: string, t: TFunction) => {
   const headers = SHEET_COLUMNS.map(col => t(col.headerKey, { defaultValue: col.headerKey }));
   
-  await fetch(`${BASE_URL_SHEETS}/${spreadsheetId}/values/A1:append?valueInputOption=USER_ENTERED`, {
+  await authenticatedFetch(`${BASE_URL_SHEETS}/${spreadsheetId}/values/A1:append?valueInputOption=USER_ENTERED`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       values: [headers],
     }),
   });
 };
 
-const appendRows = async (spreadsheetId: string, receipts: Receipt[], accessToken: string) => {
+const appendRows = async (spreadsheetId: string, receipts: Receipt[]) => {
   const rows = receipts.map(r => {
     return SHEET_COLUMNS.map(col => {
       // @ts-ignore
@@ -102,12 +130,9 @@ const appendRows = async (spreadsheetId: string, receipts: Receipt[], accessToke
     });
   });
 
-  const response = await fetch(`${BASE_URL_SHEETS}/${spreadsheetId}/values/A1:append?valueInputOption=USER_ENTERED`, {
+  const response = await authenticatedFetch(`${BASE_URL_SHEETS}/${spreadsheetId}/values/A1:append?valueInputOption=USER_ENTERED`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       values: rows,
     }),
@@ -123,11 +148,11 @@ const appendRows = async (spreadsheetId: string, receipts: Receipt[], accessToke
 
 // --- Deduplication Helper ---
 
-const getExistingReceiptIds = async (spreadsheetId: string, accessToken: string, t: TFunction): Promise<Set<string>> => {
+const getExistingReceiptIds = async (spreadsheetId: string, t: TFunction): Promise<Set<string>> => {
   try {
     // 1. Fetch Header Row to find 'id' column
     const headerUrl = `${BASE_URL_SHEETS}/${spreadsheetId}/values/1:1`;
-    const headerRes = await fetch(headerUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const headerRes = await authenticatedFetch(headerUrl);
     
     if (!headerRes.ok) return new Set();
     
@@ -151,7 +176,7 @@ const getExistingReceiptIds = async (spreadsheetId: string, accessToken: string,
     
     // 2. Fetch that column
     const dataUrl = `${BASE_URL_SHEETS}/${spreadsheetId}/values/${colLetter}:${colLetter}?majorDimension=COLUMNS`;
-    const dataRes = await fetch(dataUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const dataRes = await authenticatedFetch(dataUrl);
     
     if (!dataRes.ok) return new Set();
     
@@ -168,26 +193,71 @@ const getExistingReceiptIds = async (spreadsheetId: string, accessToken: string,
 
 // --- Main Export Function ---
 
-export const syncReceiptsToSheet = async (receipts: Receipt[], lastSyncDate: string | null, t: TFunction) => {
-  const accessToken = await getAccessToken();
+export const ensureSheetExists = async (t: TFunction) => {
+  const appName = 'Receipts Register';
+  const receiptsLabel = t('receipts.title', { defaultValue: 'Receipts' });
+  const filename = `${appName} - ${receiptsLabel}`;
 
+  let spreadsheetId = await findSheet(filename);
+  if (!spreadsheetId) {
+    spreadsheetId = await createSpreadsheet(filename);
+    await appendHeaders(spreadsheetId, t);
+  }
+  return spreadsheetId;
+};
+
+/**
+ * Handles the full Google Sheets connection flow:
+ * 1. Request permissions (Scopes)
+ * 2. Sign In
+ * 3. Create/Find Spreadsheet
+ * 4. Save ID to Storage
+ */
+export const connectToGoogleSheets = async (t: TFunction): Promise<string> => {
+  if (!GoogleSignin) {
+    throw new Error('Google Sign-In is not initialized.');
+  }
+
+  // 1. Request strict scopes
+  await GoogleSignin.addScopes({
+    scopes: [
+      'https://www.googleapis.com/auth/drive.file',
+    ]
+  });
+
+  // 2. Sign In
+  await GoogleSignin.signIn();
+
+  // 3. Ensure Sheet Exists
+  const id = await ensureSheetExists(t);
+
+  // 4. Persist ID
+  if (id) {
+    await AsyncStorage.setItem('google_sheet_id', id);
+    return id;
+  }
+  
+  throw new Error('Failed to create or find Google Sheet');
+};
+
+export const syncReceiptsToSheet = async (receipts: Receipt[], lastSyncDate: string | null, t: TFunction) => {
   // 1. Determine Filename (Translated)
   const appName = 'Receipts Register';
   const receiptsLabel = t('receipts.title', { defaultValue: 'Receipts' });
   const filename = `${appName} - ${receiptsLabel}`;
 
   // 2. Find or Create
-  let spreadsheetId = await findSheet(filename, accessToken);
+  let spreadsheetId = await findSheet(filename);
   const isNewFile = !spreadsheetId;
 
   // 4. Create if needed (Moved up to ensure we have an ID for dedupe check)
   if (!spreadsheetId) {
-    spreadsheetId = await createSpreadsheet(filename, accessToken);
+    spreadsheetId = await createSpreadsheet(filename);
   }
 
   // 5. If new, add Headers
   if (isNewFile && spreadsheetId) {
-    await appendHeaders(spreadsheetId, accessToken, t);
+    await appendHeaders(spreadsheetId, t);
   }
 
   // 3. Filter Logic (Deduplication)
@@ -196,7 +266,7 @@ export const syncReceiptsToSheet = async (receipts: Receipt[], lastSyncDate: str
   if (spreadsheetId) {
       // Fetch existing IDs from the sheet to prevent duplicates
       // This is more robust than relying on lastSyncDate which can be lost on device
-      const existingIds = await getExistingReceiptIds(spreadsheetId, accessToken, t);
+      const existingIds = await getExistingReceiptIds(spreadsheetId, t);
       
       if (existingIds.size > 0) {
           receiptsToExport = receipts.filter(r => !existingIds.has(r.id));
@@ -218,7 +288,7 @@ export const syncReceiptsToSheet = async (receipts: Receipt[], lastSyncDate: str
 
   // 6. Append Data
   if (spreadsheetId) {
-    await appendRows(spreadsheetId, receiptsToExport, accessToken);
+    await appendRows(spreadsheetId, receiptsToExport);
     
     return {
       url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,

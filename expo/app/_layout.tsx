@@ -122,6 +122,7 @@ function RootLayoutContent() {
       >
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="(app)" />
       </Stack>
       <StatusBar style={activeTheme === 'dark' ? 'light' : 'dark'} />

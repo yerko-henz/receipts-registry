@@ -1,9 +1,10 @@
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
-import { Tabs } from 'expo-router'
+import { Tabs, useRouter } from 'expo-router' // Added useRouter
 import { FolderOpen, Home, ListTodo, ScanLine, Settings } from 'lucide-react-native'
-import { ComponentProps } from 'react'
+import { ComponentProps, useEffect } from 'react' // Added useEffect
 import { useTranslation } from 'react-i18next'
+import { useGlobalStore } from '@/store/useGlobalStore' // Added useGlobalStore
 
 type TabConfig = {
   name: string
@@ -18,6 +19,23 @@ export default function AppLayout() {
   const { t } = useTranslation()
 
   // Configure which tabs are visible
+  const router = useRouter()
+  const { user } = useGlobalStore()
+
+  useEffect(() => {
+    // Check if user has completed onboarding
+    // Immediate check without timeout to prevent flash
+    if (user && !user.user_metadata?.onboarding_completed) {
+        router.replace('/onboarding')
+    }
+  }, [user])
+  
+  if (user && !user.user_metadata?.onboarding_completed) {
+      // Return null or a loader to prevent flashing the tabs while redirecting
+      return null;
+  }
+  
+  // Configure which tabs are visible
   // TODO: Replace these with actual permission checks (e.g., based on payment plan)
   const tabsConfig: TabConfig[] = [
     {
@@ -31,7 +49,7 @@ export default function AppLayout() {
     },
     {
       name: 'receipts',
-      visible: true,
+      visible: true, 
       order: 2,
       options: {
         title: t('app.receipts'),

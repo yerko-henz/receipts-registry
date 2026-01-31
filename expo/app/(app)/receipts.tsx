@@ -559,58 +559,6 @@ export default function ReceiptsUnifiedScreen() {
                         {formatPrice(totalSpent)}
                     </Text>
                 </View>
-
-                <Pressable 
-                  style={({pressed}) => {
-                    let bg = colors.card;
-                    
-                    if (hasUnsyncedChanges) {
-                         bg = colors.notification; // Red for unsynced
-                    } else if (sheetId) {
-                         bg = colors.tint + '20'; // Light Green/Tint for synced
-                    }
-
-                    return {
-                        padding: 8,
-                        borderRadius: 20,
-                        backgroundColor: bg,
-                        opacity: pressed || exporting ? 0.7 : 1,
-                        borderWidth: 1,
-                        borderColor: 'rgba(0,0,0,0.05)',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6
-                    }
-                  }}
-                  onPress={handleExport}
-                  disabled={exporting}
-                >
-                  <Animated.View style={spinStyle}>
-                      {hasUnsyncedChanges ? (
-                          <RefreshCw size={20} color="#FFF" />
-                      ) : sheetId ? (
-                          <RefreshCw size={20} color={colors.tint} />
-                      ) : (
-                          <RefreshCw size={20} color={colors.text} />
-                      )}
-                  </Animated.View>
-                </Pressable>
-
-                {sheetId && (
-                    <Pressable 
-                        style={({pressed}) => ({
-                            padding: 8,
-                            borderRadius: 20,
-                            backgroundColor: colors.card,
-                            opacity: pressed ? 0.7 : 1,
-                            borderWidth: 1,
-                            borderColor: 'rgba(0,0,0,0.05)'
-                        })}
-                        onPress={handleOpenSheet}
-                    >
-                         <Eye size={20} color={colors.text} />
-                    </Pressable>
-                )}
              </View>
         </View>
       </View>

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { MFASetup } from '@/components/MFASetup'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -11,11 +12,12 @@ import { GoogleSignin } from '@/lib/google-signin'
 import { useRouter } from 'expo-router'
 import { useGlobalStore } from '@/store/useGlobalStore'
 import { useTheme } from '@/components/ThemeProvider'
+import { ensureSheetExists, connectToGoogleSheets } from '@/services/google-sheets'
 import { setRegionLocale } from '@/lib/currency'
 import { ChevronRight, Globe, Key, Mail, Palette, Shield, User, MapPin } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Modal, Alert as RNAlert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Modal, Alert as RNAlert, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
@@ -43,6 +45,7 @@ export default function SettingsScreen() {
   const colors = Colors[colorScheme ?? 'light']
   
   const [user, setUser] = useState<any>(null)
+  const [sheetId, setSheetId] = useState<string | null>(null)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [showVerifyEmailModal, setShowVerifyEmailModal] = useState(false)
   const [showMFAModal, setShowMFAModal] = useState(false)
@@ -82,7 +85,13 @@ export default function SettingsScreen() {
     loadUser()
     loadMFAFactors()
     loadRegion()
+    checkSyncStatus()
   }, [])
+
+  async function checkSyncStatus() {
+      const id = await AsyncStorage.getItem('google_sheet_id')
+      setSheetId(id)
+  }
 
   async function loadRegion() {
       const saved = await storage.getRegion()
@@ -102,6 +111,24 @@ export default function SettingsScreen() {
   async function loadUser() {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
+  }
+
+
+
+// ...
+
+  async function handleGoogleSync() {
+    try {
+        setLoading(true)
+        const id = await connectToGoogleSheets(t);
+        setSheetId(id);
+        RNAlert.alert(t('common.success'), t('settings.permissionsGranted', { defaultValue: 'Permissions granted! You can now sync your receipts.' }))
+    } catch (error: any) {
+        console.warn('Google Sync Error', error)
+        RNAlert.alert(t('common.error'), error?.message || t('settings.connectError', { defaultValue: 'Could not connect to Google.' }))
+    } finally {
+        setLoading(false)
+    }
   }
 
   async function loadMFAFactors() {
@@ -238,12 +265,16 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Sign out from components
               if (GoogleSignin) {
                 await GoogleSignin.signOut()
               }
             } catch (error) {
-              console.error('Google Sign-Out Error:', error)
+              console.warn('Google Sign-Out Error:', error) // Changed to warn to avoid noise
             }
+            
+            // Clear Local Storage
+            await AsyncStorage.multiRemove(['google_sheet_id', 'last_export_date']);
             
             await supabase.auth.signOut()
             router.replace('/(auth)/login')
@@ -279,6 +310,28 @@ export default function SettingsScreen() {
                 <Text style={[styles.value, { color: colors.text }]}>
                   {user?.email}
                 </Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Image 
+                        source={{ uri: 'https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png' }} 
+                        style={{ width: 20, height: 20, resizeMode: 'contain' }}
+                    />
+                    <Text style={[styles.label, { color: colors.icon }]}>
+                        {t('settings.googleSheets', { defaultValue: 'Google Sheets' })}
+                    </Text>
+                 </View>
+                 <TouchableOpacity 
+                    onPress={handleGoogleSync}
+                    disabled={!!sheetId || loading}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                 >
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: sheetId ? '#10B981' : colors.icon }} />
+                    <Text style={[styles.value, { color: sheetId ? colors.text : colors.tint, flex: 0, fontWeight: sheetId ? '500' : '600' }]}>
+                        {sheetId ? t('settings.synced', { defaultValue: 'Synced' }) : t('settings.connect', { defaultValue: 'Connect' })}
+                    </Text>
+                 </TouchableOpacity>
               </View>
 
             </View>
