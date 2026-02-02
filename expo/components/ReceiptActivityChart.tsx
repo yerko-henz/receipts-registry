@@ -7,6 +7,7 @@ import { matchFont as matchFontSkia } from '@shopify/react-native-skia';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { CommonStyles } from '@/constants/Styles';
 import { DayData } from '@/lib/date';
 
 
@@ -190,7 +191,7 @@ export default function ReceiptActivityChart({ data }: Props) {
 
   return (
     <>
-      <View style={[styles.card, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
+      <View style={[CommonStyles.getCardStyle(themeColors), { padding: 20 }]}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: themeColors.text }]}>{t('chart.weeklyActivity')}</Text>
         </View>
@@ -325,17 +326,7 @@ export default function ReceiptActivityChart({ data }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    padding: 20,
     marginVertical: 10,
-    // Shadow for iOS
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    // Elevation for Android
-    elevation: 2,
-    borderWidth: 1,
   },
   header: {
     marginBottom: 20,

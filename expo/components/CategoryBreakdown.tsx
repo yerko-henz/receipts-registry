@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
+import { CommonStyles } from '@/constants/Styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getCategoryIcon } from '@/constants/categories';
 import { ProgressBar } from '@/components/receiptAnalizer/components/ProgressBar';
@@ -52,7 +53,7 @@ export default function CategoryBreakdown({ data }: Props) {
   if (categoryData.categories.length === 0) return null;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[CommonStyles.getCardStyle(colors), { padding: 20 }]}>
       <Text style={[styles.title, { color: colors.text }]}>
         {t('chart.spendingBreakdown', { defaultValue: 'Spending Breakdown' })}
       </Text>
@@ -98,17 +99,7 @@ export default function CategoryBreakdown({ data }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    padding: 20,
     marginVertical: 10,
-    // Shadow for iOS
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    // Elevation for Android
-    elevation: 2,
-    borderWidth: 1,
   },
   title: {
     fontSize: 18,

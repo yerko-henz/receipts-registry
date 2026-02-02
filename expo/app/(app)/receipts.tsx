@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme'
+import { CommonStyles } from '@/constants/Styles'
 import { formatPrice } from '@/lib/currency'
 import { DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories'
 import { useTranslation } from 'react-i18next'
@@ -438,8 +439,8 @@ export default function ReceiptsUnifiedScreen() {
             itemRefs.current[item.id] = el
         }}
         style={[
-            styles.card, 
-            { backgroundColor: colors.card, borderColor: isExpanded ? colors.tint : colors.border }
+            CommonStyles.getFlatCardStyle(colors), 
+            { borderColor: isExpanded ? colors.tint : colors.border }
         ]}
         onPress={() => toggleExpand(item.id)}
       >
@@ -826,9 +827,6 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
   },
   cardMain: {
     flexDirection: 'row',
