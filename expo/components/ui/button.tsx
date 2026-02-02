@@ -8,9 +8,10 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost'
   loading?: boolean
   disabled?: boolean
+  style?: any
 }
 
-export function Button({ title, onPress, variant = 'primary', loading, disabled }: ButtonProps) {
+export function Button({ title, onPress, variant = 'primary', loading, disabled, style }: ButtonProps) {
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
   
@@ -26,7 +27,8 @@ export function Button({ title, onPress, variant = 'primary', loading, disabled 
           borderColor: colors.tint 
         },
         variant === 'ghost' && { backgroundColor: 'transparent' },
-        (disabled || loading) && styles.disabled
+        (disabled || loading) && styles.disabled,
+        style
       ]}
       onPress={onPress}
       disabled={disabled || loading}

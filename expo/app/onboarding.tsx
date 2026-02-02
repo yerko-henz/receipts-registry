@@ -8,16 +8,18 @@ import { useRouter } from 'expo-router'
 import { ArrowRight, Check, Sheet, User } from 'lucide-react-native'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, Alert, Dimensions, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
+import { ActivityIndicator, Dimensions, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft } from 'react-native-reanimated'
 import { GoogleSignin } from '@/lib/google-signin'
 import { connectToGoogleSheets } from '@/services/google-sheets'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useAlertStore } from '@/store/useAlertStore'
 
 const { width } = Dimensions.get('window')
 
 export default function OnboardingScreen() {
   const { t } = useTranslation()
+  const showAlert = useAlertStore(state => state.showAlert)
   const router = useRouter()
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
@@ -84,7 +86,7 @@ export default function OnboardingScreen() {
         await completeOnboarding()
     } catch (error: any) {
         console.error("Google Sync Error", error)
-        Alert.alert("Sync Error", error?.message || "Could not connect to Google Sheets. You can try again later in Settings.")
+        showAlert("Sync Error", error?.message || "Could not connect to Google Sheets. You can try again later in Settings.")
     } finally {
         setLoading(false)
     }

@@ -4,16 +4,18 @@ import { Card } from '@/components/ui/card'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { deleteFile, getFiles, shareFile, supabase, uploadFile } from '@/lib/supabase'
+import { useAlertStore } from '@/store/useAlertStore'
 import * as Clipboard from 'expo-clipboard'
 import * as DocumentPicker from 'expo-document-picker'
 import { FileIcon, Share2, Trash2 } from 'lucide-react-native'
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert as RNAlert, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function StorageScreen() {
   const { t } = useTranslation()
+  const showAlert = useAlertStore(state => state.showAlert)
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
   
@@ -88,7 +90,7 @@ export default function StorageScreen() {
     }
 
   async function handleDelete(filename: string) {
-    RNAlert.alert(
+    showAlert(
       t('storage.deleteTitle'),
       t('storage.deleteConfirm'),
       [

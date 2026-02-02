@@ -14,6 +14,11 @@
     "continueWithGoogle": "Continue with Google",
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
+    "googleSigninUnavailable": "Google Sign-In Unavailable",
+    "googleSigninUnavailableDesc": "This feature requires a development build with native modules. Please use a different login method for now.",
+    "playServicesUnavailable": "Play Services Unavailable",
+    "playServicesUnavailableDesc": "Google Play Services is not available on this device.",
+    "signinError": "Sign-In Error",
     "verifyEmail": "Verify your email",
     "verifyEmailDescription": "We've sent you an email with a verification link. Please check your inbox and click the link to verify your account.",
     "backToLogin": "Back to Login",
@@ -45,6 +50,7 @@
   },
   "common": {
     "or": "OR",
+    "success": "Success",
     "error": "Error"
   },
   "home": {
@@ -53,10 +59,6 @@
     "email": "Email",
     "recentReceipts": "{{count}} receipts in the last {{days}} days",
     "memberSince": "member for {{days}} days in {{company}}"
-  },
-  "common": {
-    "success": "Success",
-    "error": "Error"
   },
   "app": {
     "home": "Home",
@@ -155,7 +157,12 @@
     "verifyEmailDescription": "We've sent a verification code to your email. Enter it below to verify your email.",
     "verifyCode": "Verify Code",
     "resendCode": "Resend Code",
-    "resendCodeWithTimer": "Resend Code ({{seconds}}s)"
+    "resendCodeWithTimer": "Resend Code ({{seconds}}s)",
+    "permissionsGranted": "Permissions granted! You can now sync your receipts.",
+    "connectError": "Could not connect to Google.",
+    "synced": "Synced",
+    "connect": "Connect",
+    "googleSheets": "Google Sheets"
   },
   "chart": {
     "weeklyActivity": "Weekly Activity",
@@ -192,6 +199,7 @@
     "noReceiptsToExport": "No receipts to export",
     "exporting": "Exporting...",
     "openSheet": "Open Sheet",
+    "alreadySynced": "All receipts are already synced.",
     "filters": {
       "All": "All",
       "Food": "Food",

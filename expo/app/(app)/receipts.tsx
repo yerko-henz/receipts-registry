@@ -12,7 +12,7 @@ import { enUS, es } from 'date-fns/locale'
 import { useFocusEffect } from 'expo-router'
 import { Store, Search, ChevronDown, ChevronUp, Trash2, TrendingUp, Eye, RefreshCw } from 'lucide-react-native'
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
-import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, Alert, ActivityIndicator, Linking } from 'react-native'
+import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, ActivityIndicator, Linking } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { DateRangeFilter } from '@/components/DateRangeFilter'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -21,6 +21,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, wit
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { syncReceiptsToSheet } from '@/services/google-sheets';
+import { useAlertStore } from '@/store/useAlertStore';
 
 const AnimatedImage = Animated.createAnimatedComponent(Image)
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -41,6 +42,7 @@ import { debounce } from 'lodash'
 
 export default function ReceiptsUnifiedScreen() {
   const { t } = useTranslation()
+  const showAlert = useAlertStore(state => state.showAlert)
 
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
@@ -242,7 +244,7 @@ export default function ReceiptsUnifiedScreen() {
   }, [hasNextPage, fetchNextPage])
 
   const handleDelete = (id: string) => {
-    Alert.alert(
+    showAlert(
       t('receipts.deleteTitle'),
       t('receipts.deleteConfirm'),
       [
@@ -253,7 +255,7 @@ export default function ReceiptsUnifiedScreen() {
               onPress: async () => {
                 deleteReceiptMutation.mutate(id, {
                     onError: () => {
-                        Alert.alert('Error', t('receipts.deleteError'))
+                        showAlert('Error', t('receipts.deleteError'))
                     }
                 })
               }
@@ -274,7 +276,7 @@ export default function ReceiptsUnifiedScreen() {
     // Given the previous logic was `filteredReceipts`, this preserves behavior for loaded items.
     
     if (receipts.length === 0) {
-      Alert.alert(t('common.error'), t('receipts.noReceiptsToExport'))
+      showAlert(t('common.error'), t('receipts.noReceiptsToExport'))
       return
     }
 
@@ -291,13 +293,13 @@ export default function ReceiptsUnifiedScreen() {
       setLastExport(result.timestamp)
 
       if (result.syncedCount === 0) {
-          Alert.alert(
+          showAlert(
             t('common.info', { defaultValue: 'Info' }),
-            t('receipts.alreadySynced', { defaultValue: 'All receipts are already synced.' }),
+            t('receipts.alreadySynced'),
             [{ text: 'OK' }]
           )
       } else {
-          Alert.alert(
+          showAlert(
             t('common.success'),
             t('receipts.exportSuccess'),
             [
@@ -309,7 +311,7 @@ export default function ReceiptsUnifiedScreen() {
     } catch (error: unknown) {
       console.error(error)
       const message = error instanceof Error ? error.message : String(error)
-      Alert.alert(t('receipts.exportError'), message || 'Could not export to Google Sheets')
+      showAlert(t('receipts.exportError'), message || 'Could not export to Google Sheets')
     } finally {
       setExporting(false)
     }

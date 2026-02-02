@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
@@ -11,6 +11,7 @@ import { ReceiptData } from '@/components/receiptAnalizer/types';
 import { createReceipts } from '@/services/receipts';
 import { useScannerStore } from '@/store/useScannerStore';
 import { useReceiptsStore } from '@/store/useReceiptsStore';
+import { useAlertStore } from '@/store/useAlertStore';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -18,6 +19,7 @@ import { useTheme } from '@/components/ThemeProvider';
 
 const App: React.FC = () => {
   const { t } = useTranslation();
+  const showAlert = useAlertStore(state => state.showAlert);
   const { activeTheme } = useTheme();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -45,7 +47,7 @@ const App: React.FC = () => {
       if (Platform.OS !== 'web') {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert(t('scanner.permissionDenied'), t('scanner.permissionMessage'));
+          showAlert(t('scanner.permissionDenied'), t('scanner.permissionMessage'));
           return;
         }
       }
@@ -86,7 +88,7 @@ const App: React.FC = () => {
       }
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', t('scanner.pickImageError'));
+      showAlert('Error', t('scanner.pickImageError'));
     }
   };
 
@@ -119,7 +121,7 @@ const App: React.FC = () => {
                     // Optional: Show a toast? The Result Header says "Success" so that might be enough.
                 } catch (e) {
                     console.error("Auto-save failed", e);
-                    Alert.alert(t('common.error'), "Failed to auto-save receipts.");
+                    showAlert(t('common.error'), "Failed to auto-save receipts.");
                 }
             };
             saveBatch();
@@ -158,7 +160,7 @@ const App: React.FC = () => {
     } catch (err: unknown) {
       console.error(err);
       const message = err instanceof Error ? err.message : 'Unknown error';
-      Alert.alert('Error', t('scanner.saveError') + ': ' + message);
+      showAlert('Error', t('scanner.saveError') + ': ' + message);
     }
   };
 
@@ -173,19 +175,19 @@ const App: React.FC = () => {
       // Refresh global list
       await fetchReceipts();
 
-      Alert.alert("Success", t('scanner.saveAllSuccess'));
+      showAlert("Success", t('scanner.saveAllSuccess'));
       resetScanner();
     } catch (err: unknown) {
       console.error(err);
       const message = err instanceof Error ? err.message : 'Unknown error';
-      Alert.alert("Error", "Failed to save all receipts: " + message);
+      showAlert("Error", "Failed to save all receipts: " + message);
     }
   };
 
   const handleRetry = () => {
       // Logic for retry would need to be in store or re-implemented
       // For now, placeholder
-       Alert.alert("Retry", "Retry logic moved to store (not fully implemented in UI yet)");
+       showAlert("Retry", "Retry logic moved to store (not fully implemented in UI yet)");
   };
 
   return (

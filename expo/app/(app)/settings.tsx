@@ -12,12 +12,13 @@ import { GoogleSignin } from '@/lib/google-signin'
 import { useRouter } from 'expo-router'
 import { useGlobalStore } from '@/store/useGlobalStore'
 import { useTheme } from '@/components/ThemeProvider'
+import { useAlertStore } from '@/store/useAlertStore'
 import { ensureSheetExists, connectToGoogleSheets } from '@/services/google-sheets'
 import { setRegionLocale } from '@/lib/currency'
 import { ChevronRight, Globe, Key, Mail, Palette, Shield, User, MapPin } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Modal, Alert as RNAlert, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
@@ -41,6 +42,7 @@ const REGIONS = [
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation()
   const router = useRouter()
+  const showAlert = useAlertStore(state => state.showAlert)
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
   
@@ -122,10 +124,10 @@ export default function SettingsScreen() {
         setLoading(true)
         const id = await connectToGoogleSheets(t);
         setSheetId(id);
-        RNAlert.alert(t('common.success'), t('settings.permissionsGranted', { defaultValue: 'Permissions granted! You can now sync your receipts.' }))
+        showAlert(t('common.success'), t('settings.permissionsGranted'))
     } catch (error: any) {
         console.warn('Google Sync Error', error)
-        RNAlert.alert(t('common.error'), error?.message || t('settings.connectError', { defaultValue: 'Could not connect to Google.' }))
+        showAlert(t('common.error'), error?.message || t('settings.connectError'))
     } finally {
         setLoading(false)
     }
@@ -255,7 +257,7 @@ export default function SettingsScreen() {
   }
 
   async function handleLogout() {
-    RNAlert.alert(
+    showAlert(
       t('auth.logout'),
       t('auth.logoutConfirm'),
       [

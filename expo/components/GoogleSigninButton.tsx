@@ -3,9 +3,10 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { supabase } from '@/lib/supabase'
 import { GoogleSignin, statusCodes, isNativeModuleAvailable } from '@/lib/google-signin'
 import { useRouter } from 'expo-router'
+import { useAlertStore } from '@/store/useAlertStore'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 
 const GoogleIcon = ({ size = 18 }: { size?: number }) => (
@@ -31,6 +32,7 @@ const GoogleIcon = ({ size = 18 }: { size?: number }) => (
 
 export function GoogleSigninButton() {
   const { t } = useTranslation()
+  const showAlert = useAlertStore(state => state.showAlert)
   const router = useRouter()
   const colorScheme = useColorScheme()
   const colors = Colors[colorScheme ?? 'light']
@@ -43,9 +45,9 @@ export function GoogleSigninButton() {
       // Check if native module is available
       if (!isNativeModuleAvailable || !GoogleSignin) {
         console.warn('Google Sign-In native module is missing or not available')
-        Alert.alert(
-          'Google Sign-In Unavailable',
-          'This feature requires a development build with native modules. Please use a different login method for now.'
+        showAlert(
+          t('auth.googleSigninUnavailable'),
+          t('auth.googleSigninUnavailableDesc')
         )
         setLoading(false)
         return
@@ -76,12 +78,12 @@ export function GoogleSigninButton() {
       } else if (error.code === statusCodes.IN_PROGRESS) {
         // operation (e.g. sign in) is in progress already
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('Play Services Unavailable', 'Google Play Services is not available on this device.')
+        showAlert(t('auth.playServicesUnavailable'), t('auth.playServicesUnavailableDesc'))
       } else {
         // some other error happened
         console.error(error)
         const message = error instanceof Error ? error.message : String(error)
-        Alert.alert('Sign-In Error', message || 'An unexpected error occurred during Google Sign-In')
+        showAlert(t('auth.signinError'), message || t('common.error'))
       }
     } finally {
       setLoading(false)

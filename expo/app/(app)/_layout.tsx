@@ -5,6 +5,7 @@ import { FolderOpen, Home, ListTodo, ScanLine, Settings } from 'lucide-react-nat
 import { ComponentProps, useEffect } from 'react' // Added useEffect
 import { useTranslation } from 'react-i18next'
 import { useGlobalStore } from '@/store/useGlobalStore' // Added useGlobalStore
+import { ModalAlert } from '@/components/ui/modal-alert'
 
 type TabConfig = {
   name: string
@@ -116,6 +117,7 @@ export default function AppLayout() {
             }}
           />
       ))}
+      <ModalAlert />
     </Tabs>
   )
 }
