@@ -1,11 +1,10 @@
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { Tabs, useRouter } from 'expo-router' // Added useRouter
-import { FolderOpen, Home, ListTodo, ScanLine, Settings } from 'lucide-react-native'
+import { Home, ListTodo, ScanLine, Settings } from 'lucide-react-native'
 import { ComponentProps, useEffect } from 'react' // Added useEffect
 import { useTranslation } from 'react-i18next'
 import { useGlobalStore } from '@/store/useGlobalStore' // Added useGlobalStore
-import { ModalAlert } from '@/components/ui/modal-alert'
 
 type TabConfig = {
   name: string
@@ -76,15 +75,6 @@ export default function AppLayout() {
       },
     },
     {
-      name: 'storage',
-      visible: false, 
-      order: 6,
-      options: {
-        title: t('app.storage'),
-        tabBarIcon: ({ color, size }) => <FolderOpen size={size} color={color} />,
-      },
-    },
-    {
       name: 'tasks',
       visible: false, 
       order: 7,
@@ -117,7 +107,6 @@ export default function AppLayout() {
             }}
           />
       ))}
-      <ModalAlert />
     </Tabs>
   )
 }

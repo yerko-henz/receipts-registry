@@ -19,6 +19,8 @@ SplashScreen.preventAutoHideAsync();
 
 
 
+import { ModalAlert } from '@/components/ui/modal-alert'
+
 function RootLayoutContent() {
   const router = useRouter()
   const { activeTheme } = useTheme()
@@ -126,6 +128,7 @@ function RootLayoutContent() {
         <Stack.Screen name="(app)" />
       </Stack>
       <StatusBar style={activeTheme === 'dark' ? 'light' : 'dark'} />
+      <ModalAlert />
     </NavThemeProvider>
   )
 }

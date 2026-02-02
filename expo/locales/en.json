@@ -62,26 +62,12 @@
   },
   "app": {
     "home": "Home",
-    "storage": "Storage",
     "tasks": "Tasks",
     "settings": "Settings",
     "receipts": "Receipts",
     "scanner": "Scanner",
     "welcome": "Welcome",
     "loading": "Loading..."
-  },
-  "storage": {
-    "title": "File Management",
-    "upload": "Upload File",
-    "uploading": "Uploading...",
-    "noFiles": "No files uploaded yet",
-    "delete": "Delete",
-    "deleteTitle": "Delete File",
-    "deleteConfirm": "Are you sure you want to delete this file?",
-    "cancel": "Cancel",
-    "share": "Share",
-    "shareFailed": "Failed to share file",
-    "download": "Download"
   },
   "tasks": {
     "title": "Task Management",

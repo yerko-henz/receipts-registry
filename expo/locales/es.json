@@ -61,26 +61,12 @@
   },
   "app": {
     "home": "Inicio",
-    "storage": "Archivos",
     "tasks": "Tareas",
     "settings": "Ajustes",
     "receipts": "Recibos",
     "scanner": "Escáner",
     "welcome": "Bienvenido",
     "loading": "Cargando..."
-  },
-  "storage": {
-    "title": "Gestión de archivos",
-    "upload": "Subir archivo",
-    "uploading": "Subiendo...",
-    "noFiles": "Aún no hay archivos subidos",
-    "delete": "Eliminar",
-    "deleteTitle": "Eliminar archivo",
-    "deleteConfirm": "¿Estás seguro de que deseas eliminar este archivo?",
-    "cancel": "Cancelar",
-    "share": "Compartir",
-    "shareFailed": "Error al compartir archivo",
-    "download": "Descargar"
   },
   "tasks": {
     "title": "Gestión de tareas",
