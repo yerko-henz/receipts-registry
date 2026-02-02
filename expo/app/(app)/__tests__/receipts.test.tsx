@@ -7,9 +7,12 @@ import { useReceiptsStore } from '@/store/useReceiptsStore';
 import { syncReceiptsToSheet } from '@/services/google-sheets';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
+import { useAlertStore } from '@/store/useAlertStore';
 
-// Mocks
-jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+const mockShowAlert = jest.fn();
+jest.mock('@/store/useAlertStore', () => ({
+  useAlertStore: jest.fn(),
+}));
 
 jest.mock('expo-router', () => ({
   useFocusEffect: jest.fn(),
@@ -122,6 +125,9 @@ describe('ReceiptsUnifiedScreen', () => {
         return selector(state);
     });
     (useDeleteReceipt as jest.Mock).mockReturnValue({ mutate: jest.fn() });
+    (useAlertStore as unknown as jest.Mock).mockImplementation((selector) => 
+      selector({ showAlert: mockShowAlert })
+    );
   });
 
   it('renders loading state initially', () => {
@@ -185,7 +191,7 @@ describe('ReceiptsUnifiedScreen', () => {
       const deleteBtn = getByText('receipts.delete');
       fireEvent.press(deleteBtn);
 
-      expect(Alert.alert).toHaveBeenCalledWith(
+      expect(mockShowAlert).toHaveBeenCalledWith(
           'receipts.deleteTitle',
           'receipts.deleteConfirm',
           expect.any(Array)

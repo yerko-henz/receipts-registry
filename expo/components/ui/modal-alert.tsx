@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, StyleSheet, Text, View, TouchableOpacity, Dimensions } from 'react-native';
+import { Modal, StyleSheet, Text, View, Dimensions } from 'react-native';
 import { useAlertStore } from '@/store/useAlertStore';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';

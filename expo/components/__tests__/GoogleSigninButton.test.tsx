@@ -5,10 +5,16 @@ import { GoogleSignin, isNativeModuleAvailable } from '@/lib/google-signin';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
+import { useAlertStore } from '@/store/useAlertStore';
 
 // Mocks
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
+}));
+
+const mockShowAlert = jest.fn();
+jest.mock('@/store/useAlertStore', () => ({
+  useAlertStore: jest.fn(),
 }));
 
 jest.mock('@/hooks/use-color-scheme', () => ({
@@ -49,6 +55,9 @@ describe('GoogleSigninButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({ replace: mockReplace });
+    (useAlertStore as unknown as jest.Mock).mockImplementation((selector) => 
+      selector({ showAlert: mockShowAlert })
+    );
     // Default happy path mocks
     (GoogleSignin.hasPlayServices as jest.Mock).mockResolvedValue(true);
     (GoogleSignin.signIn as jest.Mock).mockResolvedValue({
@@ -83,20 +92,21 @@ describe('GoogleSigninButton', () => {
 
   it('shows alert if native module is not available', async () => {
     // Override mock for this test
-    jest.requireMock('@/lib/google-signin').isNativeModuleAvailable = false;
+    const googleSigninLib = require('@/lib/google-signin');
+    googleSigninLib.isNativeModuleAvailable = false;
     
     const { getByText } = render(<GoogleSigninButton />);
     fireEvent.press(getByText('auth.continueWithGoogle'));
 
     await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith(
-            'Google Sign-In Unavailable',
-            expect.stringContaining('development build')
+        expect(mockShowAlert).toHaveBeenCalledWith(
+            'auth.googleSigninUnavailable',
+            'auth.googleSigninUnavailableDesc'
         );
     });
 
     // Reset mock
-    jest.requireMock('@/lib/google-signin').isNativeModuleAvailable = true;
+    googleSigninLib.isNativeModuleAvailable = true;
   });
 
   it('handles user cancellation gracefully', async () => {
@@ -109,7 +119,7 @@ describe('GoogleSigninButton', () => {
 
     // Should NOT alert or redirect
     await waitFor(() => expect(GoogleSignin.signIn).toHaveBeenCalled());
-    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(mockShowAlert).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
@@ -122,9 +132,9 @@ describe('GoogleSigninButton', () => {
     fireEvent.press(getByText('auth.continueWithGoogle'));
 
     await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith(
-            'Play Services Unavailable',
-            expect.anything()
+        expect(mockShowAlert).toHaveBeenCalledWith(
+            'auth.playServicesUnavailable',
+            'auth.playServicesUnavailableDesc'
         );
     });
   });
@@ -136,8 +146,8 @@ describe('GoogleSigninButton', () => {
     fireEvent.press(getByText('auth.continueWithGoogle'));
 
     await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith(
-            'Sign-In Error',
+        expect(mockShowAlert).toHaveBeenCalledWith(
+            'auth.signinError',
             'Random failure'
         );
     });

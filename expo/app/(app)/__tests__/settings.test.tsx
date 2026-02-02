@@ -7,12 +7,21 @@ jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 jest.mock('@/hooks/use-color-scheme', () => ({
   useColorScheme: jest.fn().mockReturnValue('light'),
 }));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en-US', changeLanguage: jest.fn() } }),
+}));
+
+const mockShowAlert = jest.fn();
+jest.mock('@/store/useAlertStore', () => ({
+  useAlertStore: jest.fn(),
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -72,6 +81,7 @@ jest.mock('lucide-react-native', () => ({
 }));
 
 import { useRouter } from 'expo-router';
+import { useAlertStore } from '@/store/useAlertStore';
 
 describe('SettingsScreen', () => {
   const mockReplace = jest.fn();
@@ -84,6 +94,9 @@ describe('SettingsScreen', () => {
     mockGetUser.mockResolvedValue({ 
         data: { user: { email: 'test@example.com', email_confirmed_at: '2023-01-01' } } 
     });
+    (useAlertStore as unknown as jest.Mock).mockImplementation((selector) => 
+        selector({ showAlert: mockShowAlert })
+    );
   });
 
   test('renders correctly', async () => {
@@ -107,8 +120,8 @@ describe('SettingsScreen', () => {
   });
 
   test('logs out', async () => {
-    // Mock Alert.alert to immediately trigger the destructive action
-    jest.spyOn(require('react-native').Alert, 'alert').mockImplementation((title, message, buttons) => {
+    // Mock showAlert to immediately trigger the destructive action
+    mockShowAlert.mockImplementation((title, message, buttons) => {
         const logoutButton = (buttons as any[]).find((b: any) => b.style === 'destructive');
         if (logoutButton && logoutButton.onPress) {
             logoutButton.onPress();

@@ -13,14 +13,18 @@ jest.mock('@/components/ThemeProvider', () => ({
 
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 describe('AnalysisLoading', () => {
   it('renders with progress text', () => {
     const { getByText } = render(<AnalysisLoading progress={50} />);
-    expect(getByText('Analyzing Receipt...')).toBeTruthy();
+    expect(getByText('scanner.analyzingReceipt')).toBeTruthy();
   });
 
   it('shows AI extraction message', () => {
     const { getByText } = render(<AnalysisLoading progress={75} />);
-    expect(getByText(/extracting item details/i)).toBeTruthy();
+    expect(getByText('scanner.extractingDetails')).toBeTruthy();
   });
 });

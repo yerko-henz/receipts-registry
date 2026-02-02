@@ -6,6 +6,7 @@ import { useReceiptsStore } from '@/store/useReceiptsStore';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync } from 'expo-image-manipulator';
 import { Alert } from 'react-native';
+import { useAlertStore } from '@/store/useAlertStore';
 
 // Mocks
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -81,7 +82,10 @@ jest.mock('@/components/receiptAnalizer/ReceiptAnalyzer', () => ({
     }
 }));
 
-jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+const mockShowAlert = jest.fn();
+jest.mock('@/store/useAlertStore', () => ({
+  useAlertStore: jest.fn(),
+}));
 
 describe('ReceiptAnalizer Screen', () => {
   const mockProcessImages = jest.fn();
@@ -108,6 +112,9 @@ describe('ReceiptAnalizer Screen', () => {
         };
         return selector(state);
     });
+    (useAlertStore as unknown as jest.Mock).mockImplementation((selector) => 
+        selector({ showAlert: mockShowAlert })
+    );
   });
 
   it('renders landing state when no items', () => {
