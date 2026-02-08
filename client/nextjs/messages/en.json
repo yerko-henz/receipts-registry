@@ -1,0 +1,511 @@
+{
+  "common": {
+    "slug": "Your page",
+    "email": "Email address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "updatePassword": "Update Password",
+    "updating": "Updating...",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "createAccount": "Create account",
+    "creatingAccount": "Creating account...",
+    "forgotYourPassword": "Forgot your password?",
+    "rememberYourPassword": "Remember your password?",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "returnToLogin": "Return to login",
+    "urlSiteName": "placeholder.app/"
+  },
+  "homepage": {
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "cta": "Grab This Template",
+      "login": "Login",
+      "getStarted": "Get Started"
+    },
+    "hero": {
+      "title": "Connect deeper with your fans.",
+      "highlight": "Start in 5 minutes",
+      "subtitle": "Organize, answer and monetize your audience.",
+      "goToDashboard": "Go to Dashboard",
+      "createAccount": "Create Account",
+      "linkSlug": "placeholder.app/"
+    },
+    "stats": {
+      "activeUsers": "Active Users",
+      "organizations": "Organizations",
+      "countries": "Countries",
+      "uptime": "Uptime"
+    },
+    "features": {
+      "title": "Everything You Need",
+      "subtitle": "Built with modern technologies for reliability and speed"
+    },
+    "feature": {
+      "auth": {
+        "title": "Robust Authentication",
+        "description": "Secure login with email/password, Multi-Factor Authentication, and SSO providers"
+      },
+      "storage": {
+        "title": "File Management",
+        "description": "Built-in file storage with secure sharing, downloads, and granular permissions"
+      },
+      "settings": {
+        "title": "User Settings",
+        "description": "Complete user management with password updates, MFA setup, and profile controls"
+      },
+      "tasks": {
+        "title": "Task Management",
+        "description": "Built-in todo system with real-time updates and priority management"
+      },
+      "legal": {
+        "title": "Legal Documents",
+        "description": "Pre-configured privacy policy, terms of service, and refund policy pages"
+      },
+      "cookies": {
+        "title": "Cookie Consent",
+        "description": "GDPR-compliant cookie consent system with customizable preferences"
+      }
+    },
+    "cta": {
+      "title": "Ready to Transform Your Idea into Reality?",
+      "subtitle": "Join thousands of developers building their SaaS with {productName}",
+      "button": "Get Started Now"
+    },
+    "footer": {
+      "product": "Product",
+      "legal": "Legal",
+      "features": "Features",
+      "pricing": "Pricing",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "copyright": "© {year} {productName}. All rights reserved."
+    }
+  },
+  "layout": {
+    "description": "The best way to build your SaaS product."
+  },
+  "dashboard": {
+    "welcome": "Welcome, {name}! 👋",
+    "memberFor": "Member for {days} days",
+    "stats": {
+      "processed": "Receipts Processed",
+      "saved": "Receipts Saved",
+      "totalValue": "Total Value Saved",
+      "monthlyGoal": "Monthly Goal",
+      "target": "Target: {amount}",
+      "previousDays": "Previous {days} Days",
+      "totalSpent": "Total Spent",
+      "vsLastWeek": "vs last week",
+      "vsLastMonth": "vs last month",
+      "autoProcessed": "Auto-Processed Today",
+      "recentActivity": "Recent Activity",
+      "items": "items",
+      "newScans": "new scans",
+      "today": "Today",
+      "success": "Success"
+    },
+    "categories": {
+      "food": "Food",
+      "transport": "Transport",
+      "utilities": "Utilities",
+      "entertainment": "Entertainment",
+      "shopping": "Shopping",
+      "health": "Health",
+      "other": "Other"
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "charts": {
+      "weeklyActivity": "Weekly Activity",
+      "monthlyActivity": "Monthly Activity",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "receiptsSavedThisWeek": "Receipts Saved This Week",
+      "totalSaved": "Total saved",
+      "weeklyBreakdown": "Weekly Breakdown",
+      "monthlyBreakdown": "Monthly Breakdown",
+      "viewAll": "View All",
+      "noData": "No data for this week",
+      "tooltipClick": "Click to view details",
+      "daysAxisLabel": "Days",
+      "amountVsDays": "(amount vs days)"
+    },
+    "modal": {
+      "title": "Receipts for {date}",
+      "totalSpent": "Total spent:",
+      "noReceipts": "No receipts found for this day."
+    },
+
+    "receipts": {
+      "title": "Receipt Library",
+      "subtitle": "Manage and analyze your registered expenses.",
+      "searchPlaceholder": "Search receipts by merchant",
+      "filters": {
+        "dateRange": "Dates",
+        "allTime": "All Time",
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "thisMonth": "This Month",
+        "dateType": "Date Type",
+        "receiptDate": "Receipt Date",
+        "uploadDate": "Upload Date",
+        "category": "Category",
+        "allCategories": "All Categories"
+      },
+      "table": {
+        "merchant": "Merchant",
+        "date": "Date",
+        "receiptDate": "Receipt Date",
+        "uploadDate": "Uploaded Date",
+        "category": "Category",
+        "amount": "Total",
+        "action": "Action",
+        "empty": "No receipts found.",
+        "loading": "Loading...",
+        "view": "View"
+      },
+      "pagination": {
+        "prev": "Previous",
+        "next": "Next",
+        "showing": "Showing {start} to {end} of {total} results"
+      }
+    },
+    "nav": {
+      "homepage": "Dashboard",
+      "questions": "Questions",
+      "receipts": "Receipts",
+      "analyze": "Analyze",
+      "settings": "Settings",
+      "userSettings": "User Account",
+      "dropdown": {
+        "signedInAs": "Signed in as",
+        "changePassword": "Change Password",
+        "signOut": "Sign Out"
+      }
+    },
+    "analyze": {
+      "title": "Analyze Receipt",
+      "description": "Upload a receipt image to automatically extract details.",
+      "uploadNew": "Upload New Receipt",
+      "dragDrop": "Drag and drop your files here or click to browse.",
+      "dropFiles": "Drop files here",
+      "supportedFormats": "Supported formats: PDF, JPG, PNG",
+      "browseFiles": "Upload",
+      "recentlyUploaded": "Recently Uploaded",
+      "label": "Receipt Image",
+      "button": "Analyze",
+      "analyzing": "Analyzing...",
+      "success": "Analysis Complete",
+      "integrity": "Integrity",
+      "merchant": "Merchant",
+      "date": "Date",
+      "total": "Total",
+      "category": "Category",
+      "save": "Save Receipt",
+      "saving": "Saving...",
+      "error": "Save Error",
+      "table": {
+        "item": "Item",
+        "qty": "Qty",
+        "price": "Price",
+        "empty": "No recent receipts found."
+      }
+    }
+  },
+  "storage": {
+    "title": "File Management",
+    "subtitle": "Upload, download, and share your files",
+    "error": {
+      "generic": "Failed to load files",
+      "upload": "Failed to upload file",
+      "download": "Failed to download file",
+      "share": "Failed to generate share link",
+      "delete": "Failed to delete file",
+      "copy": "Failed to copy to clipboard"
+    },
+    "success": {
+      "upload": "File uploaded successfully",
+      "delete": "File deleted successfully"
+    },
+    "uploader": {
+      "uploading": "Uploading...",
+      "dropHere": "Drop your file here",
+      "idle": "Drag and drop or click to select a file (max 50mb)"
+    },
+    "files": {
+      "none": "No files uploaded yet"
+    },
+    "share": {
+      "title": "Share {fileName}",
+      "description": "Copy the link below to share your file. This link will expire in 24 hours.",
+      "copied": "Copied!"
+    },
+    "delete": {
+      "title": "Delete File",
+      "description": "Are you sure you want to delete this file? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+  "tasks": {
+    "createDialog": {
+      "title": "Create New Task",
+      "addTask": "Add Task",
+      "taskTitle": {
+        "placeholder": "Task title"
+      },
+      "taskDescription": {
+        "placeholder": "Task description (optional)"
+      },
+      "markUrgent": "Mark as urgent",
+      "error": {
+        "add": "Failed to add task"
+      }
+    },
+    "list": {
+      "title": "Task Management",
+      "subtitle": "Manage your tasks and to-dos",
+      "error": {
+        "load": "Failed to load tasks",
+        "remove": "Failed to remove task",
+        "update": "Failed to update task"
+      }
+    },
+    "filters": {
+      "all": "All Tasks",
+      "active": "Active",
+      "completed": "Completed"
+    },
+    "empty": "No tasks found",
+    "created": "Created: {date}",
+    "urgent": "Urgent"
+  },
+  "questions": {
+    "title": "Questions",
+    "subtitle": "Manage and answer questions from your audience",
+    "comingSoon": "Questions content coming soon..."
+  },
+  "userSettings": {
+    "title": "User Settings",
+    "subtitle": "Manage your account settings and preferences",
+    "userDetails": {
+      "title": "User Details",
+      "subtitle": "Your account information",
+      "userId": "User ID",
+      "email": "Email"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "subtitle": "Update your account password",
+      "newPassword": "New Password",
+      "confirmNewPassword": "Confirm New Password",
+      "button": "Update Password",
+      "loading": "Updating...",
+      "error": {
+        "mismatch": "New passwords don't match",
+        "generic": "Failed to update password"
+      },
+      "success": "Password updated successfully"
+    },
+    "mfa": {
+      "title": "Two-Factor Authentication (2FA)",
+      "subtitle": "Add an additional layer of security to your account",
+      "status": {
+        "verified": "Verified",
+        "unverified": "Unverified"
+      },
+      "list": {
+        "empty": "Protect your account with two-factor authentication. When enabled, you'll need to enter a code from your authenticator app in addition to your password when signing in.",
+        "notEmpty": "You can add additional authentication methods or remove existing ones.",
+        "addedOn": "Added on {date}"
+      },
+      "buttons": {
+        "add": "Add New Authentication Method",
+        "processing": "Processing...",
+        "cancel": "Cancel",
+        "continue": "Continue",
+        "verify": "Verify",
+        "verifying": "Verifying...",
+        "remove": "Remove"
+      },
+      "setup": {
+        "deviceName": {
+          "label": "Device Name",
+          "placeholder": "e.g., Work Phone, Personal iPhone",
+          "helper": "Give this authentication method a name to help you identify it later"
+        },
+        "verificationInfo": {
+          "label": "Verification Code",
+          "placeholder": "Enter code from your authenticator app"
+        }
+      },
+      "errors": {
+        "fetch": "Failed to fetch MFA status",
+        "nameRequired": "Please provide a name for this authentication method",
+        "enroll": "Failed to start MFA enrollment",
+        "verify": "Failed to verify MFA code",
+        "unenroll": "Failed to unenroll MFA factor"
+      },
+      "success": "Two-factor authentication settings updated successfully"
+    },
+    "googleSheets": {
+      "title": "Google Sheets",
+      "connect": "Connect",
+      "synced": "Synced",
+      "connected": "Connected",
+      "disconnect": "Disconnect"
+    },
+    "verifyEmail": {
+      "title": "Verify Email",
+      "description": "Your email is not verified. Click to send verification email.",
+      "sent": "Verification email sent"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Select your preferred language",
+      "english": "English",
+      "spanish": "Spanish"
+    },
+    "region": {
+      "title": "Region & Currency",
+      "description": "Currency format based on your region",
+      "auto": "Auto-detected"
+    },
+    "theme": {
+      "title": "Theme",
+      "description": "App appearance",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
+  },
+  "auth": {
+    "login": {
+      "button": {
+        "signingIn": "Signing in...",
+        "signIn": "Sign in"
+      },
+      "error": {
+        "unknown": "An unknown error occurred"
+      },
+      "link": {
+        "forgotPassword": "Forgot your password?",
+        "signUp": "Sign up"
+      },
+      "prompt": {
+        "noAccount": "Don't have an account?"
+      }
+    },
+    "register": {
+      "error": {
+        "acceptTerms": "You must accept the Terms of Service and Privacy Policy",
+        "passwordMismatch": "Passwords don't match",
+        "unknown": "An unknown error occurred"
+      },
+      "checkbox": {
+        "label": "I agree to the <termsOfService>Terms of Service</termsOfService> and <privacyPolicy>Privacy Policy</privacyPolicy>",
+        "termsOfService": "Terms of Service",
+        "privacyPolicy": "Privacy Policy"
+      },
+      "button": {
+        "creatingAccount": "Creating account...",
+        "createAccount": "Create account"
+      },
+      "prompt": {
+        "alreadyHaveAccount": "Already have an account?"
+      },
+      "link": {
+        "signIn": "Sign in"
+      }
+    },
+    "forgotPassword": {
+      "success": {
+        "title": "Check your email",
+        "description": "We have sent a password reset link to your email address. Please check your inbox and follow the instructions to reset your password."
+      },
+      "title": "Reset your password",
+      "helper": "Enter your email address and we will send you a link to reset your password.",
+      "button": {
+        "sending": "Sending reset link...",
+        "send": "Send reset link"
+      },
+      "prompt": {
+        "rememberPassword": "Remember your password?"
+      },
+      "link": {
+        "signIn": "Sign in"
+      },
+      "error": {
+        "unknown": "An unknown error occurred"
+      }
+    },
+    "resetPassword": {
+      "error": {
+        "invalidLink": "Invalid or expired reset link. Please request a new password reset.",
+        "verifySession": "Failed to verify reset session",
+        "passwordsMismatch": "Passwords don't match",
+        "tooShort": "Password must be at least 6 characters long",
+        "generic": "Failed to reset password"
+      },
+      "success": {
+        "title": "Password reset successful",
+        "description": "Your password has been successfully reset. You will be redirected to the app in a moment."
+      },
+      "title": "Create new password",
+      "helper": "Password must be at least 6 characters long",
+      "button": {
+        "resetting": "Resetting password...",
+        "reset": "Reset password"
+      }
+    }
+  },
+  "legal": {
+    "sidebar": {
+      "selectDocument": "Select document on the left."
+    },
+    "list": {
+      "title": "Legal Documents",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "refund": "Refund Policy"
+    },
+    "document": {
+      "privacy": "Privacy Notice",
+      "terms": "Terms of Service",
+      "refund": "Refund Policy"
+    }
+  },
+  "cookies": {
+    "message": "We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. By clicking \"Accept\", you consent to our use of cookies.",
+    "moreInfo": "Read our {privacyPolicy} and {termsOfService} for more information.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "decline": "Decline",
+    "accept": "Accept",
+    "close": "Close"
+  },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Choose the plan that's right for your business (THIS IS PLACEHOLDER – NO REAL PRICING FOR THIS TEMPLATE)",
+    "badge": {
+      "mostPopular": "Most Popular"
+    },
+    "perMonth": "/month",
+    "button": {
+      "getStarted": "Get Started"
+    },
+    "allPlansInclude": "All plans include: {features}"
+  }
+}

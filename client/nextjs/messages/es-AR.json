@@ -1,0 +1,22 @@
+{
+  "homepage": {
+    "nav": {
+      "getStarted": "Empezar"
+    },
+    "hero": {
+      "title": "Lanzá tu SaaS",
+      "highlight": "En 5 minutos",
+      "goToDashboard": "Ir a tu App",
+      "createAccount": "Crear Cuenta"
+    },
+    "cta": {
+      "button": "Empezá ahora"
+    }
+  },
+  "pricing": {
+    "badge": {
+      "mostPopular": "Más elegido"
+    }
+  }
+}
+

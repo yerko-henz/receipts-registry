@@ -1,0 +1,511 @@
+{
+  "common": {
+    "slug": "Tu página",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "updatePassword": "Actualizar contraseña",
+    "updating": "Actualizando...",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "createAccount": "Crear cuenta",
+    "creatingAccount": "Creando cuenta...",
+    "forgotYourPassword": "¿Olvidaste tu contraseña?",
+    "rememberYourPassword": "¿Recuerdas tu contraseña?",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "dontHaveAccount": "¿No tienes una cuenta?",
+    "returnToLogin": "Volver al inicio de sesión",
+    "urlSiteName": "placeholder.app/"
+  },
+  "homepage": {
+    "nav": {
+      "features": "Funciones",
+      "pricing": "Precios",
+      "cta": "Obtener esta plantilla",
+      "login": "Iniciar sesión",
+      "getStarted": "Empezar"
+    },
+    "hero": {
+      "title": "Lanza tu SaaS",
+      "highlight": "En 5 minutos",
+      "subtitle": "Lanza tu producto SaaS en días, no en meses. Con autenticación y seguridad de nivel empresarial integradas.",
+      "goToDashboard": "Ir a tu App",
+      "createAccount": "Crear Cuenta",
+      "linkSlug": "placeholder.app/"
+    },
+    "stats": {
+      "activeUsers": "Usuarios activos",
+      "organizations": "Organizaciones",
+      "countries": "Países",
+      "uptime": "Disponibilidad"
+    },
+    "features": {
+      "title": "Todo lo que necesitas",
+      "subtitle": "Construido con tecnologías modernas para ofrecer fiabilidad y velocidad"
+    },
+    "feature": {
+      "auth": {
+        "title": "Autenticación robusta",
+        "description": "Inicio de sesión seguro con correo/contraseña, autenticación multifactor (MFA) y proveedores SSO"
+      },
+      "storage": {
+        "title": "Gestión de archivos",
+        "description": "Almacenamiento de archivos integrado con uso compartido seguro, descargas y permisos granulares"
+      },
+      "settings": {
+        "title": "Configuración de usuario",
+        "description": "Gestión completa de usuarios con cambio de contraseña, configuración de MFA y control del perfil"
+      },
+      "tasks": {
+        "title": "Gestión de tareas",
+        "description": "Sistema de tareas integrado con actualizaciones en tiempo real y gestión de prioridades"
+      },
+      "legal": {
+        "title": "Documentos legales",
+        "description": "Páginas preconfiguradas de política de privacidad, términos de servicio y política de reembolsos"
+      },
+      "cookies": {
+        "title": "Consentimiento de cookies",
+        "description": "Sistema de consentimiento de cookies compatible con RGPD con preferencias personalizables"
+      }
+    },
+    "cta": {
+      "title": "¿Listo para transformar tu idea en realidad?",
+      "subtitle": "Únete a miles de desarrolladores que crean su SaaS con {productName}",
+      "button": "Empezar ahora"
+    },
+    "footer": {
+      "product": "Producto",
+      "legal": "Legal",
+      "features": "Funciones",
+      "pricing": "Precios",
+      "privacy": "Privacidad",
+      "terms": "Términos",
+      "copyright": "© {year} {productName}. Todos los derechos reservados."
+    }
+  },
+  "layout": {
+    "description": "La mejor manera de crear tu producto SaaS."
+  },
+  "dashboard": {
+    "welcome": "Bienvenido, {name} 👋",
+    "memberFor": "Miembro desde hace {days} días",
+    "stats": {
+      "processed": "Recibos Procesados",
+      "saved": "Recibos Guardados",
+      "totalValue": "Valor Total Guardado",
+      "monthlyGoal": "Meta Mensual",
+      "target": "Meta: {amount}",
+      "previousDays": "Últimos {days} días",
+      "totalSpent": "Gasto Total",
+      "vsLastWeek": "vs semana anterior",
+      "vsLastMonth": "vs mes anterior",
+      "autoProcessed": "Auto-Procesados Hoy",
+      "recentActivity": "Actividad Reciente",
+      "items": "recibos",
+      "newScans": "nuevos escaneos",
+      "today": "Hoy",
+      "success": "Éxito"
+    },
+    "categories": {
+      "food": "Comida",
+      "transport": "Transporte",
+      "utilities": "Servicios",
+      "entertainment": "Entretenimiento",
+      "shopping": "Compras",
+      "health": "Salud",
+      "other": "Otros"
+    },
+    "days": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mié",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sáb",
+      "sun": "Dom"
+    },
+    "charts": {
+      "weeklyActivity": "Actividad Semanal",
+      "monthlyActivity": "Actividad Mensual",
+      "weekly": "Semanal",
+      "monthly": "Mensual",
+      "receiptsSavedThisWeek": "Recibos Guardados Esta Semana",
+      "totalSaved": "Total guardado",
+      "weeklyBreakdown": "Desglose Semanal",
+      "monthlyBreakdown": "Desglose Mensual",
+      "viewAll": "Ver Todo",
+      "noData": "Sin datos para esta semana",
+      "tooltipClick": "Haz clic para ver detalles",
+      "daysAxisLabel": "Días",
+      "amountVsDays": "(monto vs días)"
+    },
+    "modal": {
+      "title": "Recibos del {date}",
+      "totalSpent": "Total gastado:",
+      "noReceipts": "No se encontraron recibos para este día."
+    },
+
+    "receipts": {
+      "title": "Biblioteca de Recibos",
+      "subtitle": "Gestiona y analiza tus gastos registrados.",
+      "searchPlaceholder": "Buscar recibos por comercio",
+      "filters": {
+        "dateRange": "Fechas",
+        "allTime": "Todo el tiempo",
+        "last7Days": "Últimos 7 días",
+        "last30Days": "Últimos 30 días",
+        "thisMonth": "Este Mes",
+        "dateType": "Tipo de Fecha",
+        "receiptDate": "Fecha del Recibo",
+        "uploadDate": "Fecha de Subida",
+        "category": "Categoría",
+        "allCategories": "Todas las Categorías"
+      },
+      "table": {
+        "merchant": "Comercio",
+        "date": "Fecha",
+        "receiptDate": "Fecha del Recibo",
+        "uploadDate": "Fecha de Subida",
+        "category": "Categoría",
+        "amount": "Total",
+        "action": "Acción",
+        "empty": "No hay recibos encontrados.",
+        "loading": "Cargando...",
+        "view": "Ver"
+      },
+      "pagination": {
+        "prev": "Anterior",
+        "next": "Siguiente",
+        "showing": "Mostrando {start} a {end} de {total} resultados"
+      }
+    },
+    "nav": {
+      "homepage": "Inicio",
+      "questions": "Preguntas",
+      "receipts": "Recibos",
+      "analyze": "Analizar",
+      "settings": "Configuración",
+      "userSettings": "Configuración de usuario",
+      "dropdown": {
+          "signedInAs": "Sesión iniciada como",
+          "changePassword": "Cambiar contraseña",
+          "signOut": "Cerrar sesión"
+      }
+    },
+    "analyze": {
+      "title": "Analizar Recibo",
+      "description": "Sube una imagen de recibo para extraer detalles automáticamente.",
+      "uploadNew": "Subir Nuevo Recibo",
+      "dragDrop": "Arrastra y suelta tus archivos aquí o haz clic para buscar.",
+      "dropFiles": "Suelta los archivos aquí",
+      "supportedFormats": "Formatos soportados: PDF, JPG, PNG",
+      "browseFiles": "Subir",
+      "recentlyUploaded": "Subidos Recientemente",
+      "label": "Imagen del Recibo",
+      "button": "Analizar",
+      "analyzing": "Analizando...",
+      "success": "Análisis Completo",
+      "integrity": "Integridad",
+      "merchant": "Comercio",
+      "date": "Fecha",
+      "total": "Total",
+      "category": "Categoría",
+      "save": "Guardar Recibo",
+      "saving": "Guardando...",
+      "error": "Error al Guardar",
+      "table": {
+        "item": "Ítem",
+        "qty": "Cant.",
+        "price": "Precio",
+        "empty": "No se encontraron recibos recientes."
+      }
+    }
+  },
+  "storage": {
+    "title": "Gestión de archivos",
+    "subtitle": "Sube, descarga y comparte tus archivos",
+    "error": {
+      "generic": "No se pudieron cargar los archivos",
+      "upload": "No se pudo subir el archivo",
+      "download": "No se pudo descargar el archivo",
+      "share": "No se pudo generar el enlace para compartir",
+      "delete": "No se pudo eliminar el archivo",
+      "copy": "No se pudo copiar al portapapeles"
+    },
+    "success": {
+      "upload": "Archivo subido correctamente",
+      "delete": "Archivo eliminado correctamente"
+    },
+    "uploader": {
+      "uploading": "Subiendo...",
+      "dropHere": "Suelta tu archivo aquí",
+      "idle": "Arrastra y suelta o haz clic para seleccionar un archivo (máx. 50 MB)"
+    },
+    "files": {
+      "none": "Todavía no has subido archivos"
+    },
+    "share": {
+      "title": "Compartir {fileName}",
+      "description": "Copia el enlace de abajo para compartir tu archivo. Este enlace expirará en 24 horas.",
+      "copied": "¡Copiado!"
+    },
+    "delete": {
+      "title": "Eliminar archivo",
+      "description": "¿Seguro que quieres eliminar este archivo? Esta acción no se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    }
+  },
+  "tasks": {
+    "createDialog": {
+      "title": "Crear nueva tarea",
+      "addTask": "Añadir tarea",
+      "taskTitle": {
+        "placeholder": "Título de la tarea"
+      },
+      "taskDescription": {
+        "placeholder": "Descripción de la tarea (opcional)"
+      },
+      "markUrgent": "Marcar como urgente",
+      "error": {
+        "add": "No se pudo añadir la tarea"
+      }
+    },
+    "list": {
+      "title": "Gestión de tareas",
+      "subtitle": "Administra tus tareas y pendientes",
+      "error": {
+        "load": "No se pudieron cargar las tareas",
+        "remove": "No se pudo eliminar la tarea",
+        "update": "No se pudo actualizar la tarea"
+      }
+    },
+    "filters": {
+      "all": "Todas las tareas",
+      "active": "Activas",
+      "completed": "Completadas"
+    },
+    "empty": "No se encontraron tareas",
+    "created": "Creada: {date}",
+    "urgent": "Urgente"
+  },
+  "questions": {
+    "title": "Preguntas",
+    "subtitle": "Gestiona y responde las preguntas de tu audiencia",
+    "comingSoon": "El contenido de las preguntas estará disponible pronto..."
+  },
+  "userSettings": {
+    "title": "Configuración de usuario",
+    "subtitle": "Administra la configuración y preferencias de tu cuenta",
+    "userDetails": {
+      "title": "Detalles del usuario",
+      "subtitle": "Información de tu cuenta",
+      "userId": "ID de usuario",
+      "email": "Correo electrónico"
+    },
+    "changePassword": {
+      "title": "Cambiar contraseña",
+      "subtitle": "Actualiza la contraseña de tu cuenta",
+      "newPassword": "Nueva contraseña",
+      "confirmNewPassword": "Confirmar nueva contraseña",
+      "button": "Actualizar contraseña",
+      "loading": "Actualizando...",
+      "error": {
+        "mismatch": "Las nuevas contraseñas no coinciden",
+        "generic": "No se pudo actualizar la contraseña"
+      },
+      "success": "Contraseña actualizada correctamente"
+    },
+    "mfa": {
+      "title": "Autenticación en dos pasos (2FA)",
+      "subtitle": "Añade una capa adicional de seguridad a tu cuenta",
+      "status": {
+        "verified": "Verificado",
+        "unverified": "No verificado"
+      },
+      "list": {
+        "empty": "Protege tu cuenta con autenticación en dos pasos. Cuando esté habilitada, necesitarás ingresar un código de tu aplicación de autenticación además de tu contraseña al iniciar sesión.",
+        "notEmpty": "Puedes añadir métodos de autenticación adicionales o eliminar los existentes.",
+        "addedOn": "Añadido el {date}"
+      },
+      "buttons": {
+        "add": "Añadir nuevo método de autenticación",
+        "processing": "Procesando...",
+        "cancel": "Cancelar",
+        "continue": "Continuar",
+        "verify": "Verificar",
+        "verifying": "Verificando...",
+        "remove": "Eliminar"
+      },
+      "setup": {
+        "deviceName": {
+          "label": "Nombre del dispositivo",
+          "placeholder": "ej. Teléfono del trabajo, iPhone personal",
+          "helper": "Dale un nombre a este método de autenticación para identificarlo más tarde"
+        },
+        "verificationInfo": {
+          "label": "Código de verificación",
+          "placeholder": "Ingresa el código de tu aplicación de autenticación"
+        }
+      },
+      "errors": {
+        "fetch": "No se pudo obtener el estado de MFA",
+        "nameRequired": "Por favor proporciona un nombre para este método de autenticación",
+        "enroll": "No se pudo iniciar la inscripción de MFA",
+        "verify": "No se pudo verificar el código MFA",
+        "unenroll": "No se pudo cancelar la inscripción del factor MFA"
+      },
+      "success": "La configuración de la autenticación en dos pasos se actualizó correctamente"
+    },
+    "googleSheets": {
+      "title": "Google Sheets",
+      "connect": "Conectar",
+      "synced": "Sincronizado",
+      "connected": "Conectado",
+      "disconnect": "Desconectar"
+    },
+    "verifyEmail": {
+      "title": "Verificar correo",
+      "description": "Tu correo no ha sido verificado. Haz clic para enviar un correo de verificación.",
+      "sent": "Correo de verificación enviado"
+    },
+    "language": {
+      "title": "Idioma",
+      "description": "Selecciona tu idioma preferido",
+      "english": "Inglés",
+      "spanish": "Español"
+    },
+    "region": {
+      "title": "Región y Moneda",
+      "description": "Formato de moneda basado en tu región",
+      "auto": "Auto-detectado"
+    },
+    "theme": {
+      "title": "Tema",
+      "description": "Apariencia de la aplicación",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    }
+  },
+  "auth": {
+    "login": {
+      "button": {
+        "signingIn": "Iniciando sesión...",
+        "signIn": "Iniciar sesión"
+      },
+      "error": {
+        "unknown": "Ocurrió un error desconocido"
+      },
+      "link": {
+        "forgotPassword": "¿Olvidaste tu contraseña?",
+        "signUp": "Crear cuenta"
+      },
+      "prompt": {
+        "noAccount": "¿No tienes una cuenta?"
+      }
+    },
+    "register": {
+      "error": {
+        "acceptTerms": "Debes aceptar los Términos del servicio y la Política de privacidad",
+        "passwordMismatch": "Las contraseñas no coinciden",
+        "unknown": "Ocurrió un error desconocido"
+      },
+      "checkbox": {
+        "label": "Acepto los <termsOfService>Términos del servicio</termsOfService> y la <privacyPolicy>Política de privacidad</privacyPolicy>",
+        "termsOfService": "Términos del servicio",
+        "privacyPolicy": "Política de privacidad"
+      },
+      "button": {
+        "creatingAccount": "Creando cuenta...",
+        "createAccount": "Crear cuenta"
+      },
+      "prompt": {
+        "alreadyHaveAccount": "¿Ya tienes una cuenta?"
+      },
+      "link": {
+        "signIn": "Iniciar sesión"
+      }
+    },
+    "forgotPassword": {
+      "success": {
+        "title": "Revisa tu correo",
+        "description": "Te hemos enviado un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada y sigue las instrucciones."
+      },
+      "title": "Restablece tu contraseña",
+      "helper": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+      "button": {
+        "sending": "Enviando enlace...",
+        "send": "Enviar enlace"
+      },
+      "prompt": {
+        "rememberPassword": "¿Recuerdas tu contraseña?"
+      },
+      "link": {
+        "signIn": "Iniciar sesión"
+      },
+      "error": {
+        "unknown": "Ocurrió un error desconocido"
+      }
+    },
+    "resetPassword": {
+      "error": {
+        "invalidLink": "Enlace inválido o caducado. Solicita un nuevo restablecimiento de contraseña.",
+        "verifySession": "No se pudo verificar la sesión de restablecimiento",
+        "passwordsMismatch": "Las contraseñas no coinciden",
+        "tooShort": "La contraseña debe tener al menos 6 caracteres",
+        "generic": "No se pudo restablecer la contraseña"
+      },
+      "success": {
+        "title": "Contraseña restablecida correctamente",
+        "description": "Tu contraseña se ha restablecido correctamente. Serás redirigido a la aplicación en unos momentos."
+      },
+      "title": "Crear nueva contraseña",
+      "helper": "La contraseña debe tener al menos 6 caracteres",
+      "button": {
+        "resetting": "Restableciendo contraseña...",
+        "reset": "Restablecer contraseña"
+      }
+    }
+  },
+  "legal": {
+    "sidebar": {
+      "selectDocument": "Selecciona un documento en la izquierda."
+    },
+    "list": {
+      "title": "Documentos legales",
+      "privacy": "Política de privacidad",
+      "terms": "Términos del servicio",
+      "refund": "Política de reembolsos"
+    },
+    "document": {
+      "privacy": "Aviso de privacidad",
+      "terms": "Términos del servicio",
+      "refund": "Política de reembolsos"
+    }
+  },
+  "cookies": {
+    "message": "Utilizamos cookies para mejorar tu experiencia de navegación, ofrecer contenido personalizado y analizar nuestro tráfico. Al hacer clic en \"Aceptar\", das tu consentimiento para el uso de cookies.",
+    "moreInfo": "Lee nuestra {privacyPolicy} y nuestros {termsOfService} para obtener más información.",
+    "privacyPolicy": "Política de privacidad",
+    "termsOfService": "Términos del servicio",
+    "decline": "Rechazar",
+    "accept": "Aceptar",
+    "close": "Cerrar"
+  },
+  "pricing": {
+    "title": "Precios simples y transparentes",
+    "subtitle": "Elige el plan que mejor se adapte a tu negocio (ESTO ES UN EJEMPLO – NO HAY PRECIOS REALES PARA ESTA PLANTILLA)",
+    "badge": {
+      "mostPopular": "Más popular"
+    },
+    "perMonth": "/mes",
+    "button": {
+      "getStarted": "Empezar"
+    },
+    "allPlansInclude": "Todos los planes incluyen: {features}"
+  }
+}
