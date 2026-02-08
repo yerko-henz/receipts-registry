@@ -43,6 +43,8 @@ export const formatPrice = (amount: number, currencyCode?: string): string => {
       style: 'currency',
       currency: currency, 
       currencyDisplay: 'code', // We'll replace the code manually to be safe
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).formatToParts(amount);
 
     // Reconstruct the string: Replace 'currency' part with our symbol
