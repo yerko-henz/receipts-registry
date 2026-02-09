@@ -63,6 +63,14 @@ export default function ReceiptActivityChart({ data, viewMode, onViewModeChange 
   const handleBarClick = (data: any) => {
       if (data && data.activePayload && data.activePayload.length > 0) {
           const payload = data.activePayload[0].payload;
+          
+          if (!payload.receipts || payload.receipts.length === 0) {
+              // Option: Show a small alert or toast here if we had a toast system
+              // For now, simply do not open the modal
+              // alert(t('charts.noReceiptsForDay')); // Uncomment if alert is desired
+              return;
+          }
+
           setSelectedDay({
               date: payload.dateKey,
               receipts: payload.receipts
@@ -109,6 +117,7 @@ export default function ReceiptActivityChart({ data, viewMode, onViewModeChange 
                             data={chartData} 
                             onClick={handleBarClick}
                             className="cursor-pointer"
+                            style={{ cursor: 'pointer' }}
                         >
                             <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f0f0f0" />
                             <XAxis 
@@ -134,8 +143,8 @@ export default function ReceiptActivityChart({ data, viewMode, onViewModeChange 
                                 dataKey="totalSpent"
                                 stroke="#3b82f6"
                                 strokeWidth={3}
-                                dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }}
-                                activeDot={{ r: 6, strokeWidth: 0 }}
+                                dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff", cursor: 'pointer' }}
+                                activeDot={{ r: 6, strokeWidth: 0, cursor: 'pointer' }}
                             />
                         </LineChart>
                     </ResponsiveContainer>

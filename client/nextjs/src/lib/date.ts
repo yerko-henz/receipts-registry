@@ -27,8 +27,12 @@ export interface DayData {
     isToday: boolean;
 }
   
-export const groupReceiptsByDay = (receipts: Receipt[], language: string = 'en', dateMode: 'transaction' | 'created' = 'transaction'): DayData[] => {
-    const days = 7;
+export const groupReceiptsByDay = (
+    receipts: Receipt[], 
+    days: number = 7,
+    language: string = 'en', 
+    dateMode: 'transaction' | 'created' = 'transaction'
+): DayData[] => {
     const now = new Date();
     const REF_DATE_STR = format(now, 'yyyy-MM-dd');
     const lastNDays = getLastNDaysKeys(days);

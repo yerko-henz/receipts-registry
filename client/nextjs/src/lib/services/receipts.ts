@@ -1,18 +1,14 @@
 import { createSPAClient } from '@/lib/supabase/client';
-import { startOfDay, endOfDay, parseISO, format } from 'date-fns';
+import { startOfDay, endOfDay, parseISO } from 'date-fns';
 import { ReceiptCategory } from '@/constants/categories';
 
 // Define Database types locally or import if available. 
-// Assuming Database type is not fully available or compatible, we define Receipt loosely or try to import.
-// Removed unused import
-// If Database is not exported from types, we might need to redefine.
-// Checking client/nextjs/src/lib/types.ts content would be good, but for now I'll use 'any' fallback for complex types
-// and specific fields for what we need.
+// Mirroring mobile app structure for consistency.
 
 export type Receipt = {
   id: string;
   created_at: string;
-  transaction_date: string;
+  transaction_date: string | null;
   merchant_name: string;
   total_amount: number;
   currency: string;
@@ -21,7 +17,7 @@ export type Receipt = {
   image_url?: string;
   user_id: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  receipt_items?: any[]; // Simplified
+  receipt_items?: any[]; 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw_ai_output?: any;
 };
@@ -103,6 +99,7 @@ export const getRecentReceipts = async (userId: string, days: number = 7) => {
 
   if (error) throw error;
   
+  // Note: We don't sign images here to keep it lighter/faster for chart usage, matching mobile app
   return data as Receipt[];
 };
 
@@ -125,8 +122,6 @@ export const getReceiptsByUserId = async (
   const supabase = createSPAClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-
-
 
   let query = supabase
     .from('receipts')
@@ -152,19 +147,15 @@ export const getReceiptsByUserId = async (
         const end = endOfDay(parseISO(endToken));
         query = query.lte(dateColumn, end.toISOString());
       } else {
-        // Transaction date is likely a DATE column (YYYY-MM-DD), so compare strings
-        // We use the date part of the ISO string
-
-        const start = parseISO(filters.startDate);
-        const startStr = format(start, 'yyyy-MM-dd');
-
-        query = query.gte(dateColumn, startStr);
+        // Transaction date is likely a DATE column (YYYY-MM-DD) or timestamptz. 
+        // Mobile app converts to ISO string start of day.
+        
+        const start = startOfDay(parseISO(filters.startDate));
+        query = query.gte(dateColumn, start.toISOString());
 
         const endToken = filters.endDate || filters.startDate;
-        const end = parseISO(endToken);
-        const endStr = format(end, 'yyyy-MM-dd');
-
-        query = query.lte(dateColumn, endStr);
+        const end = endOfDay(parseISO(endToken));
+        query = query.lte(dateColumn, end.toISOString());
       }
   }
 
@@ -198,16 +189,6 @@ export const getReceiptsByUserId = async (
 
 export const createReceipt = async (params: NewReceiptWithItems) => {
   const supabase = createSPAClient();
-  // Check integrity if passed (handled in Analyze page usually, but good to have here if we want)
-  // For web, we assume integrity checked before calling this or valid data.
-
-  // Handle image upload if provided (local file object handling happens in UI usually)
-  // Here params.image_url is expected to be a signed URL or path if already uploaded, 
-  // OR we upload it here if it's a File object?
-  // Since we are invalidating the previous mobile logic of "file://", we expect the Caller to handle upload 
-  // OR we accept a File object in params.
-  // But NewReceiptWithItems has image_url: string.
-  // So the UI should upload first.
   
   // @ts-expect-error: RPC types might be missing in generated types
   const { error } = await supabase.rpc('save_receipt_with_items', {
@@ -236,17 +217,6 @@ export const uploadReceiptImage = async (file: File) => {
         .upload(`${user.id}/${filename}`, file);
   
     if (error) throw error;
-    
-    // Get public URL? But the mobile app uses Signed URLs usually or just path.
-    // The mobile service returned `publicUrlData.publicUrl`.
-    // But mobile `uploadReceiptImage` uploaded to `${user.id}/${filename}`.
-    // And returned public URL.
-    // But `save_receipt_with_items` stores it.
-    // If bucket is private, we should store path.
-    // Mobile `uploadReceiptImage` returns publicUrl.
-    // Let's stick to returning path or public URL.
-    // Mobile: `const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(data.path);`
-    // I'll replicate that.
     
     const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(data.path);
     return publicUrlData.publicUrl;

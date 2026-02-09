@@ -12,72 +12,38 @@ import { createSPASassClientAuthenticated as createSPASassClient } from "@/lib/s
 import ReceiptActivityChart from "@/components/dashboard/ReceiptActivityChart";
 import CategoryBreakdown from "@/components/dashboard/CategoryBreakdown";
 import StatCard from "@/components/dashboard/StatCard";
-import { DayData } from "@/lib/date";
-import { subDays, format } from "date-fns";
+import { groupReceiptsByDay } from "@/lib/date";
+import { useRecentReceipts } from "@/lib/hooks/useReceipts";
 import { formatPrice } from "@/lib/utils/currency";
-
-// --- DUMMY DATA GENERATOR ---
-const generateDummyData = (): DayData[] => {
-  const categories = ['Food', 'Transport', 'Utilities', 'Entertainment', 'Shopping', 'Health', 'Other'];
-  const days = 30; // Generate 30 days to support monthly view
-  const data: DayData[] = [];
-  const now = new Date();
-
-  for (let i = days - 1; i >= 0; i--) {
-     const date = subDays(now, i);
-     const dateKey = format(date, 'yyyy-MM-dd');
-     const dayName = format(date, 'EEE');
-     
-     // Random daily count between 5 and 25
-     const count = Math.floor(Math.random() * 20) + 5;
-     
-     // Generate dummy receipts for categories
-     const receipts = Array.from({ length: count }).map((_, idx) => ({
-        id: `${dateKey}-${idx}`,
-        created_at: date.toISOString(),
-        transaction_date: date.toISOString(),
-        merchant_name: `Store ${idx}`,
-        total_amount: Math.random() * 50 + 10, // Random amount 10-60
-        currency: 'USD',
-        category: categories[Math.floor(Math.random() * categories.length)],
-        user_id: 'dummy',
-     }));
-
-     const totalSpent = receipts.reduce((sum, r) => sum + r.total_amount, 0);
-
-     data.push({
-         dateKey,
-         dayName,
-         receipts,
-         totalSpent,
-         count,
-         isToday: i === 0
-     });
-  }
-  return data;
-};
-
-const DUMMY_DATA = generateDummyData();
 
 export default function DashboardContent() {
   const { loading, user, region } = useGlobal();
   const t = useTranslations("dashboard");
   const [viewMode, setViewMode] = React.useState<'weekly' | 'monthly'>('weekly');
   
-  // Use Dummy Data instead of real hooks
-  // const { data: recentReceipts = [] } = useRecentReceipts(user?.id, 30);
+  const daysToFetch = viewMode === 'weekly' ? 7 : 30;
+  const { data: recentReceipts = [] } = useRecentReceipts(user?.id, daysToFetch);
   
-  const stats = {
-      totalSpent: 1245.50,
-      itemsProcessedToday: 42,
-      newScansToday: 12
-  };
+  const dailyData = useMemo(() => {
+      // Assuming 'en' for now, ideally strictly from locale
+      return groupReceiptsByDay(recentReceipts, daysToFetch, 'en');
+  }, [recentReceipts, daysToFetch]);
+  
+  const stats = useMemo(() => {
+      const totalSpent = recentReceipts.reduce((sum, r) => sum + (r.total_amount || 0), 0);
+      const itemsProcessed = recentReceipts.length;
+      
+      // Calculate today's stats
+      const today = new Date().toISOString().split('T')[0];
+      const todayReceipts = recentReceipts.filter(r => r.created_at.startsWith(today));
+      const newScansToday = todayReceipts.length;
 
-  const dailyData = DUMMY_DATA;
-  
-  const totalReceiptsCount = useMemo(() => {
-    return dailyData.reduce((sum, day) => sum + day.count, 0);
-  }, [dailyData]);
+      return {
+          totalSpent,
+          itemsProcessed,
+          newScansToday
+      };
+  }, [recentReceipts]);
 
   useEffect(() => {
     createAppUser();
@@ -123,19 +89,19 @@ export default function DashboardContent() {
           value={formatPrice(stats.totalSpent, region)}
           icon={TrendingUp}
           className="shadow-sm"
-          trend="5.2%"
+          trend="0%" // Todo: Calculate vs previous period
           subtext={viewMode === 'weekly' ? t('stats.vsLastWeek') : t('stats.vsLastMonth')}
-          trendType="positive"
+          trendType="neutral"
         />
 
         <StatCard
           title={t('stats.saved')}
-          value={totalReceiptsCount}
+          value={stats.itemsProcessed}
           icon={FileCheck}
           className="shadow-sm"
-          trend="12%"
+          trend="0%" // Todo: Calculate vs previous period
           subtext={viewMode === 'weekly' ? t('stats.vsLastWeek') : t('stats.vsLastMonth')}
-          trendType="positive"
+          trendType="neutral"
         />
 
         <StatCard

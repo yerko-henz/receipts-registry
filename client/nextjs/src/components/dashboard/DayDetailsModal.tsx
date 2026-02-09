@@ -1,7 +1,25 @@
+import React from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { useTranslations } from 'next-intl';
 import { formatPrice } from '@/lib/utils/currency';
 import { useGlobal } from '@/lib/context/GlobalContext';
+import { Receipt } from '@/lib/services/receipts';
+import { getCategoryIcon } from '@/constants/categories';
 
-// ...
+interface DayDetailsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  date: string;
+  receipts: Receipt[];
+}
 
 export default function DayDetailsModal({
   isOpen,
@@ -9,11 +27,12 @@ export default function DayDetailsModal({
   date,
   receipts,
 }: DayDetailsModalProps) {
-  const { region } = useGlobal(); // Get region
-  const t = useTranslations('dashboard'); // Reuse receipts translations or generic
+  const { region } = useGlobal();
+  const t = useTranslations('dashboard');
 
-  const formattedDate = date ? format(parseISO(date), 'MMMM do, yyyy') : '';
-  const totalSpent = receipts.reduce((sum, r) => sum + (r.total_amount || 0), 0);
+  const formattedDate = date ? format(parseISO(date), "d 'de' MMMM 'de' yyyy", { locale: es }) : '';
+  const safeReceipts = receipts || [];
+  const totalSpent = safeReceipts.reduce((sum, r) => sum + (r.total_amount || 0), 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -26,18 +45,17 @@ export default function DayDetailsModal({
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
-          {receipts.length === 0 ? (
-            <p className="text-center text-gray-500 py-4">{t('modal.noReceipts')}</p>
+          {safeReceipts.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">{t('modal.noReceipts')}</p>
           ) : (
-            receipts.map((receipt) => {
-               // Use standard icon if category missing, or get specific
+            safeReceipts.map((receipt) => {
                const Icon = getCategoryIcon(receipt.category || 'Other');
                
                return (
                 <div key={receipt.id} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded border">
-                       <Icon className="h-4 w-4 text-gray-600" />
+                    <div className="p-2 bg-background rounded border">
+                       <Icon className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
                       <p className="font-medium text-sm">{receipt.merchant_name || 'Unknown Merchant'}</p>
