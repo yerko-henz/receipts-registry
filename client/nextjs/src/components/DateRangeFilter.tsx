@@ -111,12 +111,7 @@ export function DateRangeFilter({
               color: 'hsl(var(--foreground))',
               opacity: 1,
           },
-          dropdown: {
-              backgroundColor: 'hsl(var(--popover))',
-              borderColor: 'hsl(var(--border))',
-              color: 'hsl(var(--popover-foreground))',
-              boxShadow: 'var(--shadow-md)',
-          },
+
           calendarHeader: {
               color: 'hsl(var(--foreground))',
               maxWidth: '100%',

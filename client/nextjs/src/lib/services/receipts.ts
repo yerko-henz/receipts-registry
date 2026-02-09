@@ -1,5 +1,5 @@
 import { createSPAClient } from '@/lib/supabase/client';
-import { startOfDay, endOfDay, parseISO } from 'date-fns';
+import { startOfDay, endOfDay, parseISO, subDays } from 'date-fns';
 import { ReceiptCategory } from '@/constants/categories';
 
 // Define Database types locally or import if available. 
@@ -86,8 +86,7 @@ const signReceiptImages = async (receipts: Receipt[]) => {
 
 export const getRecentReceipts = async (userId: string, days: number = 7) => {
   const supabase = createSPAClient();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  const startDate = subDays(new Date(), days);
   const startDateStr = startDate.toISOString().split('T')[0];
 
   const { data, error } = await supabase
@@ -95,7 +94,8 @@ export const getRecentReceipts = async (userId: string, days: number = 7) => {
     .select('*')
     .eq('user_id', userId)
     .gte('created_at', startDateStr) 
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(1000);
 
   if (error) throw error;
   

@@ -20,10 +20,12 @@ interface Props {
 // Since it's a sub-component defined outside, let's move it inside or pass t
 const CustomTooltip = ({ active, payload, label, t, region }: TooltipProps<number, string> & { t: any, region: string }) => {
   if (active && payload && payload.length) {
+    const data = payload[0].payload;
     return (
       <div className="bg-popover p-2 border rounded-md shadow-md text-sm text-popover-foreground">
         <p className="font-semibold">{label}</p>
-        <p className="text-muted-foreground">{t('charts.totalSaved')}: {formatPrice(payload[0].value as number, region)}</p>
+        <p className="text-muted-foreground">{t('stats.saved')}: {payload[0].value}</p>
+        <p className="text-muted-foreground font-medium">{formatPrice(data.totalSpent, region)}</p>
         <p className="text-muted-foreground/70 text-xs mt-1">{t('charts.tooltipClick')}</p>
       </div>
     );
@@ -133,14 +135,13 @@ export default function ReceiptActivityChart({ data, viewMode, onViewModeChange 
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => formatPrice(value, region)}
                                 allowDecimals={false}
-                                width={80}
+                                width={30}
                             />
                             <Tooltip content={<CustomTooltip t={t} region={region} />} cursor={{stroke: '#3b82f6', strokeWidth: 1}} />
                             <Line
                                 type="monotone"
-                                dataKey="totalSpent"
+                                dataKey="count"
                                 stroke="#3b82f6"
                                 strokeWidth={3}
                                 dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff", cursor: 'pointer' }}
