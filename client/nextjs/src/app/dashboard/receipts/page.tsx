@@ -31,7 +31,10 @@ import {
   Search, 
   Filter, 
   ChevronLeft, 
-  ChevronRight, 
+  ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import { RECEIPT_CATEGORIES } from "@/constants/categories";
 import { ENABLE_TRANSACTION_DATE_FILTER } from "@/constants/featureFlags";
@@ -48,7 +51,8 @@ export default function ReceiptsPage() {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
-  const [dateMode, setDateMode] = useState<'transaction' | 'created'>('transaction');
+  const [dateMode, setDateMode] = useState<'transaction' | 'created'>(ENABLE_TRANSACTION_DATE_FILTER ? 'transaction' : 'created');
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'desc' });
 
   // Fetch data
   const { data, isLoading } = useReceipts(user?.id, page, pageSize, {
@@ -57,11 +61,26 @@ export default function ReceiptsPage() {
     dateMode: dateMode,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
+    sortBy: sortConfig.key || undefined,
+    sortOrder: sortConfig.direction,
   });
 
   const receipts = data?.data || [];
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Helper for category translations
+  const categoryLabels = React.useMemo(() => {
+    return RECEIPT_CATEGORIES.reduce((acc, cat) => {
+      const lowerCat = cat.toLowerCase();
+      if (['food', 'transport', 'utilities', 'entertainment', 'shopping', 'health', 'other'].includes(lowerCat)) {
+        acc[cat] = tCategories(lowerCat as any);
+      } else {
+        acc[cat] = cat;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+  }, [tCategories]);
 
   // Helper for category badge colors
   const getCategoryColor = (category: string) => {
@@ -76,6 +95,21 @@ export default function ReceiptsPage() {
       case 'health': return "bg-teal-100 text-teal-700 hover:bg-teal-100";
       default: return "bg-muted text-muted-foreground hover:bg-muted";
     }
+  };
+
+  const handleSort = (key: string) => {
+    setSortConfig(current => {
+      if (current.key === key) {
+        return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const RenderSortIcon = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    if (sortConfig.direction === 'asc') return <ArrowUp className="ml-2 h-4 w-4" />;
+    return <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
   return (
@@ -105,16 +139,17 @@ export default function ReceiptsPage() {
                {/* Category Filter */}
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={t('filters.category')} />
+                  <SelectValue placeholder={t('filters.category')}>
+                    {categoryFilter === 'All' 
+                      ? t('filters.allCategories') 
+                      : (categoryLabels[categoryFilter] || categoryFilter)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">{t('filters.allCategories')}</SelectItem>
                   {RECEIPT_CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>
-                        {/* Try to translate category, fallback to original if key missing */}
-                        {['food', 'transport', 'utilities', 'entertainment', 'shopping', 'health', 'other'].includes(cat.toLowerCase()) 
-                            ? tCategories(cat.toLowerCase() as any) 
-                            : cat}
+                        {categoryLabels[cat] || cat}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -151,19 +186,49 @@ export default function ReceiptsPage() {
             <Table>
                 <TableHeader className="bg-muted/50">
                 <TableRow>
-                    <TableHead className="w-[150px] font-semibold text-foreground">
-                        {ENABLE_TRANSACTION_DATE_FILTER 
-                            ? (dateMode === 'transaction' ? t('table.receiptDate') : t('table.uploadDate'))
-                            : t('table.date')}
+                    <TableHead 
+                        className="w-[150px] font-semibold text-foreground cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort(ENABLE_TRANSACTION_DATE_FILTER && dateMode === 'transaction' ? 'transaction_date' : 'created_at')}
+                    >
+                        <div className="flex items-center">
+                            {ENABLE_TRANSACTION_DATE_FILTER 
+                                ? (dateMode === 'transaction' ? t('table.receiptDate') : t('table.uploadDate'))
+                                : t('table.date')}
+                            <RenderSortIcon columnKey={ENABLE_TRANSACTION_DATE_FILTER && dateMode === 'transaction' ? 'transaction_date' : 'created_at'} />
+                        </div>
                     </TableHead>
-                    <TableHead className="font-semibold text-foreground">{t('table.merchant')}</TableHead>
-                    <TableHead className="font-semibold text-foreground">{t('table.category')}</TableHead>
-                    <TableHead className="text-right font-semibold text-foreground">{t('table.amount')}</TableHead>
+                    <TableHead 
+                        className="font-semibold text-foreground cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('merchant_name')}
+                    >
+                        <div className="flex items-center">
+                            {t('table.merchant')}
+                            <RenderSortIcon columnKey="merchant_name" />
+                        </div>
+                    </TableHead>
+                    <TableHead 
+                        className="font-semibold text-foreground cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('category')}
+                    >
+                         <div className="flex items-center">
+                            {t('table.category')}
+                            <RenderSortIcon columnKey="category" />
+                        </div>
+                    </TableHead>
+                    <TableHead 
+                        className="text-right font-semibold text-foreground cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('total_amount')}
+                    >
+                        <div className="flex items-center justify-end">
+                            {t('table.amount')}
+                            <RenderSortIcon columnKey="total_amount" />
+                        </div>
+                    </TableHead>
                     <TableHead className="text-right font-semibold text-foreground w-[100px]">{t('table.action')}</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {isLoading ? (
+                {isLoading || !user ? (
                      <TableRow>
                         <TableCell colSpan={5} className="h-24 text-center">
                             {t('table.loading')}
@@ -181,6 +246,12 @@ export default function ReceiptsPage() {
                             ? (receipt.transaction_date || receipt.created_at) // Fallback if transaction date missing
                             : receipt.created_at;
 
+                        // Normalize category to title case for lookup if needed, but RECEIPT_CATEGORIES are Title Case
+                        // And receipt.category might be anything. 
+                        // Let's try to match case-insensitively to our known categories
+                        const knownCategory = RECEIPT_CATEGORIES.find(c => c.toLowerCase() === (receipt.category || '').toLowerCase());
+                        const displayCategory = knownCategory ? categoryLabels[knownCategory] : (receipt.category || 'Uncategorized');
+
                         return (
                         <TableRow key={receipt.id} className="hover:bg-muted/50">
                             <TableCell className="text-muted-foreground font-medium">
@@ -191,9 +262,7 @@ export default function ReceiptsPage() {
                             </TableCell>
                             <TableCell>
                                 <Badge variant="secondary" className={`${getCategoryColor(receipt.category || 'Other')} border-none px-2 py-0.5`}>
-                                    {['food', 'transport', 'utilities', 'entertainment', 'shopping', 'health', 'other'].includes((receipt.category || '').toLowerCase())
-                                        ? tCategories((receipt.category || 'Other').toLowerCase() as any)
-                                        : (receipt.category || 'Uncategorized')}
+                                    {displayCategory}
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right font-bold text-base">

@@ -1,5 +1,5 @@
 import { createSPAClient } from '@/lib/supabase/client';
-import { startOfDay, endOfDay, parseISO } from 'date-fns';
+import { startOfDay, endOfDay, parseISO, format } from 'date-fns';
 import { ReceiptCategory } from '@/constants/categories';
 
 // Define Database types locally or import if available. 
@@ -112,6 +112,8 @@ export type ReceiptFilters = {
     startDate?: string;
     endDate?: string;
     dateMode?: 'transaction' | 'created';
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
 };
 
 export const getReceiptsByUserId = async (
@@ -123,6 +125,8 @@ export const getReceiptsByUserId = async (
   const supabase = createSPAClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+
+
 
   let query = supabase
     .from('receipts')
@@ -139,18 +143,43 @@ export const getReceiptsByUserId = async (
 
   if (filters?.startDate) {
       const dateColumn = filters.dateMode === 'created' ? 'created_at' : 'transaction_date';
-      const start = startOfDay(parseISO(filters.startDate));
-      query = query.gte(dateColumn, start.toISOString());
+      
+      if (filters.dateMode === 'created') {
+        const start = startOfDay(parseISO(filters.startDate));
+        query = query.gte(dateColumn, start.toISOString());
 
-      const endToken = filters.endDate || filters.startDate;
-      const end = endOfDay(parseISO(endToken));
-      query = query.lte(dateColumn, end.toISOString());
+        const endToken = filters.endDate || filters.startDate;
+        const end = endOfDay(parseISO(endToken));
+        query = query.lte(dateColumn, end.toISOString());
+      } else {
+        // Transaction date is likely a DATE column (YYYY-MM-DD), so compare strings
+        // We use the date part of the ISO string
+
+        const start = parseISO(filters.startDate);
+        const startStr = format(start, 'yyyy-MM-dd');
+
+        query = query.gte(dateColumn, startStr);
+
+        const endToken = filters.endDate || filters.startDate;
+        const end = parseISO(endToken);
+        const endStr = format(end, 'yyyy-MM-dd');
+
+        query = query.lte(dateColumn, endStr);
+      }
   }
 
-  const orderBy = filters?.dateMode === 'created' ? 'created_at' : 'transaction_date';
+  let orderBy = filters?.dateMode === 'created' ? 'created_at' : 'transaction_date';
+  let ascending = false;
+
+  if (filters?.sortBy) {
+      orderBy = filters.sortBy;
+      if (filters.sortOrder === 'asc') {
+          ascending = true;
+      }
+  }
   
   query = query
-    .order(orderBy, { ascending: false })
+    .order(orderBy, { ascending })
     .range(from, to);
 
   const { data, error, count } = await query;

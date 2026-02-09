@@ -53,9 +53,30 @@ export function DateRangeFilter({
 
       setValue(val as [Date | null, Date | null]);
       const [start, end] = val;
+      
+      const formatToIso = (date: any) => {
+          if (!date) return null;
+          if (date instanceof Date) return date.toISOString();
+          if (typeof date === 'string') {
+              // Parse YYYY-MM-DD string as local date (midnight)
+              // new Date('YYYY-MM-DD') parses as UTC midnight, which might be previous day in local time.
+              // new Date(y, m, d) uses local time.
+              const parts = date.split('-');
+              if (parts.length === 3) {
+                  const year = parseInt(parts[0], 10);
+                  const month = parseInt(parts[1], 10) - 1;
+                  const day = parseInt(parts[2], 10);
+                  return new Date(year, month, day).toISOString();
+              }
+              // Fallback
+              return new Date(date).toISOString();
+          } 
+          return null;
+      };
+
       onRangeChange(
-          (start && start instanceof Date) ? start.toISOString() : null,
-          (end && end instanceof Date) ? end.toISOString() : null
+          formatToIso(start),
+          formatToIso(end)
       );
   };
 
@@ -67,7 +88,7 @@ export function DateRangeFilter({
       onChange={handleChange}
       disabled={disabled}
       clearable
-      style={{ width: 220 }}
+      style={{ width: 260 }}
       rightSection={<ChevronDown className="h-4 w-4 opacity-50" />}
       rightSectionWidth={28}
       rightSectionPointerEvents="none"

@@ -153,7 +153,7 @@
       "subtitle": "Gestiona y analiza tus gastos registrados.",
       "searchPlaceholder": "Buscar recibos por comercio",
       "filters": {
-        "dateRange": "Fechas",
+        "dateRange": "Fecha",
         "allTime": "Todo el tiempo",
         "last7Days": "Últimos 7 días",
         "last30Days": "Últimos 30 días",
