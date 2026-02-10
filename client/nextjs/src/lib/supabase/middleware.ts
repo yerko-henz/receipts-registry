@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function updateSession(request: NextRequest, response?: NextResponse) {
+export async function updateSession(request: NextRequest, response?: NextResponse, isPublicRoute = false) {
     let supabaseResponse = response || NextResponse.next({
         request,
     })
@@ -32,18 +32,20 @@ export async function updateSession(request: NextRequest, response?: NextRespons
     // issues with users being randomly logged out.
 
     // IMPORTANT: DO NOT REMOVE auth.getUser()
+    // Optimization: Skip user check for public routes to reduce latency
+    if (!isPublicRoute) {
+        const {data: user} = await supabase.auth.getUser()
+        
+        // Bypass for E2E testing
+        const isTestMode = request.cookies.get('E2E_TEST_MODE')?.value === 'true'
 
-    const {data: user} = await supabase.auth.getUser()
-
-    // Bypass for E2E testing
-    const isTestMode = request.cookies.get('E2E_TEST_MODE')?.value === 'true'
-
-    if (
-        (!user || !user.user) && request.nextUrl.pathname.startsWith('/dashboard') && !isTestMode
-    ) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/auth/login'
-        return NextResponse.redirect(url)
+        if (
+            (!user || !user.user) && request.nextUrl.pathname.startsWith('/dashboard') && !isTestMode
+        ) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/auth/login'
+            return NextResponse.redirect(url)
+        }
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is.
