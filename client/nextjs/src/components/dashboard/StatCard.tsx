@@ -12,6 +12,8 @@ interface StatCardProps {
   subtext?: string;
   className?: string;
   iconClassName?: string;
+  "data-testid"?: string;
+  subtextTestId?: string;
 }
 
 export default function StatCard({ 
@@ -22,16 +24,18 @@ export default function StatCard({
   trendType = 'positive',
   subtext,
   className,
-  iconClassName
+  iconClassName,
+  "data-testid": testId,
+  subtextTestId
 }: StatCardProps) {
   return (
-    <Card className={cn("overflow-hidden border-border", className)}>
+    <Card className={cn("overflow-hidden border-border", className)} data-testid={testId}>
       <CardContent className="p-6 flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-sm font-medium text-muted-foreground" data-testid={`${testId}-title`}>
             {title}
           </p>
-          <h2 className="text-3xl font-bold tracking-tight">
+          <h2 className="text-3xl font-bold tracking-tight" data-testid={`${testId}-value`}>
              {value}
           </h2>
           
@@ -43,7 +47,7 @@ export default function StatCard({
                        trendType === 'positive' && "text-green-600 dark:text-green-400",
                        trendType === 'negative' && "text-red-600 dark:text-red-400",
                        trendType === 'neutral' && "text-gray-600 dark:text-gray-400",
-                     )}>
+                     )} data-testid={`${testId}-trend`}>
                        {trendType === 'positive' && <ArrowUp className="w-3 h-3" />}
                        {trendType === 'negative' && <ArrowDown className="w-3 h-3" />}
                        {trendType === 'neutral' && <Minus className="w-3 h-3" />}
@@ -51,7 +55,7 @@ export default function StatCard({
                      </div>
                   )}
                  {subtext && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground" data-testid={subtextTestId || `${testId}-subtext`}>
                       {subtext}
                     </span>
                  )}

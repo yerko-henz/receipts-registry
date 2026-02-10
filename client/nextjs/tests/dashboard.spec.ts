@@ -1,49 +1,84 @@
 import { test, expect } from '@playwright/test';
+import { mockSupabaseAuth, mockReceiptsResponse } from './utils';
 
 test.describe('Dashboard Page', () => {
 
     test.beforeEach(async ({ page }) => {
-        // Since we are testing the UI which might use real data calls or context,
-        // and standard login flows might be complex, we can rely on the fact 
-        // that the app might function with existing dev environment or we mock.
-        // Given your request for "request made in home should make sense", 
-        // implies checking the actual functionality or mocked behavior.
-        // For E2E stability, mocking data (as per plan) is safer for logic verification.
-        // However, the dashboard currently uses DUMMY_DATA in the code! (See step 102 view_file).
-        // So mocking network won't affect the Charts/Stats unless we refactor the page to fetch real data.
-        // *Observation*: The dashboard/page.tsx provided uses `DUMMY_DATA` constant.
-        // So we can only test that the UI renders that dummy data correctly and interactions work.
-        
+        await mockSupabaseAuth(page);
         await page.goto('/dashboard');
     });
 
     test('should load dashboard components', async ({ page }) => {
-        await expect(page.getByText('Total Spent')).toBeVisible();
-        await expect(page.getByText('Recent Activity')).toBeVisible();
-        // Check for charts
-        await expect(page.locator('.recharts-responsive-container').first()).toBeVisible();
+        await expect(page.getByTestId('stat-total-spent')).toBeVisible();
+        await expect(page.getByTestId('stat-recent-activity')).toBeVisible();
+        await expect(page.getByTestId('receipt-activity-chart')).toBeVisible();
     });
 
     test('should toggle between weekly and monthly views', async ({ page }) => {
-        const weeklyBtn = page.getByRole('button', { name: 'Weekly', exact: true });
-        const monthlyBtn = page.getByRole('button', { name: 'Monthly', exact: true });
-
-        // Default should be weekly
-        // We can check style or just click interactions
-        // Based on logic: viewMode === 'weekly' ? 'bg-background...' : 'text-muted...'
+        // Toggle is inside ReceiptActivityChart, which is a client component.
+        // We need to find the toggle buttons. 
+        // Assuming they are accessible by text "Weekly" / "Monthly" or we should add testid to them in component.
+        // For now, let's try to locate them safely.
         
-        // Click Monthly
+        await expect(page.getByTestId('receipt-activity-chart')).toBeVisible();
+        
+        // Note: The specific toggle implementation might need data-testid if texts change.
+        // But let's assume "Weekly" and "Monthly" are standard for now or use the ones from translation if possible?
+        // Actually, best to add test-id to the toggle in ReceiptActivityChart.tsx if we haven't.
+        // But I will use text for now as it matches the previous test logic which was working (except for auth).
+        
+        const weeklyBtn = page.getByTestId('toggle-weekly');
+        const monthlyBtn = page.getByTestId('toggle-monthly');
+        
+        await expect(weeklyBtn).toBeVisible();
+        await expect(monthlyBtn).toBeVisible();
+
+        // Initial state should be weekly ? or we just click to be sure.
+        // Let's click monthly.
         await monthlyBtn.click();
         
-        // Determine verification: The stat card subtext should change.
-        // "vs Last Week" -> "vs Last Month"
-        // Note: The translation keys are used. We expect English default for tests usually.
-        // If English: "vs last week" / "vs last month"
+        // Check if stats changed. The previous test checked for text "vs last month" in subtext.
+        // Now we verify using the dynamic ID which confirms the state change and content.
+        await expect(page.getByTestId('stat-total-spent-subtext-monthly')).toBeVisible();
+        await expect(page.getByTestId('stat-total-spent-subtext-monthly')).toHaveText(/last month/i);
         
-        await expect(page.getByText('vs last month').first()).toBeVisible();
+        await expect(page.getByTestId('stat-items-processed-subtext-monthly')).toBeVisible();
+        await expect(page.getByTestId('stat-items-processed-subtext-monthly')).toHaveText(/last month/i);
         
-        // Click Weekly
+        // Verify breakdown card updated
+        await expect(page.getByTestId('category-breakdown-chart-monthly')).toBeVisible();
+
+        // Click weekly
         await weeklyBtn.click();
-        await expect(page.getByText('vs last week').first()).toBeVisible();
+        await expect(page.getByTestId('stat-total-spent-subtext-weekly')).toBeVisible();
+        await expect(page.getByTestId('stat-total-spent-subtext-weekly')).toHaveText(/last week/i);
+
+        await expect(page.getByTestId('stat-items-processed-subtext-weekly')).toBeVisible();
+        await expect(page.getByTestId('stat-items-processed-subtext-weekly')).toHaveText(/last week/i);
+
+        // Verify breakdown card updated
+        await expect(page.getByTestId('category-breakdown-chart-weekly')).toBeVisible();
+    });
+
+    test('should show correct empty state messages', async ({ page }) => {
+        // Mock empty receipts
+        await mockReceiptsResponse(page, []);
+        
+        // Reload page to apply empty data
+        await page.reload();
+        
+        // Check weekly empty state
+        const weeklyBreakdown = page.getByTestId('category-breakdown-chart-weekly');
+        await expect(weeklyBreakdown).toBeVisible();
+        await expect(weeklyBreakdown).toHaveText(/No data for this week/i);
+        
+        // Toggle to monthly
+        const monthlyBtn = page.getByTestId('toggle-monthly');
+        await monthlyBtn.click();
+        
+        // Check monthly empty state
+        const monthlyBreakdown = page.getByTestId('category-breakdown-chart-monthly');
+        await expect(monthlyBreakdown).toBeVisible();
+        await expect(monthlyBreakdown).toHaveText(/No data for this month/i);
     });
 });

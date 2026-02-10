@@ -154,6 +154,8 @@ export default function DashboardContent() {
           trend={stats.spendTrend !== null ? `${stats.spendTrend > 0 ? '+' : ''}${stats.spendTrend.toFixed(1)}%` : undefined}
           subtext={viewMode === 'weekly' ? t('stats.vsLastWeek') : t('stats.vsLastMonth')}
           trendType={stats.spendTrend === null || stats.spendTrend === 0 ? 'neutral' : stats.spendTrend > 0 ? 'positive' : 'negative'}
+          data-testid="stat-total-spent"
+          subtextTestId={`stat-total-spent-subtext-${viewMode}`}
         />
 
         <StatCard
@@ -164,6 +166,8 @@ export default function DashboardContent() {
           trend={stats.countTrend !== null ? `${stats.countTrend > 0 ? '+' : ''}${stats.countTrend.toFixed(1)}%` : undefined}
           subtext={viewMode === 'weekly' ? t('stats.vsLastWeek') : t('stats.vsLastMonth')}
           trendType={stats.countTrend === null || stats.countTrend === 0 ? 'neutral' : stats.countTrend > 0 ? 'positive' : 'negative'}
+          data-testid="stat-items-processed"
+          subtextTestId={`stat-items-processed-subtext-${viewMode}`}
         />
 
         <StatCard
@@ -172,20 +176,25 @@ export default function DashboardContent() {
           icon={History}
           className="shadow-sm"
           subtext={t('stats.today')}
+          data-testid="stat-recent-activity"
         />
       </div>
 
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-3">
-           <div className="lg:col-span-2">
+           <div className="lg:col-span-2" data-testid="receipt-activity-chart">
                <ReceiptActivityChart 
                   data={dailyData} 
                   viewMode={viewMode}
                   onViewModeChange={setViewMode}
                />
            </div>
-           <div>
-               <CategoryBreakdown data={dailyData} viewMode={viewMode} />
+           <div data-testid="category-breakdown-container">
+               <CategoryBreakdown 
+                    data={dailyData} 
+                    viewMode={viewMode} 
+                    testId={`category-breakdown-chart-${viewMode}`}
+               />
            </div>
       </div>
     </div>

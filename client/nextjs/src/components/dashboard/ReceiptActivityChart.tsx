@@ -92,6 +92,7 @@ export default function ReceiptActivityChart({ data, viewMode, onViewModeChange 
                 <div className="flex bg-muted rounded-lg p-1">
                     <button
                         onClick={() => onViewModeChange('weekly')}
+                        data-testid="toggle-weekly"
                         className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
                             viewMode === 'weekly' 
                                 ? 'bg-background text-foreground shadow-sm' 
@@ -102,6 +103,7 @@ export default function ReceiptActivityChart({ data, viewMode, onViewModeChange 
                     </button>
                     <button
                         onClick={() => onViewModeChange('monthly')}
+                        data-testid="toggle-monthly"
                         className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
                             viewMode === 'monthly' 
                                 ? 'bg-background text-foreground shadow-sm' 

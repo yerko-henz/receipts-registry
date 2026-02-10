@@ -54,6 +54,7 @@ export default function AuthAwareButtons({
       <Link
         href="/dashboard"
         className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-all font-medium"
+        data-testid="nav-dashboard-link"
       >
         {t("hero.goToDashboard")}{" "}
       </Link>
@@ -62,6 +63,7 @@ export default function AuthAwareButtons({
         <Link
           href="/auth/register"
           className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-all font-medium"
+          data-testid="nav-get-started-link"
         >
           {t("nav.getStarted")}
         </Link>
@@ -74,6 +76,7 @@ export default function AuthAwareButtons({
     <Link
       href="/dashboard"
       className="inline-flex items-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all"
+      data-testid="hero-dashboard-link"
     >
       {t("hero.goToDashboard")}
       <ArrowRight className="ml-2 h-5 w-5" />
@@ -81,13 +84,12 @@ export default function AuthAwareButtons({
   ) : (
     <>
       <div className="flex gap-3 items-center w-full justify-center">
-        <Link href="/auth/register" className="w-full sm:w-auto">
-          <button
-            onClick={() => createAccount()}
-            className="w-full px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all"
-          >
-            {t("hero.createAccount")}
-          </button>
+        <Link 
+          href="/auth/register" 
+          className="w-full sm:w-auto px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all text-center"
+          data-testid="hero-create-account-link"
+        >
+           {t("hero.createAccount")}
         </Link>
       </div>
     </>

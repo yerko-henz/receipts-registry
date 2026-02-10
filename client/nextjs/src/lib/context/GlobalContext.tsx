@@ -9,6 +9,7 @@ type User = {
     email: string;
     id: string;
     registered_at: Date;
+    email_confirmed_at?: string | null;
 };
 
 interface GlobalContextType {
@@ -30,14 +31,20 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
             try {
                 const supabase = await createSPASassClient();
                 const client = supabase.getSupabaseClient();
+                
+                console.log('GlobalContext: Client created', !!client);
 
                 // Get user data
-                const { data: { user } } = await client.auth.getUser();
+                const userResponse = await client.auth.getUser();
+                console.log('GlobalContext: getUser response', userResponse);
+                const { data: { user } } = userResponse;
+                
                 if (user) {
                     setUser({
                         email: user.email!,
                         id: user.id,
-                        registered_at: new Date(user.created_at)
+                        registered_at: new Date(user.created_at),
+                        email_confirmed_at: user.email_confirmed_at
                     });
                 } else {
                     throw new Error('User not found');

@@ -24,6 +24,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors"
       aria-label="Toggle theme"
+      data-testid="theme-toggle"
     >
       {/* Sun icon shows in dark mode to switch to light */}
       <Sun className="h-5 w-5 hidden dark:block" />

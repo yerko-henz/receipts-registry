@@ -141,7 +141,8 @@
       "weeklyBreakdown": "Weekly Breakdown",
       "monthlyBreakdown": "Monthly Breakdown",
       "viewAll": "View All",
-      "noData": "No data for this week",
+      "noDataWeekly": "No data for this week",
+      "noDataMonthly": "No data for this month",
       "tooltipClick": "Click to view details",
       "daysAxisLabel": "Days",
       "amountVsDays": "(amount vs days)"

@@ -11,9 +11,10 @@ import Link from 'next/link';
 interface Props {
   data: DayData[];
   viewMode?: 'weekly' | 'monthly';
+  testId?: string;
 }
 
-export default function CategoryBreakdown({ data, viewMode = 'weekly' }: Props) {
+export default function CategoryBreakdown({ data, viewMode = 'weekly', testId }: Props) {
      const t = useTranslations('dashboard');
 
   const categoryData = useMemo(() => {
@@ -49,21 +50,23 @@ export default function CategoryBreakdown({ data, viewMode = 'weekly' }: Props) 
       // Return empty state or null, but for layout consistency maybe an empty card?
       // For now null as per original
       return (
-        <Card className="col-span-1 border-none shadow-sm h-full">
+        <Card className="col-span-1 border-none shadow-sm h-full" data-testid={testId}>
              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-semibold">
                     {viewMode === 'weekly' ? t('charts.weeklyBreakdown') : t('charts.monthlyBreakdown')}
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-sm text-muted-foreground">{t('charts.noData')}</p>
+                <p className="text-sm text-muted-foreground">
+                    {viewMode === 'weekly' ? t('charts.noDataWeekly') : t('charts.noDataMonthly')}
+                </p>
             </CardContent>
         </Card>
       );
   }
 
   return (
-    <Card className="col-span-1 border-border shadow-sm h-full">
+    <Card className="col-span-1 border-border shadow-sm h-full" data-testid={testId}>
         <CardHeader className="flex flex-row items-center justify-between pb-4">
              <CardTitle className="text-lg font-semibold">
                 {viewMode === 'weekly' ? t('charts.weeklyBreakdown') : t('charts.monthlyBreakdown')}

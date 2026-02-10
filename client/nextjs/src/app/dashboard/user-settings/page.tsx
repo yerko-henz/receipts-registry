@@ -73,20 +73,20 @@ export default function UserSettingsPage() {
     return (
         <div className="space-y-6 p-6">
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+                <h1 className="text-3xl font-bold tracking-tight" data-testid="settings-title">{t('title')}</h1>
                 <p className="text-muted-foreground">
                     {t('subtitle')}
                 </p>
             </div>
 
             {error && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" data-testid="settings-error">
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
 
             {success && (
-                <Alert>
+                <Alert data-testid="settings-success">
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription>{success}</AlertDescription>
                 </Alert>
@@ -94,7 +94,7 @@ export default function UserSettingsPage() {
 
             <div className="grid gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    <Card>
+                    <Card data-testid="user-details-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <User className="h-5 w-5" />
@@ -105,12 +105,12 @@ export default function UserSettingsPage() {
                         <CardContent className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">{t('userDetails.email')}</label>
-                                <p className="mt-1 text-sm text-foreground">{user?.email}</p>
+                                <p className="mt-1 text-sm text-foreground" data-testid="user-email">{user?.email}</p>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card data-testid="change-password-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Key className="h-5 w-5" />
@@ -121,11 +121,11 @@ export default function UserSettingsPage() {
                         <CardContent>
                             <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="w-full sm:w-auto">
+                                    <Button className="w-full sm:w-auto" data-testid="change-password-button">
                                         {t('changePassword.button')}
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="sm:max-w-[425px]">
+                                <DialogContent className="sm:max-w-[425px]" data-testid="change-password-modal">
                                     <DialogHeader>
                                         <DialogTitle>{t('changePassword.title')}</DialogTitle>
                                         <DialogDescription>
@@ -141,6 +141,7 @@ export default function UserSettingsPage() {
                                                 value={newPassword}
                                                 onChange={(e) => setNewPassword(e.target.value)}
                                                 required
+                                                data-testid="new-password-input"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -151,10 +152,11 @@ export default function UserSettingsPage() {
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                                 required
+                                                data-testid="confirm-password-input"
                                             />
                                         </div>
                                          <div className="flex justify-end pt-4">
-                                             <Button type="submit" disabled={passwordLoading}>
+                                             <Button type="submit" disabled={passwordLoading} data-testid="submit-password-change">
                                                  {passwordLoading ? t('changePassword.loading') : t('changePassword.button')}
                                              </Button>
                                          </div>
@@ -165,7 +167,7 @@ export default function UserSettingsPage() {
                     </Card>
 
                     {/* Google Sheets Sync */}
-                    <Card>
+                    <Card data-testid="google-sheets-card">
                         <CardHeader>
                              <CardTitle className="flex items-center gap-2">
                                 <FileSpreadsheet className="h-5 w-5" />
@@ -184,8 +186,8 @@ export default function UserSettingsPage() {
                     </Card>
 
                     {/* Verify Email */}
-                     {!globalLoading && !user?.email && (
-                        <Card>
+                     {!globalLoading && !user?.email_confirmed_at && (
+                        <Card data-testid="verify-email-card">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Mail className="h-5 w-5" />
@@ -203,7 +205,7 @@ export default function UserSettingsPage() {
 
 
                     {/* Language */}
-                    <Card>
+                    <Card data-testid="language-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Globe className="h-5 w-5" />
@@ -220,6 +222,7 @@ export default function UserSettingsPage() {
                                     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
                                     window.location.reload();
                                 }}
+                                data-testid="language-select"
                             >
                                 <option value="en">{t('language.english')}</option>
                                 <option value="es">{t('language.spanish')}</option>
@@ -228,7 +231,7 @@ export default function UserSettingsPage() {
                     </Card>
 
                     {/* Region */}
-                     <Card>
+                     <Card data-testid="region-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <MapPin className="h-5 w-5" />
@@ -244,6 +247,7 @@ export default function UserSettingsPage() {
                                     setRegion(e.target.value);
                                     window.location.reload();
                                 }}
+                                data-testid="region-select"
                             >
                                 <option value="en-US">United States (USD)</option>
                                 <option value="es-CL">Chile (CLP)</option>

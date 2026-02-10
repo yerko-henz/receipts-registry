@@ -116,7 +116,7 @@ export default function ReceiptsPage() {
     <div className="space-y-6 p-6">
       {/* Header Section */}
       <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('title')}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground" data-testid="receipts-title">{t('title')}</h1>
         <p className="text-muted-foreground">
           {t('subtitle')}
         </p>
@@ -132,13 +132,14 @@ export default function ReceiptsPage() {
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              data-testid="search-input"
             />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
                {/* Category Filter */}
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" data-testid="category-filter">
                   <SelectValue placeholder={t('filters.category')}>
                     {categoryFilter === 'All' 
                       ? t('filters.allCategories') 
@@ -146,9 +147,9 @@ export default function ReceiptsPage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All">{t('filters.allCategories')}</SelectItem>
+                  <SelectItem value="All" data-testid="category-option-all">{t('filters.allCategories')}</SelectItem>
                   {RECEIPT_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
+                    <SelectItem key={cat} value={cat} data-testid={`category-option-${cat.toLowerCase()}`}>
                         {categoryLabels[cat] || cat}
                     </SelectItem>
                   ))}
@@ -158,7 +159,7 @@ export default function ReceiptsPage() {
                {/* Date Mode Filter - Only show if enabled */}
                {ENABLE_TRANSACTION_DATE_FILTER && (
                  <Select value={dateMode} onValueChange={(v) => setDateMode(v as 'transaction' | 'created')}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-[150px]" data-testid="date-mode-filter">
                     <SelectValue placeholder={t('filters.dateType')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -169,26 +170,29 @@ export default function ReceiptsPage() {
                )}
             
                {/* Date Range Filter */}
-               <DateRangeFilter 
-                    startDate={startDate} 
-                    endDate={endDate}
-                    onRangeChange={(start, end) => {
-                        setStartDate(start);
-                        setEndDate(end);
-                    }}
-               />
+               <div data-testid="date-range-filter">
+                   <DateRangeFilter 
+                        startDate={startDate} 
+                        endDate={endDate}
+                        onRangeChange={(start, end) => {
+                            setStartDate(start);
+                            setEndDate(end);
+                        }}
+                   />
+               </div>
             </div>
           </div>
         </div>
         
         {/* Table Section */}
         <div className="border-t">
-            <Table>
+            <Table data-testid="receipts-table">
                 <TableHeader className="bg-muted/50">
                 <TableRow>
                     <TableHead 
                         className="w-[150px] font-semibold text-foreground cursor-pointer hover:bg-muted/50"
                         onClick={() => handleSort(ENABLE_TRANSACTION_DATE_FILTER && dateMode === 'transaction' ? 'transaction_date' : 'created_at')}
+                        data-testid="header-date"
                     >
                         <div className="flex items-center">
                             {ENABLE_TRANSACTION_DATE_FILTER 
@@ -200,6 +204,7 @@ export default function ReceiptsPage() {
                     <TableHead 
                         className="font-semibold text-foreground cursor-pointer hover:bg-muted/50"
                         onClick={() => handleSort('merchant_name')}
+                        data-testid="header-merchant"
                     >
                         <div className="flex items-center">
                             {t('table.merchant')}
@@ -209,6 +214,7 @@ export default function ReceiptsPage() {
                     <TableHead 
                         className="font-semibold text-foreground cursor-pointer hover:bg-muted/50"
                         onClick={() => handleSort('category')}
+                        data-testid="header-category"
                     >
                          <div className="flex items-center">
                             {t('table.category')}
@@ -218,6 +224,7 @@ export default function ReceiptsPage() {
                     <TableHead 
                         className="text-right font-semibold text-foreground cursor-pointer hover:bg-muted/50"
                         onClick={() => handleSort('total_amount')}
+                        data-testid="header-amount"
                     >
                         <div className="flex items-center justify-end">
                             {t('table.amount')}
@@ -236,7 +243,7 @@ export default function ReceiptsPage() {
                     </TableRow>
                 ) : receipts.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground" data-testid="empty-state">
                             {t('table.empty')}
                         </TableCell>
                     </TableRow>
@@ -253,12 +260,12 @@ export default function ReceiptsPage() {
                         const displayCategory = knownCategory ? categoryLabels[knownCategory] : (receipt.category || 'Uncategorized');
 
                         return (
-                        <TableRow key={receipt.id} className="hover:bg-muted/50">
+                        <TableRow key={receipt.id} className="hover:bg-muted/50" data-testid={`receipt-row-${receipt.id}`}>
                             <TableCell className="text-muted-foreground font-medium">
                                 {format(new Date(dateToDisplay), "MMM d, yyyy")}
                             </TableCell>
                             <TableCell>
-                                <span className="font-semibold text-foreground">{receipt.merchant_name}</span>
+                                <span className="font-semibold text-foreground" data-testid={`merchant-${receipt.id}`}>{receipt.merchant_name}</span>
                             </TableCell>
                             <TableCell>
                                 <Badge variant="secondary" className={`${getCategoryColor(receipt.category || 'Other')} border-none px-2 py-0.5`}>
@@ -282,7 +289,8 @@ export default function ReceiptsPage() {
         </div>
 
         {/* Footer / Pagination */}
-        <div className="flex items-center justify-between p-4 border-t bg-muted/5">
+        {totalPages > 1 && (
+        <div className="flex items-center justify-between p-4 border-t bg-muted/5" data-testid="receipts-pagination">
              <div className="text-sm text-muted-foreground">
                  {t('pagination.showing', { 
                     start: Math.min((page - 1) * pageSize + 1, totalCount), 
@@ -327,6 +335,7 @@ export default function ReceiptsPage() {
                  </Button>
              </div>
         </div>
+        )}
       </Card>
     </div>
   );

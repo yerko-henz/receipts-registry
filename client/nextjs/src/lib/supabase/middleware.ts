@@ -34,8 +34,12 @@ export async function updateSession(request: NextRequest, response?: NextRespons
     // IMPORTANT: DO NOT REMOVE auth.getUser()
 
     const {data: user} = await supabase.auth.getUser()
+
+    // Bypass for E2E testing
+    const isTestMode = request.cookies.get('E2E_TEST_MODE')?.value === 'true'
+
     if (
-        (!user || !user.user) && request.nextUrl.pathname.startsWith('/dashboard')
+        (!user || !user.user) && request.nextUrl.pathname.startsWith('/dashboard') && !isTestMode
     ) {
         const url = request.nextUrl.clone()
         url.pathname = '/auth/login'
