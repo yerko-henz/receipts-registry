@@ -21,12 +21,19 @@ interface GlobalContextType {
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
 
-export function GlobalProvider({ children }: { children: React.ReactNode }) {
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<User | null>(null);
+export function GlobalProvider({ children, initialUser }: { children: React.ReactNode, initialUser?: any }) {
+    const [loading, setLoading] = useState(!initialUser);
+    const [user, setUser] = useState<User | null>(initialUser ? {
+        email: initialUser.email!,
+        id: initialUser.id,
+        registered_at: new Date(initialUser.created_at),
+        email_confirmed_at: initialUser.email_confirmed_at
+    } : null);
     const [region, setRegion] = useState<string>('es-CL');
 
     useEffect(() => {
+        if (initialUser) return;
+
         async function loadData() {
             try {
                 const supabase = await createSPASassClient();

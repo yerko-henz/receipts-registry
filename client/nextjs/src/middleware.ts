@@ -1,8 +1,14 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-    // Only handle Supabase session management
+    const isPrefetch = request.headers.get('x-nextjs-prefetch') === '1'
+    
+    // Optimization: Skip session update for prefetches to improve responsiveness
+    if (isPrefetch) {
+        return NextResponse.next({ request })
+    }
+
     return await updateSession(request)
 }
 

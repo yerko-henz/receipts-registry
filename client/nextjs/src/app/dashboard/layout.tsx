@@ -1,18 +1,14 @@
-// src/app/dashboard/layout.tsx
-"use client";
 import AppLayout from '@/components/AppLayout';
-import { GlobalProvider } from '@/lib/context/GlobalContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { Providers } from '@/components/Providers';
+import { createSSRClient } from '@/lib/supabase/server';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-    const [queryClient] = useState(() => new QueryClient());
+export default async function Layout({ children }: { children: React.ReactNode }) {
+    const supabase = await createSSRClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
     return (
-        <QueryClientProvider client={queryClient}>
-            <GlobalProvider>
-                <AppLayout>{children}</AppLayout>
-            </GlobalProvider>
-        </QueryClientProvider>
+        <Providers initialUser={user}>
+            <AppLayout>{children}</AppLayout>
+        </Providers>
     );
 }
