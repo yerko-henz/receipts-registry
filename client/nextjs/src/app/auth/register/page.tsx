@@ -53,9 +53,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+    <div className="bg-white dark:bg-zinc-900 py-8 px-4 shadow sm:rounded-lg sm:px-10 border dark:border-zinc-800">
       {error && (
-        <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg">
           {error}
         </div>
       )}
@@ -65,7 +65,7 @@ export default function RegisterPage() {
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-zinc-300"
           >
             {tCommon("email")}
           </label>
@@ -78,7 +78,7 @@ export default function RegisterPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+              className="block w-full appearance-none rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 shadow-sm focus:border-primary-500 dark:focus:border-primary-400 focus:outline-none focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white"
             />
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function RegisterPage() {
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-zinc-300"
           >
             {tCommon("password")}
           </label>
@@ -99,7 +99,7 @@ export default function RegisterPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+              className="block w-full appearance-none rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 shadow-sm focus:border-primary-500 dark:focus:border-primary-400 focus:outline-none focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white"
             />
           </div>
         </div>
@@ -107,7 +107,7 @@ export default function RegisterPage() {
         <div>
           <label
             htmlFor="confirmPassword"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-zinc-300"
           >
             {tCommon("confirmPassword")}
           </label>
@@ -120,7 +120,7 @@ export default function RegisterPage() {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+              className="block w-full appearance-none rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 shadow-sm focus:border-primary-500 dark:focus:border-primary-400 focus:outline-none focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white"
             />
           </div>
         </div>
@@ -134,16 +134,16 @@ export default function RegisterPage() {
                 type="checkbox"
                 checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="h-4 w-4 rounded border-gray-300 dark:border-zinc-700 text-primary-600 focus:ring-primary-500 bg-white dark:bg-zinc-950"
               />
             </div>
             <div className="ml-3 text-sm">
-              <label htmlFor="terms" className="text-gray-600">
+              <label htmlFor="terms" className="text-gray-600 dark:text-zinc-400">
                 {tAuth.rich("checkbox.label", {
                   termsOfService: (chunks) => (
                     <Link
                       href="/legal/terms"
-                      className="font-medium text-primary-600 hover:text-primary-500"
+                      className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
                       target="_blank"
                     >
                       {chunks}
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                   privacyPolicy: (chunks) => (
                     <Link
                       href="/legal/privacy"
-                      className="font-medium text-primary-600 hover:text-primary-500"
+                      className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
                       target="_blank"
                     >
                       {chunks}
@@ -167,7 +167,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+            className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
           >
             {loading
               ? tAuth("button.creatingAccount")
@@ -179,10 +179,10 @@ export default function RegisterPage() {
       <SSOButtons onError={setError} />
 
       <div className="mt-6 text-center text-sm">
-        <span className="text-gray-600">{tCommon("alreadyHaveAccount")}</span>{" "}
+        <span className="text-gray-600 dark:text-zinc-400">{tCommon("alreadyHaveAccount")}</span>{" "}
         <Link
           href="/auth/login"
-          className="font-medium text-primary-600 hover:text-primary-500"
+          className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
         >
           {tCommon("signIn")}
         </Link>

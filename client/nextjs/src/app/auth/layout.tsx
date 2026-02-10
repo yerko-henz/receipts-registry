@@ -29,18 +29,18 @@ export default function AuthLayout({
     ];
 
     return (
-        <div className="flex min-h-screen">
-            <div className="w-full lg:w-1/2 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white relative">
+        <div className="flex min-h-screen bg-white dark:bg-zinc-950">
+            <div className="w-full lg:w-1/2 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white dark:bg-zinc-950 relative">
                 <Link
                     href="/"
-                    className="absolute left-8 top-8 flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    className="absolute left-8 top-8 flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Homepage
                 </Link>
 
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                    <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
+                    <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
                         {productName}
                     </h2>
                 </div>

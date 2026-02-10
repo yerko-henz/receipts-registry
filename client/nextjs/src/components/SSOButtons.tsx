@@ -32,9 +32,9 @@ const PROVIDER_CONFIGS = {
         />
       </svg>
     ),
-    bgColor: "bg-white hover:bg-gray-50",
-    textColor: "text-gray-700",
-    borderColor: "border-gray-300",
+    bgColor: "bg-white dark:bg-zinc-950 hover:bg-gray-50 dark:hover:bg-zinc-900",
+    textColor: "text-gray-700 dark:text-zinc-300",
+    borderColor: "border-gray-300 dark:border-zinc-700",
     active: true,
   },
   facebook: {
@@ -112,10 +112,10 @@ export default function SSOButtons({ onError }: SSOButtonsProps) {
     <div className="mt-6">
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
+          <div className="w-full border-t border-gray-300 dark:border-zinc-700" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-2 text-gray-500">Or continue with</span>
+          <span className="bg-white dark:bg-zinc-900 px-2 text-gray-500 dark:text-zinc-400">Or continue with</span>
         </div>
       </div>
 
@@ -140,18 +140,18 @@ export default function SSOButtons({ onError }: SSOButtonsProps) {
           );
         })}
       </div>
-      <div className="mt-4 text-center text-xs text-gray-500">
+      <div className="mt-4 text-center text-xs text-gray-500 dark:text-zinc-500">
         By creating an account via selected provider, you agree to our{" "}
         <Link
           href="/legal/terms"
-          className="text-primary hover:underline underline-offset-4"
+          className="text-primary dark:text-primary-400 hover:underline underline-offset-4"
         >
           Terms and Conditions
         </Link>{" "}
         and{" "}
         <Link
           href="/legal/privacy"
-          className="text-primary hover:underline underline-offset-4"
+          className="text-primary dark:text-primary-400 hover:underline underline-offset-4"
         >
           Privacy Policy
         </Link>

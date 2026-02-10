@@ -62,16 +62,16 @@ export default function LoginPage() {
 
 
     return (
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white dark:bg-zinc-900 py-8 px-4 shadow sm:rounded-lg sm:px-10 border dark:border-zinc-800">
             {error && (
-                <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+                <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg">
                     {error}
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
                         {tCommon('email')}
                     </label>
                     <div className="mt-1">
@@ -83,13 +83,13 @@ export default function LoginPage() {
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                            className="block w-full appearance-none rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 shadow-sm focus:border-primary-500 dark:focus:border-primary-400 focus:outline-none focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white"
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
                         {tCommon('password')}
                     </label>
                     <div className="mt-1">
@@ -101,14 +101,14 @@ export default function LoginPage() {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                            className="block w-full appearance-none rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 shadow-sm focus:border-primary-500 dark:focus:border-primary-400 focus:outline-none focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white"
                         />
                     </div>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="text-sm">
-                        <Link href="/auth/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
+                        <Link href="/auth/forgot-password" className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
                             {tCommon('forgotYourPassword')}
                         </Link>
                     </div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+                        className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
                     >
                         {loading ? tAuth('button.signingIn') : tCommon('signIn')}
                     </button>
@@ -128,9 +128,9 @@ export default function LoginPage() {
             <SSOButtons onError={setError} />
 
             <div className="mt-6 text-center text-sm">
-                <span className="text-gray-600">{tCommon('dontHaveAccount')}</span>
+                <span className="text-gray-600 dark:text-zinc-400">{tCommon('dontHaveAccount')}</span>
                 {' '}
-                <Link href="/auth/register" className="font-medium text-primary-600 hover:text-primary-500">
+                <Link href="/auth/register" className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
                     {tCommon('signUp')}
                 </Link>
             </div>
