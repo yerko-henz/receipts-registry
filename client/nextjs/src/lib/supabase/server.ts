@@ -43,12 +43,12 @@ export async function createSSRClient() {
             limit: queryMock,
             single: async () => ({ data: null, error: null }),
             maybeSingle: async () => ({ data: null, error: null }),
-            then: (onfulfilled: any) => Promise.resolve({ data: [], error: null }).then(onfulfilled)
+            then: (onfulfilled?: (value: { data: any[]; error: null }) => any) => Promise.resolve({ data: [], error: null }).then(onfulfilled)
         });
 
         return {
             auth: {
-                getUser: async () => ({ data: { user: mockUser as any }, error: null }),
+                getUser: async () => ({ data: { user: mockUser as unknown as any }, error: null }),
                 getSession: async () => ({ 
                     data: { 
                         session: mockUser ? { 

@@ -18,7 +18,7 @@ interface Props {
 
 // Custom Tooltip component can't easily use hook unless we pass t or use Context inside (if inside provider)
 // Since it's a sub-component defined outside, let's move it inside or pass t
-const CustomTooltip = ({ active, payload, label, t, region }: TooltipProps<number, string> & { t: any, region: string }) => {
+const CustomTooltip = ({ active, payload, label, t, region }: TooltipProps<number, string> & { t: (key: string) => string, region: string }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -62,9 +62,9 @@ export default function ReceiptActivityChart({ data, viewMode, onViewModeChange 
     return data.reduce((sum, day) => sum + day.count, 0);
   }, [data]);
 
-  const handleBarClick = (data: any) => {
-      if (data && data.activePayload && data.activePayload.length > 0) {
-          const payload = data.activePayload[0].payload;
+  const handleBarClick = (chartData: { activePayload?: { payload: any }[] }) => {
+      if (chartData && chartData.activePayload && chartData.activePayload.length > 0) {
+          const payload = chartData.activePayload[0].payload;
           
           if (!payload.receipts || payload.receipts.length === 0) {
               // Option: Show a small alert or toast here if we had a toast system

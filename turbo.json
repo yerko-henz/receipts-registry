@@ -4,7 +4,23 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "PRIVATE_SUPABASE_SERVICE_KEY",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_TIERS_NAMES",
+        "NEXT_PUBLIC_TIERS_PRICES",
+        "NEXT_PUBLIC_TIERS_DESCRIPTIONS",
+        "NEXT_PUBLIC_TIERS_FEATURES",
+        "NEXT_PUBLIC_POPULAR_TIER",
+        "NEXT_PUBLIC_COMMON_FEATURES",
+        "NEXT_PUBLIC_PRODUCTNAME",
+        "NEXT_PUBLIC_THEME",
+        "NEXT_PUBLIC_GOOGLE_TAG",
+        "NEXT_PUBLIC_GEMINI_API_KEY",
+        "NEXT_PUBLIC_SSO_PROVIDERS"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
