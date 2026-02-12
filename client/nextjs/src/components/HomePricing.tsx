@@ -19,11 +19,11 @@ const HomePricing = () => {
                     <p className="text-muted-foreground text-lg">{t('subtitle')}</p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 mb-12">
+                <div className="flex flex-col md:flex-row justify-center gap-8 mb-12">
                     {tiers.map((tier) => (
                         <Card
-                            key={tier.name}
-                            className={`relative flex flex-col bg-card border-border ${
+                            key={tier.id}
+                            className={`relative flex flex-col bg-card border-border w-full md:max-w-md ${
                                 tier.popular ? 'border-primary ring-1 ring-primary shadow-lg shadow-primary/10' : ''
                             }`}
                         >
@@ -34,8 +34,8 @@ const HomePricing = () => {
                             )}
 
                             <CardHeader>
-                                <CardTitle className="text-foreground">{tier.name}</CardTitle>
-                                <CardDescription className="text-muted-foreground">{tier.description}</CardDescription>
+                                <CardTitle className="text-foreground">{t(`tiers.${tier.id}.name`)}</CardTitle>
+                                <CardDescription className="text-muted-foreground">{t(`tiers.${tier.id}.description`)}</CardDescription>
                             </CardHeader>
 
                             <CardContent className="flex-grow flex flex-col">
@@ -45,10 +45,10 @@ const HomePricing = () => {
                                 </div>
 
                                 <ul className="space-y-3 mb-8 flex-grow">
-                                    {tier.features.map((feature) => (
-                                        <li key={feature} className="flex items-center gap-2">
+                                    {tier.featureKeys.map((featureKey) => (
+                                        <li key={featureKey} className="flex items-center gap-2">
                                             <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                                            <span className="text-muted-foreground">{feature}</span>
+                                            <span className="text-muted-foreground">{t(`tiers.${tier.id}.features.${featureKey}`)}</span>
                                         </li>
                                     ))}
                                 </ul>

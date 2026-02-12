@@ -125,7 +125,7 @@ export default function LoginPage() {
                 </div>
             </form>
 
-            <SSOButtons onError={setError} />
+            <SSOButtons onError={setError} showDisclaimer={false} />
 
             <div className="mt-6 text-center text-sm">
                 <span className="text-gray-600 dark:text-zinc-400">{tCommon('dontHaveAccount')}</span>

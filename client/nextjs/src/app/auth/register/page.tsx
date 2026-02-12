@@ -13,7 +13,6 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const router = useRouter();
   const tCommon = useTranslations("common");
   const tAuth = useTranslations("auth.register");
@@ -21,11 +20,6 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!acceptedTerms) {
-      setError(tAuth("error.acceptTerms"));
-      return;
-    }
 
     if (password !== confirmPassword) {
       setError(tAuth("error.passwordMismatch"));
@@ -125,44 +119,9 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-start">
-            <div className="flex h-5 items-center">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 dark:border-zinc-700 text-primary-600 focus:ring-primary-500 bg-white dark:bg-zinc-950"
-              />
-            </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="terms" className="text-gray-600 dark:text-zinc-400">
-                {tAuth.rich("checkbox.label", {
-                  termsOfService: (chunks) => (
-                    <Link
-                      href="/legal/terms"
-                      className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
-                      target="_blank"
-                    >
-                      {chunks}
-                    </Link>
-                  ),
-                  privacyPolicy: (chunks) => (
-                    <Link
-                      href="/legal/privacy"
-                      className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
-                      target="_blank"
-                    >
-                      {chunks}
-                    </Link>
-                  ),
-                })}
-              </label>
-            </div>
-          </div>
-        </div>
+
+        {/* Checkbox removed as per user request */}
+
         <div>
           <button
             type="submit"

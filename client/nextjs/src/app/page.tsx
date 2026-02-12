@@ -24,48 +24,23 @@ export default async function Home() {
 
   const features = [
     {
-      icon: Shield,
-      title: t("feature.auth.title"),
-      description: t("feature.auth.description"),
-      color: "text-green-600",
-    },
-    {
       icon: Database,
-      title: t("feature.storage.title"),
-      description: t("feature.storage.description"),
+      title: t("feature.categorization.title"),
+      description: t("feature.categorization.description"),
       color: "text-orange-600",
     },
     {
-      icon: Users,
-      title: t("feature.settings.title"),
-      description: t("feature.settings.description"),
-      color: "text-red-600",
-    },
-    {
-      icon: Clock,
-      title: t("feature.tasks.title"),
-      description: t("feature.tasks.description"),
-      color: "text-teal-600",
-    },
-    {
       icon: Globe,
-      title: t("feature.legal.title"),
-      description: t("feature.legal.description"),
+      title: t("feature.reports.title"),
+      description: t("feature.reports.description"),
       color: "text-purple-600",
     },
     {
       icon: Key,
-      title: t("feature.cookies.title"),
-      description: t("feature.cookies.description"),
+      title: t("feature.sync.title"),
+      description: t("feature.sync.description"),
       color: "text-primary",
     },
-  ];
-
-  const stats = [
-    { label: t("stats.activeUsers"), value: "10K+" },
-    { label: t("stats.organizations"), value: "2K+" },
-    { label: t("stats.countries"), value: "50+" },
-    { label: t("stats.uptime"), value: "99.9%" },
   ];
 
   return (
@@ -119,21 +94,6 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="py-16 bg-gradient-to-b from-background to-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-4xl font-bold text-primary">
-                  {stat.value}
-                </div>
-                <div className="mt-2 text-sm text-muted-foreground">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section id="features" className="py-24 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -143,7 +103,7 @@ export default async function Home() {
               {t("features.subtitle")}
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div
                 key={index}

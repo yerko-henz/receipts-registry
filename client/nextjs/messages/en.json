@@ -28,9 +28,9 @@
       "getStarted": "Get Started"
     },
     "hero": {
-      "title": "Connect deeper with your fans.",
-      "highlight": "Start in 5 minutes",
-      "subtitle": "Organize, answer and monetize your audience.",
+      "title": "Master Your Expenses",
+      "highlight": "Effortless Receipt Tracking",
+      "subtitle": "Scan receipts, track expenses, and gain insights into your spending habits with our powerful and easy-to-use platform.",
       "goToDashboard": "Go to Dashboard",
       "createAccount": "Create Account",
       "linkSlug": "placeholder.app/"
@@ -42,33 +42,33 @@
       "uptime": "Uptime"
     },
     "features": {
-      "title": "Everything You Need",
-      "subtitle": "Built with modern technologies for reliability and speed"
+      "title": "Everything you need",
+      "subtitle": "Powerful features to help you stay organized and save money."
     },
     "feature": {
-      "auth": {
-        "title": "Robust Authentication",
-        "description": "Secure login with email/password, Multi-Factor Authentication, and SSO providers"
+      "scanning": {
+        "title": "Smart Receipt Scanning",
+        "description": "Automatically extract date, merchant, and total from your receipts with our advanced AI."
+      },
+      "categorization": {
+        "title": "Expense Categorization",
+        "description": "Organize your expenses into custom categories for better budget tracking."
+      },
+      "analytics": {
+        "title": "Budget Analytics",
+        "description": "Visualize your spending habits with intuitive charts and graphs."
       },
       "storage": {
-        "title": "File Management",
-        "description": "Built-in file storage with secure sharing, downloads, and granular permissions"
+        "title": "Secure Cloud Storage",
+        "description": "Keep your receipt images safe and accessible from anywhere, anytime."
       },
-      "settings": {
-        "title": "User Settings",
-        "description": "Complete user management with password updates, MFA setup, and profile controls"
+      "reports": {
+        "title": "Export Reports",
+        "description": "Generate PDF and CSV reports for easy tax filing and reimbursement."
       },
-      "tasks": {
-        "title": "Task Management",
-        "description": "Built-in todo system with real-time updates and priority management"
-      },
-      "legal": {
-        "title": "Legal Documents",
-        "description": "Pre-configured privacy policy, terms of service, and refund policy pages"
-      },
-      "cookies": {
-        "title": "Cookie Consent",
-        "description": "GDPR-compliant cookie consent system with customizable preferences"
+      "sync": {
+        "title": "Multi-Platform Sync",
+        "description": "Access your data seamlessly across web and mobile devices."
       }
     },
     "cta": {
@@ -474,6 +474,12 @@
         "resetting": "Resetting password...",
         "reset": "Reset password"
       }
+    },
+    "sso": {
+      "orContinueWith": "Or continue with",
+      "continueWith": "Continue with {provider}",
+      "signingIn": "Signing in...",
+      "disclaimer": "By creating an account, you agree to our <terms>Terms and Conditions</terms> and <privacy>Privacy Policy</privacy>."
     }
   },
   "legal": {
@@ -503,7 +509,7 @@
   },
   "pricing": {
     "title": "Simple, Transparent Pricing",
-    "subtitle": "Choose the plan that's right for your business (THIS IS PLACEHOLDER – NO REAL PRICING FOR THIS TEMPLATE)",
+    "subtitle": "Choose the plan that's right for your needs",
     "badge": {
       "mostPopular": "Most Popular"
     },
@@ -511,6 +517,30 @@
     "button": {
       "getStarted": "Get Started"
     },
-    "allPlansInclude": "All plans include: {features}"
+    "allPlansInclude": "All plans include: {features}",
+    "tiers": {
+      "free": {
+        "name": "Free",
+        "description": "Perfect for personal use",
+        "features": {
+          "receipts": "Up to 50 receipts per month",
+          "categorization": "Basic expense categorization",
+          "retention": "30 days data retention",
+          "support": "Email support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For power users and small businesses",
+        "features": {
+          "receipts": "Unlimited receipts",
+          "ai": "Advanced AI extraction",
+          "retention": "Unlimited data retention",
+          "categories": "Custom categories",
+          "export": "Export to PDF & CSV",
+          "support": "Priority support"
+        }
+      }
+    }
   }
 }

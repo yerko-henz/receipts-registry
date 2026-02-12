@@ -1,43 +1,44 @@
 export interface PricingTier {
-    name: string;
+    id: string;
     price: number;
-    description: string;
-    features: string[];
     popular?: boolean;
+    featureKeys: string[];
 }
 
 class PricingService {
-    private static tiers: PricingTier[] = [];
+    private static tiers: PricingTier[] = [
+        {
+            id: "free",
+            price: 0,
+            popular: false,
+            featureKeys: ["receipts", "categorization", "retention", "support"]
+        },
+        {
+            id: "pro",
+            price: 9.99,
+            popular: true,
+            featureKeys: ["receipts", "ai", "retention", "categories", "export", "support"]
+        }
+    ];
 
     static initialize() {
-        const names = process.env.NEXT_PUBLIC_TIERS_NAMES?.split(',') || [];
-        const prices = process.env.NEXT_PUBLIC_TIERS_PRICES?.split(',').map(Number) || [];
-        const descriptions = process.env.NEXT_PUBLIC_TIERS_DESCRIPTIONS?.split(',') || [];
-        const features = process.env.NEXT_PUBLIC_TIERS_FEATURES?.split(',').map(f => f.split('|')) || [];
-        const popularTier = process.env.NEXT_PUBLIC_POPULAR_TIER;
-
-        this.tiers = names.map((name, index) => ({
-            name,
-            price: prices[index],
-            description: descriptions[index],
-            features: features[index] || [],
-            popular: name === popularTier
-        }));
+        // No initialization needed for static tiers
     }
 
     static getAllTiers(): PricingTier[] {
-        if (this.tiers.length === 0) {
-            this.initialize();
-        }
         return this.tiers;
     }
 
     static getCommonFeatures(): string[] {
-        return process.env.NEXT_PUBLIC_COMMON_FEATURES?.split(',') || [];
+        return [
+            "Secure Cloud Storage",
+            "Mobile App Access",
+            "SSL Encryption"
+        ];
     }
 
     static formatPrice(price: number): string {
-        return `$${price}`;
+        return price === 0 ? "Free" : `$${price}`;
     }
 
 }

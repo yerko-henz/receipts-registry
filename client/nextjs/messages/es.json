@@ -28,10 +28,10 @@
       "getStarted": "Empezar"
     },
     "hero": {
-      "title": "Lanza tu SaaS",
-      "highlight": "En 5 minutos",
-      "subtitle": "Lanza tu producto SaaS en días, no en meses. Con autenticación y seguridad de nivel empresarial integradas.",
-      "goToDashboard": "Ir a tu App",
+      "title": "Domina tus gastos",
+      "highlight": "Seguimiento de recibos sin esfuerzo",
+      "subtitle": "Escanea recibos, sigue tus gastos y obtén información sobre tus hábitos de consumo con nuestra plataforma potente y fácil de usar.",
+      "goToDashboard": "Ir al Panel",
       "createAccount": "Crear Cuenta",
       "linkSlug": "placeholder.app/"
     },
@@ -43,37 +43,37 @@
     },
     "features": {
       "title": "Todo lo que necesitas",
-      "subtitle": "Construido con tecnologías modernas para ofrecer fiabilidad y velocidad"
+      "subtitle": "Funciones potentes para ayudarte a mantenerte organizado y ahorrar dinero."
     },
     "feature": {
-      "auth": {
-        "title": "Autenticación robusta",
-        "description": "Inicio de sesión seguro con correo/contraseña, autenticación multifactor (MFA) y proveedores SSO"
+      "scanning": {
+        "title": "Escaneo inteligente de recibos",
+        "description": "Extrae automáticamente la fecha, el comercio y el total de tus recibos con nuestra IA avanzada."
+      },
+      "categorization": {
+        "title": "Categorización de gastos",
+        "description": "Organiza tus gastos en categorías personalizadas para un mejor seguimiento del presupuesto."
+      },
+      "analytics": {
+        "title": "Análisis de presupuesto",
+        "description": "Visualiza tus hábitos de gasto con gráficos y tablas intuitivos."
       },
       "storage": {
-        "title": "Gestión de archivos",
-        "description": "Almacenamiento de archivos integrado con uso compartido seguro, descargas y permisos granulares"
+        "title": "Almacenamiento seguro en la nube",
+        "description": "Mantén las imágenes de tus recibos seguras y accesibles desde cualquier lugar, en cualquier momento."
       },
-      "settings": {
-        "title": "Configuración de usuario",
-        "description": "Gestión completa de usuarios con cambio de contraseña, configuración de MFA y control del perfil"
+      "reports": {
+        "title": "Exportar informes",
+        "description": "Genera informes en PDF y CSV para facilitar la declaración de impuestos y reembolsos."
       },
-      "tasks": {
-        "title": "Gestión de tareas",
-        "description": "Sistema de tareas integrado con actualizaciones en tiempo real y gestión de prioridades"
-      },
-      "legal": {
-        "title": "Documentos legales",
-        "description": "Páginas preconfiguradas de política de privacidad, términos de servicio y política de reembolsos"
-      },
-      "cookies": {
-        "title": "Consentimiento de cookies",
-        "description": "Sistema de consentimiento de cookies compatible con RGPD con preferencias personalizables"
+      "sync": {
+        "title": "Sincronización multiplataforma",
+        "description": "Accede a tus datos sin problemas a través de dispositivos web y móviles."
       }
     },
     "cta": {
-      "title": "¿Listo para transformar tu idea en realidad?",
-      "subtitle": "Únete a miles de desarrolladores que crean su SaaS con {productName}",
+      "title": "¿Listo para transformar tu gestión de gastos?",
+      "subtitle": "Únete a miles de usuarios que controlan sus finanzas con {productName}",
       "button": "Empezar ahora"
     },
     "footer": {
@@ -474,6 +474,12 @@
         "resetting": "Restableciendo contraseña...",
         "reset": "Restablecer contraseña"
       }
+    },
+    "sso": {
+      "orContinueWith": "O continuar con",
+      "continueWith": "Continuar con {provider}",
+      "signingIn": "Iniciando sesión...",
+      "disclaimer": "Al crear una cuenta, aceptas nuestros <terms>Términos y Condiciones</terms> y nuestra <privacy>Política de Privacidad</privacy>."
     }
   },
   "legal": {
@@ -503,7 +509,7 @@
   },
   "pricing": {
     "title": "Precios simples y transparentes",
-    "subtitle": "Elige el plan que mejor se adapte a tu negocio (ESTO ES UN EJEMPLO – NO HAY PRECIOS REALES PARA ESTA PLANTILLA)",
+    "subtitle": "Elige el plan que mejor se adapte a tus necesidades",
     "badge": {
       "mostPopular": "Más popular"
     },
@@ -511,6 +517,30 @@
     "button": {
       "getStarted": "Empezar"
     },
-    "allPlansInclude": "Todos los planes incluyen: {features}"
+    "allPlansInclude": "Todos los planes incluyen: {features}",
+    "tiers": {
+      "free": {
+        "name": "Gratis",
+        "description": "Perfecto para uso personal",
+        "features": {
+          "receipts": "Hasta 50 recibos por mes",
+          "categorization": "Categorización básica de gastos",
+          "retention": "30 días de retención de datos",
+          "support": "Soporte por correo electrónico"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Para usuarios avanzados y pequeñas empresas",
+        "features": {
+          "receipts": "Recibos ilimitados",
+          "ai": "Extracción avanzada con IA",
+          "retention": "Retención de datos ilimitada",
+          "categories": "Categorías personalizadas",
+          "export": "Exportar a PDF y CSV",
+          "support": "Soporte prioritario"
+        }
+      }
+    }
   }
 }

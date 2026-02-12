@@ -1,12 +1,14 @@
-"use client";
-
 import { createSPAClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type Provider = "google" | "facebook" | "apple";
 
 interface SSOButtonsProps {
   onError?: (error: string) => void;
+  showDisclaimer?: boolean;
 }
 
 const PROVIDER_CONFIGS = {
@@ -79,8 +81,13 @@ function getEnabledProviders(): Provider[] {
   });
 }
 
-export default function SSOButtons({ onError }: SSOButtonsProps) {
+export default function SSOButtons({ onError, showDisclaimer = true }: SSOButtonsProps) {
+  const t = useTranslations("auth.sso");
+  const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
+
   const handleSSOLogin = async (provider: Provider) => {
+    console.log("Starting SSO login for:", provider);
+    setLoadingProvider(provider);
     try {
       const supabase = createSPAClient();
       const redirectTo = `${window.location.origin}/api/auth/callback`;
@@ -93,7 +100,10 @@ export default function SSOButtons({ onError }: SSOButtonsProps) {
       });
 
       if (error) throw error;
+      // Note: We don't Reset loading state here because we are redirecting away.
     } catch (err: Error | unknown) {
+      console.error("SSO Login Error:", err);
+      setLoadingProvider(null);
       if (err instanceof Error) {
         onError?.(err.message);
       } else {
@@ -115,47 +125,61 @@ export default function SSOButtons({ onError }: SSOButtonsProps) {
           <div className="w-full border-t border-gray-300 dark:border-zinc-700" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-white dark:bg-zinc-900 px-2 text-gray-500 dark:text-zinc-400">Or continue with</span>
+          <span className="bg-white dark:bg-zinc-900 px-2 text-gray-500 dark:text-zinc-400">{t("orContinueWith")}</span>
         </div>
       </div>
 
       <div className="mt-6 flex flex-col space-y-3">
         {enabledProviders.map((provider) => {
           const config = PROVIDER_CONFIGS[provider];
+          const isLoading = loadingProvider === provider;
+          const isDisabled = loadingProvider !== null;
+
           return (
             <button
               key={provider}
               onClick={() => handleSSOLogin(provider)}
-              className={`group relative flex h-11 items-center rounded-md border ${config.borderColor} px-6 transition-colors ${config.bgColor} ${config.textColor}`}
+              disabled={isDisabled}
+              className={`group relative flex h-11 items-center rounded-md border ${config.borderColor} px-6 transition-colors ${config.bgColor} ${config.textColor} ${isDisabled ? "opacity-70 cursor-not-allowed" : ""}`}
             >
               <div className="absolute left-6">
                 <div className="flex h-5 w-5 items-center justify-center">
-                  {config.icon}
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  ) : (
+                    config.icon
+                  )}
                 </div>
               </div>
               <span className="mx-auto text-sm font-semibold">
-                Continue with {config.name}
+                {isLoading ? t("signingIn") : t("continueWith", { provider: config.name })}
               </span>
             </button>
           );
         })}
       </div>
-      <div className="mt-4 text-center text-xs text-gray-500 dark:text-zinc-500">
-        By creating an account via selected provider, you agree to our{" "}
-        <Link
-          href="/legal/terms"
-          className="text-primary dark:text-primary-400 hover:underline underline-offset-4"
-        >
-          Terms and Conditions
-        </Link>{" "}
-        and{" "}
-        <Link
-          href="/legal/privacy"
-          className="text-primary dark:text-primary-400 hover:underline underline-offset-4"
-        >
-          Privacy Policy
-        </Link>
-      </div>
+      {showDisclaimer && (
+        <div className="mt-4 text-center text-xs text-gray-500 dark:text-zinc-500">
+          {t.rich("disclaimer", {
+            terms: (chunks) => (
+              <Link
+                href="/legal/terms"
+                className="text-primary dark:text-primary-400 hover:underline underline-offset-4"
+              >
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks) => (
+              <Link
+                href="/legal/privacy"
+                className="text-primary dark:text-primary-400 hover:underline underline-offset-4"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
+        </div>
+      )}
     </div>
   );
 }
