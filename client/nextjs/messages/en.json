@@ -185,7 +185,12 @@
         "prev": "Previous",
         "next": "Next",
         "showing": "Showing {start} to {end} of {total} results"
-      }
+      },
+      "exportToSheets": "Export to Sheets",
+      "openSheet": "Open Sheet",
+      "noReceiptsToExport": "No receipts to export",
+      "alreadySynced": "All receipts are already synced!",
+      "exportSuccess": "Export successful!"
     },
     "nav": {
       "homepage": "Dashboard",
@@ -370,7 +375,9 @@
       "connect": "Connect",
       "synced": "Synced",
       "connected": "Connected",
-      "disconnect": "Disconnect"
+      "disconnect": "Disconnect",
+      "fileTitle": "Receipts",
+      "success": "Successfully connected to Google Sheets"
     },
     "verifyEmail": {
       "title": "Verify Email",

@@ -1,12 +1,14 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { createSPASassClientAuthenticated as createSPASassClient } from '@/lib/supabase/client';
-import { Key, User, CheckCircle, FileSpreadsheet, Globe, MapPin, Palette, Mail } from 'lucide-react';
+import { Key, User, CheckCircle, FileSpreadsheet, Globe, MapPin, Palette, Mail, Loader2, Link as LinkIcon, Check } from 'lucide-react';
 import { MFASetup } from '@/components/MFASetup';
 import { useTranslations, useLocale } from 'next-intl';
+import Script from 'next/script';
+import { connectToGoogleSheets, initGoogleAuth } from '@/lib/services/google-sheets';
 import {
   Dialog,
   DialogContent,
@@ -23,12 +25,58 @@ export default function UserSettingsPage() {
     const { user, loading: globalLoading, region, setRegion } = useGlobal();
     const t = useTranslations('userSettings');
     const locale = useLocale();
+    
+    // Password State
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [passwordLoading, setPasswordLoading] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+    // Google Sheets State
+    const [sheetId, setSheetId] = useState<string | null>(null);
+    const [googleLoading, setGoogleLoading] = useState(false);
+
+    // General State
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+    useEffect(() => {
+        // Check for existing sheet ID
+        const storedId = localStorage.getItem('google_sheet_id');
+        if (storedId) {
+            setSheetId(storedId);
+        }
+    }, []);
+
+    const handleGoogleSync = async () => {
+        setGoogleLoading(true);
+        setError('');
+        try {
+            // Pass a simple translation function or use t directly if keys match
+            // The service expects keys like 'receipts.title'
+            // We can map them to our current translations or pass hardcoded strings for now if keys are missing in web
+            // For now, let's wrap t to handle defaults if keys missing
+            const tWrapper = (key: string) => {
+                 // Map mobile keys to web keys or defaults
+                 if (key === 'receipts.title') return t('googleSheets.fileTitle') || 'Receipts';
+                 if (key === 'receipts.receiptDate') return 'Date';
+                 if (key === 'receipts.merchant') return 'Merchant';
+                 if (key === 'receipts.total') return 'Total';
+                 if (key === 'receipts.link') return 'Standard Link'; 
+                 if (key === 'receipts.id') return 'ID';
+                 return key;
+            };
+
+            const id = await connectToGoogleSheets(tWrapper);
+            setSheetId(id);
+            setSuccess(t('googleSheets.success'));
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Failed to connect to Google Sheets');
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
 
 
     const handlePasswordChange = async (e: React.FormEvent) => {
@@ -72,6 +120,12 @@ export default function UserSettingsPage() {
 
     return (
         <div className="space-y-6 p-6">
+            <Script 
+                src="https://accounts.google.com/gsi/client" 
+                strategy="afterInteractive"
+                onLoad={() => initGoogleAuth()}
+            />
+
             <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight" data-testid="settings-title">{t('title')}</h1>
                 <p className="text-muted-foreground">
@@ -100,12 +154,54 @@ export default function UserSettingsPage() {
                                 <User className="h-5 w-5" />
                                 {t('userDetails.title')}
                             </CardTitle>
-                            <CardDescription>{t('userDetails.subtitle')}</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-6">
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">{t('userDetails.email')}</label>
                                 <p className="mt-1 text-sm text-foreground" data-testid="user-email">{user?.email}</p>
+                            </div>
+
+                            <div className="flex items-center justify-between py-2">
+                                <div className="flex items-center gap-2">
+                                    {sheetId ? (
+                                        <a 
+                                           href={`https://docs.google.com/spreadsheets/d/${sheetId}`}
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           className="flex items-center gap-2 group"
+                                        >
+                                            <img 
+                                                src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" 
+                                                alt="Google Sheets" 
+                                                className="h-5 w-5"
+                                            />
+                                            <span className="text-sm font-medium text-muted-foreground group-hover:text-primary group-hover:underline transition-colors">
+                                                {t('googleSheets.title')}
+                                            </span>
+                                        </a>
+                                    ) : (
+                                        <>
+                                            <img 
+                                                src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" 
+                                                alt="Google Sheets" 
+                                                className="h-5 w-5"
+                                            />
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                {t('googleSheets.title')}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                                <button 
+                                    onClick={handleGoogleSync}
+                                    disabled={!!sheetId || googleLoading}
+                                    className="flex items-center gap-1.5 outline-none"
+                                >
+                                    <div className={`h-2 w-2 rounded-full ${sheetId ? 'bg-[#10B981]' : 'bg-[#64748b]'}`} />
+                                    <span className={`text-sm ${sheetId ? 'font-medium text-foreground' : 'font-semibold text-[#1ab8a0]'}`}>
+                                        {googleLoading ? '...' : (sheetId ? t('googleSheets.synced') : t('googleSheets.connect'))}
+                                    </span>
+                                </button>
                             </div>
                         </CardContent>
                     </Card>
@@ -163,25 +259,6 @@ export default function UserSettingsPage() {
                                     </form>
                                 </DialogContent>
                             </Dialog>
-                        </CardContent>
-                    </Card>
-
-                    {/* Google Sheets Sync */}
-                    <Card data-testid="google-sheets-card">
-                        <CardHeader>
-                             <CardTitle className="flex items-center gap-2">
-                                <FileSpreadsheet className="h-5 w-5" />
-                                {t('googleSheets.title')}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-muted-foreground/50" />
-                                <span className="text-sm text-muted-foreground">{t('googleSheets.connect')}</span>
-                            </div>
-                            <Button variant="outline" disabled>
-                                {t('googleSheets.connect')}
-                            </Button>
                         </CardContent>
                     </Card>
 

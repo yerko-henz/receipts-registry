@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGlobal } from "@/lib/context/GlobalContext";
 import { useReceipts } from "@/lib/hooks/useReceipts";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
@@ -34,14 +34,25 @@ import {
   ChevronRight,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  FileSpreadsheet,
+  Loader2,
+  ExternalLink
 } from "lucide-react";
 import { RECEIPT_CATEGORIES } from "@/constants/categories";
 import { ENABLE_TRANSACTION_DATE_FILTER } from "@/constants/featureFlags";
+import { syncReceiptsToSheet, initGoogleAuth } from "@/lib/services/google-sheets";
+import Script from "next/script";
+
+// import { toast } from "sonner"; // Removed as not available
 
 export default function ReceiptsPage() {
   const { user, region } = useGlobal();
   const t = useTranslations('dashboard.receipts');
+  // We need a translation helper for the sheet logic that might expect different keys
+  // or we pass a custom t function.
+  const tUserSettings = useTranslations('userSettings');
+  
   const tCategories = useTranslations('dashboard.categories');
   
   // State for filters and pagination
@@ -53,6 +64,19 @@ export default function ReceiptsPage() {
   const [endDate, setEndDate] = useState<string | null>(null);
   const [dateMode, setDateMode] = useState<'transaction' | 'created'>(ENABLE_TRANSACTION_DATE_FILTER ? 'transaction' : 'created');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'desc' });
+
+  // Export State
+  const [exporting, setExporting] = useState(false);
+  const [sheetId, setSheetId] = useState<string | null>(null);
+  const [lastExport, setLastExport] = useState<string | null>(null);
+
+  // Load Saved Sheet State
+  useEffect(() => {
+    const id = localStorage.getItem('google_sheet_id');
+    const date = localStorage.getItem('last_export_date');
+    if (id) setSheetId(id);
+    if (date) setLastExport(date);
+  }, []);
 
   // Fetch data
   const { data, isLoading } = useReceipts(user?.id, page, pageSize, {
@@ -68,6 +92,12 @@ export default function ReceiptsPage() {
   const receipts = data?.data || [];
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  const hasUnsyncedChanges = React.useMemo(() => {
+    if (receipts.length === 0) return false;
+    if (!lastExport) return true; 
+    return receipts.some(r => r.created_at > lastExport);
+  }, [receipts, lastExport]);
 
   // Helper for category translations
   const categoryLabels = React.useMemo(() => {
@@ -106,6 +136,54 @@ export default function ReceiptsPage() {
     });
   };
 
+  const handleExport = async () => {
+    if (receipts.length === 0) {
+      alert(t('noReceiptsToExport') || 'No receipts to export');
+      return;
+    }
+
+    try {
+        setExporting(true);
+        // Translation wrapper for the service
+        const tWrapper = (key: string) => {
+             if (key === 'receipts.title') return tUserSettings('googleSheets.fileTitle') || 'Receipts';
+             if (key === 'receipts.receiptDate') return 'Date';
+             if (key === 'receipts.merchant') return 'Merchant';
+             if (key === 'receipts.total') return 'Total';
+             if (key === 'receipts.link') return 'Standard Link'; 
+             if (key === 'receipts.id') return 'ID';
+             return key;
+        };
+
+        // Note: This only exports the current PAGE of receipts because `receipts` is paginated.
+        // The mobile app exports `receipts` which seems to be the loaded list.
+        // Ideally we should fetch ALL, but for now we follow the mobile pattern or the current data.
+        // User might expect to export what they see, or everything filtered.
+        const result = await syncReceiptsToSheet(receipts, lastExport, tWrapper);
+        
+        localStorage.setItem('google_sheet_id', result.spreadsheetId);
+        localStorage.setItem('last_export_date', result.timestamp);
+        
+        setSheetId(result.spreadsheetId);
+        setLastExport(result.timestamp);
+
+        if (result.syncedCount === 0) {
+            alert(t('alreadySynced') || 'All receipts are already synced!');
+        } else {
+             const openSheet = confirm(`${t('exportSuccess') || 'Export successful!'} Open sheet?`);
+             if (openSheet) {
+                 window.open(result.url, '_blank');
+             }
+        }
+
+    } catch (error: any) {
+        console.error(error);
+        alert(error.message || 'Failed to export to Google Sheets');
+    } finally {
+        setExporting(false);
+    }
+  };
+
   const RenderSortIcon = ({ columnKey }: { columnKey: string }) => {
     if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
     if (sortConfig.direction === 'asc') return <ArrowUp className="ml-2 h-4 w-4" />;
@@ -114,12 +192,48 @@ export default function ReceiptsPage() {
 
   return (
     <div className="space-y-6 p-6">
+      <Script 
+        src="https://accounts.google.com/gsi/client" 
+        strategy="afterInteractive"
+        onLoad={() => initGoogleAuth()}
+      />
       {/* Header Section */}
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground" data-testid="receipts-title">{t('title')}</h1>
-        <p className="text-muted-foreground">
-          {t('subtitle')}
-        </p>
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground" data-testid="receipts-title">{t('title')}</h1>
+            <p className="text-muted-foreground">
+            {t('subtitle')}
+            </p>
+        </div>
+        <div className="flex items-center gap-2">
+            {sheetId && !hasUnsyncedChanges && (
+                 <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="hidden sm:flex"
+                    onClick={() => window.open(`https://docs.google.com/spreadsheets/d/${sheetId}`, '_blank')}
+                 >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {t('openSheet') || 'Open Sheet'}
+                 </Button>
+            )}
+            
+            {sheetId && hasUnsyncedChanges && (
+                <Button 
+                    onClick={handleExport} 
+                    disabled={exporting || receipts.length === 0}
+                    variant="default"
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                    {exporting ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    )}
+                    {t('exportToSheets') || 'Export to Sheets'}
+                </Button>
+            )}
+        </div>
       </div>
 
       <Card className="border shadow-sm">

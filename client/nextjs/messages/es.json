@@ -185,7 +185,12 @@
         "prev": "Anterior",
         "next": "Siguiente",
         "showing": "Mostrando {start} a {end} de {total} resultados"
-      }
+      },
+      "exportToSheets": "Exportar a Sheets",
+      "openSheet": "Abrir Hoja",
+      "noReceiptsToExport": "No hay recibos para exportar",
+      "alreadySynced": "¡Todos los recibos ya están sincronizados!",
+      "exportSuccess": "¡Exportación exitosa!"
     },
     "nav": {
       "homepage": "Inicio",
@@ -370,7 +375,9 @@
       "connect": "Conectar",
       "synced": "Sincronizado",
       "connected": "Conectado",
-      "disconnect": "Desconectar"
+      "disconnect": "Desconectar",
+      "fileTitle": "Recibos",
+      "success": "Conexión exitosa con Google Sheets"
     },
     "verifyEmail": {
       "title": "Verificar correo",
