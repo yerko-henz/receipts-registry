@@ -209,7 +209,7 @@ export default function UserSettingsPage() {
                                 >
                                     <div className={`h-2 w-2 rounded-full ${sheetId ? 'bg-[#10B981]' : 'bg-[#64748b]'}`} />
                                     <span className={`text-sm ${sheetId ? 'font-medium text-foreground' : 'font-semibold text-[#1ab8a0]'}`}>
-                                        {googleLoading ? '...' : (sheetId ? t('googleSheets.synced') : t('googleSheets.connect'))}
+                                        {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (sheetId ? t('googleSheets.synced') : t('googleSheets.connect'))}
                                     </span>
                                 </button>
                             </div>

@@ -190,8 +190,10 @@
       "openSheet": "Abrir Hoja",
       "noReceiptsToExport": "No hay recibos para exportar",
       "alreadySynced": "¡Todos los recibos ya están sincronizados!",
-      "alreadySyncedTitle": "Sincronizado",,
-      "exportSuccess": "¡Exportación exitosa!"
+      "alreadySyncedTitle": "Sincronizado",
+      "exportSuccess": "¡Exportación exitosa!",
+      "exportSuccessMessage": "Tus recibos se han exportado exitosamente a Google Sheets.",
+      "close": "Cerrar"
     },
     "nav": {
       "homepage": "Inicio",
@@ -378,7 +380,8 @@
       "connected": "Conectado",
       "disconnect": "Desconectar",
       "fileTitle": "Recibos",
-      "success": "Conexión exitosa con Google Sheets"
+      "success": "Conexión exitosa con Google Sheets",
+      "permissionsGranted": "Permisos concedidos exitosamente."
     },
     "verifyEmail": {
       "title": "Verificar correo",

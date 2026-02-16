@@ -184,7 +184,7 @@ export default function ReceiptsPage() {
                 title: t('exportSuccess') || 'Export Successful',
                 description: t('exportSuccessMessage') || 'Your receipts have been successfully exported to Google Sheets.',
                 actions: [
-                    { label: 'Close', onClick: closeModal, variant: 'outline' },
+                    { label: t('close') || 'Close', onClick: closeModal, variant: 'outline' },
                     { 
                         label: t('openSheet') || 'Open Sheet', 
                         onClick: () => {
@@ -227,7 +227,7 @@ export default function ReceiptsPage() {
             </p>
         </div>
         <div className="flex items-center gap-2">
-            {sheetId && !hasUnsyncedChanges && (
+            {sheetId && !hasUnsyncedChanges && !isLoading && (
                  <Button 
                     variant="outline" 
                     size="sm"
@@ -249,7 +249,11 @@ export default function ReceiptsPage() {
                     {exporting ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        <img 
+                            src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" 
+                            alt="Google Sheets" 
+                            className="mr-2 h-4 w-4"
+                        />
                     )}
                     {t('exportToSheets') || 'Export to Sheets'}
                 </Button>

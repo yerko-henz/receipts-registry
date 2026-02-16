@@ -177,8 +177,14 @@ const appendHeaders = async (spreadsheetId: string, t: (key: string) => string) 
 };
 
 const appendRows = async (spreadsheetId: string, receipts: Receipt[]) => {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
   const rows = receipts.map(r => {
     return SHEET_COLUMNS.map(col => {
+      if (col.key === 'image_url') {
+        return r.image_url ? `${origin}/api/receipts/image/${r.id}` : '';
+      }
+
       // @ts-ignore
       const val = r[col.key];
       return val || ''; // Handle null/undefined

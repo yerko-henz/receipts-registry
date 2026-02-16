@@ -190,8 +190,10 @@
       "openSheet": "Open Sheet",
       "noReceiptsToExport": "No receipts to export",
       "alreadySynced": "All receipts are already synced!",
-      "alreadySyncedTitle": "Synced",,
-      "exportSuccess": "Export successful!"
+      "alreadySyncedTitle": "Synced",
+      "exportSuccess": "Export successful!",
+      "exportSuccessMessage": "Your receipts have been successfully exported to Google Sheets.",
+      "close": "Close"
     },
     "nav": {
       "homepage": "Dashboard",
@@ -378,7 +380,8 @@
       "connected": "Connected",
       "disconnect": "Disconnect",
       "fileTitle": "Receipts",
-      "success": "Successfully connected to Google Sheets"
+      "success": "Successfully connected to Google Sheets",
+      "permissionsGranted": "Permissions granted successfully."
     },
     "verifyEmail": {
       "title": "Verify Email",
