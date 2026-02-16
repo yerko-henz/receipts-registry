@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useModal } from "@/lib/context/ModalContext";
 import {
   Select,
   SelectContent,
@@ -69,14 +70,17 @@ export default function ReceiptsPage() {
   const [exporting, setExporting] = useState(false);
   const [sheetId, setSheetId] = useState<string | null>(null);
   const [lastExport, setLastExport] = useState<string | null>(null);
+  const { openModal, closeModal } = useModal();
 
   // Load Saved Sheet State
   useEffect(() => {
-    const id = localStorage.getItem('google_sheet_id');
-    const date = localStorage.getItem('last_export_date');
-    if (id) setSheetId(id);
-    if (date) setLastExport(date);
-  }, []);
+    if (user?.id) {
+        const id = localStorage.getItem(`google_sheet_id_${user.id}`);
+        const date = localStorage.getItem(`last_export_date_${user.id}`);
+        setSheetId(id || null);
+        setLastExport(date || null);
+    }
+  }, [user]);
 
   // Fetch data
   const { data, isLoading } = useReceipts(user?.id, page, pageSize, {
@@ -161,19 +165,36 @@ export default function ReceiptsPage() {
         // User might expect to export what they see, or everything filtered.
         const result = await syncReceiptsToSheet(receipts, lastExport, tWrapper);
         
-        localStorage.setItem('google_sheet_id', result.spreadsheetId);
-        localStorage.setItem('last_export_date', result.timestamp);
+        if (user?.id) {
+            localStorage.setItem(`google_sheet_id_${user.id}`, result.spreadsheetId);
+            localStorage.setItem(`last_export_date_${user.id}`, result.timestamp);
+        }
         
         setSheetId(result.spreadsheetId);
         setLastExport(result.timestamp);
 
         if (result.syncedCount === 0) {
-            alert(t('alreadySynced') || 'All receipts are already synced!');
+            openModal({
+                title: t('alreadySyncedTitle') || 'Already Synced',
+                description: t('alreadySynced') || 'All receipts are already synced!',
+                actions: [{ label: 'OK', onClick: closeModal, variant: 'default' }]
+            });
         } else {
-             const openSheet = confirm(`${t('exportSuccess') || 'Export successful!'} Open sheet?`);
-             if (openSheet) {
-                 window.open(result.url, '_blank');
-             }
+             openModal({
+                title: t('exportSuccess') || 'Export Successful',
+                description: t('exportSuccessMessage') || 'Your receipts have been successfully exported to Google Sheets.',
+                actions: [
+                    { label: 'Close', onClick: closeModal, variant: 'outline' },
+                    { 
+                        label: t('openSheet') || 'Open Sheet', 
+                        onClick: () => {
+                            window.open(result.url, '_blank');
+                            closeModal();
+                        },
+                        variant: 'default'
+                    }
+                ]
+             });
         }
 
     } catch (error: any) {
@@ -451,6 +472,8 @@ export default function ReceiptsPage() {
         </div>
         )}
       </Card>
+
+
     </div>
   );
 }

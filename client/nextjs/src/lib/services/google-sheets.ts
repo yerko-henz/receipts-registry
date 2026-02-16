@@ -243,7 +243,7 @@ export const ensureSheetExists = async (t: (key: string) => string) => {
   return spreadsheetId;
 };
 
-export const connectToGoogleSheets = async (t: (key: string) => string): Promise<string> => {
+export const connectToGoogleSheets = async (userId: string, t: (key: string) => string): Promise<string> => {
      // Trigger auth flow
      await getAccessToken();
      
@@ -252,7 +252,7 @@ export const connectToGoogleSheets = async (t: (key: string) => string): Promise
      
      // Persist ID
      if (id) {
-         localStorage.setItem('google_sheet_id', id);
+         localStorage.setItem(`google_sheet_id_${userId}`, id);
          return id;
      }
 

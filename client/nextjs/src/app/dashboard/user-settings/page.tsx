@@ -20,11 +20,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useModal } from "@/lib/context/ModalContext";
 
 export default function UserSettingsPage() {
     const { user, loading: globalLoading, region, setRegion } = useGlobal();
     const t = useTranslations('userSettings');
     const locale = useLocale();
+    const { openModal, closeModal } = useModal();
     
     // Password State
     const [newPassword, setNewPassword] = useState('');
@@ -41,23 +43,19 @@ export default function UserSettingsPage() {
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
-        // Check for existing sheet ID
-        const storedId = localStorage.getItem('google_sheet_id');
-        if (storedId) {
-            setSheetId(storedId);
+        if (user?.id) {
+            const storedId = localStorage.getItem(`google_sheet_id_${user.id}`);
+            setSheetId(storedId || null);
         }
-    }, []);
+    }, [user]);
 
     const handleGoogleSync = async () => {
+        if (!user?.id) return;
+
         setGoogleLoading(true);
         setError('');
         try {
-            // Pass a simple translation function or use t directly if keys match
-            // The service expects keys like 'receipts.title'
-            // We can map them to our current translations or pass hardcoded strings for now if keys are missing in web
-            // For now, let's wrap t to handle defaults if keys missing
             const tWrapper = (key: string) => {
-                 // Map mobile keys to web keys or defaults
                  if (key === 'receipts.title') return t('googleSheets.fileTitle') || 'Receipts';
                  if (key === 'receipts.receiptDate') return 'Date';
                  if (key === 'receipts.merchant') return 'Merchant';
@@ -67,12 +65,24 @@ export default function UserSettingsPage() {
                  return key;
             };
 
-            const id = await connectToGoogleSheets(tWrapper);
+            const id = await connectToGoogleSheets(user.id, tWrapper);
             setSheetId(id);
             setSuccess(t('googleSheets.success'));
+
+            openModal({
+                title: t('googleSheets.success') || 'Success',
+                description: t('googleSheets.permissionsGranted') || 'Permissions granted successfully.',
+                actions: [{ label: 'OK', onClick: closeModal, variant: 'default' }]
+            });
         } catch (err: any) {
             console.error(err);
             setError(err.message || 'Failed to connect to Google Sheets');
+
+            openModal({
+                title: 'Error',
+                description: err.message || t('googleSheets.connectError') || 'Failed to connect to Google Sheets',
+                actions: [{ label: 'OK', onClick: closeModal, variant: 'default' }]
+            });
         } finally {
             setGoogleLoading(false);
         }

@@ -190,6 +190,7 @@
       "openSheet": "Abrir Hoja",
       "noReceiptsToExport": "No hay recibos para exportar",
       "alreadySynced": "¡Todos los recibos ya están sincronizados!",
+      "alreadySyncedTitle": "Sincronizado",,
       "exportSuccess": "¡Exportación exitosa!"
     },
     "nav": {

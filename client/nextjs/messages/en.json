@@ -190,6 +190,7 @@
       "openSheet": "Open Sheet",
       "noReceiptsToExport": "No receipts to export",
       "alreadySynced": "All receipts are already synced!",
+      "alreadySyncedTitle": "Synced",,
       "exportSuccess": "Export successful!"
     },
     "nav": {

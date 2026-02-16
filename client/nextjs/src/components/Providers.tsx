@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GlobalProvider } from '@/lib/context/GlobalContext';
+import { ModalProvider } from '@/lib/context/ModalContext';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -21,7 +22,9 @@ export function Providers({ children, initialUser }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <GlobalProvider initialUser={initialUser}>
-        {children}
+        <ModalProvider>
+          {children}
+        </ModalProvider>
       </GlobalProvider>
     </QueryClientProvider>
   );
