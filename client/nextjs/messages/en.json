@@ -158,6 +158,11 @@
     "receipts": {
       "title": "Receipt Library",
       "subtitle": "Manage and analyze your registered expenses.",
+      "noImage": "No image available",
+      "total": "Total",
+      "tax": "Tax",
+      "items": "Items",
+      "uploadedOn": "Uploaded on",
       "searchPlaceholder": "Search receipts by merchant",
       "filters": {
         "dateRange": "Dates",
@@ -195,7 +200,12 @@
       "alreadySyncedTitle": "Synced",
       "exportSuccess": "Export successful!",
       "exportSuccessMessage": "Your receipts have been successfully exported to Google Sheets.",
-      "close": "Close"
+      "close": "Close",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete Receipt",
+      "deleteConfirmDescription": "Are you sure you want to delete this receipt? This action cannot be undone.",
+      "deleteError": "Failed to delete receipt",
+      "deleteSuccess": "Receipt deleted"
     },
     "nav": {
       "homepage": "Dashboard",

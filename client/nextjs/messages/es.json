@@ -158,6 +158,11 @@
     "receipts": {
       "title": "Biblioteca de Recibos",
       "subtitle": "Gestiona y analiza tus gastos registrados.",
+      "noImage": "No hay imagen disponible",
+      "total": "Total",
+      "tax": "Impuesto",
+      "items": "Ítems",
+      "uploadedOn": "Subido el",
       "searchPlaceholder": "Buscar recibos por comercio",
       "filters": {
         "dateRange": "Fecha",
@@ -195,7 +200,12 @@
       "alreadySyncedTitle": "Sincronizado",
       "exportSuccess": "¡Exportación exitosa!",
       "exportSuccessMessage": "Tus recibos se han exportado exitosamente a Google Sheets.",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "delete": "Eliminar",
+      "deleteConfirmTitle": "Eliminar Recibo",
+      "deleteConfirmDescription": "¿Estás seguro de que deseas eliminar este recibo? Esta acción no se puede deshacer.",
+      "deleteError": "Error al eliminar el recibo",
+      "deleteSuccess": "Recibo eliminado"
     },
     "nav": {
       "homepage": "Inicio",

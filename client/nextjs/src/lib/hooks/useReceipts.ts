@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getRecentReceipts, getReceiptsByUserId, createReceipt, ReceiptFilters, NewReceiptWithItems } from '@/lib/services/receipts';
+import { getRecentReceipts, getReceiptsByUserId, createReceipt, deleteReceipt, ReceiptFilters, NewReceiptWithItems } from '@/lib/services/receipts';
 
 export const useRecentReceipts = (userId: string | undefined, days: number = 7) => {
   return useQuery({
@@ -21,6 +21,17 @@ export const useCreateReceipt = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (newReceipt: NewReceiptWithItems) => createReceipt(newReceipt),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['receipts'] });
+            queryClient.invalidateQueries({ queryKey: ['recent_receipts'] });
+        }
+    });
+};
+
+export const useDeleteReceipt = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (receiptId: string) => deleteReceipt(receiptId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['receipts'] });
             queryClient.invalidateQueries({ queryKey: ['recent_receipts'] });

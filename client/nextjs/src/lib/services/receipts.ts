@@ -237,3 +237,13 @@ export const uploadReceiptImage = async (file: File) => {
     const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(data.path);
     return publicUrlData.publicUrl;
 };
+
+export const deleteReceipt = async (receiptId: string) => {
+    const supabase = createSPAClient();
+    const { error } = await supabase
+        .from('receipts')
+        .delete()
+        .eq('id', receiptId);
+
+    if (error) throw error;
+};

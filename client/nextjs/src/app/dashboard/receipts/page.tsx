@@ -38,11 +38,14 @@ import {
   ArrowDown,
   FileSpreadsheet,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Eye
 } from "lucide-react";
+
 import { RECEIPT_CATEGORIES } from "@/constants/categories";
 import { ENABLE_TRANSACTION_DATE_FILTER } from "@/constants/featureFlags";
 import { syncReceiptsToSheet, initGoogleAuth } from "@/lib/services/google-sheets";
+import ReceiptDetailsModal from "@/components/dashboard/ReceiptDetailsModal";
 import Script from "next/script";
 
 // import { toast } from "sonner"; // Removed as not available
@@ -71,6 +74,7 @@ export default function ReceiptsPage() {
   const [sheetId, setSheetId] = useState<string | null>(null);
   const [lastExport, setLastExport] = useState<string | null>(null);
   const { openModal, closeModal } = useModal();
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
 
   // Load Saved Sheet State
   useEffect(() => {
@@ -415,8 +419,15 @@ export default function ReceiptsPage() {
                                  {formatPrice(receipt.total_amount || 0, region, receipt.currency)}
                             </TableCell>
                             <TableCell className="text-right">
-                                <Button variant="ghost" className="h-8 text-primary font-medium hover:text-primary/80">
-                                    {t('table.view')}
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-muted"
+                                    onClick={() => setSelectedReceipt(receipt)}
+                                    title={t('table.view')}
+                                >
+                                    <Eye className="h-4 w-4" />
+                                    <span className="sr-only">{t('table.view')}</span>
                                 </Button>
                             </TableCell>
                         </TableRow>
@@ -477,7 +488,11 @@ export default function ReceiptsPage() {
         )}
       </Card>
 
-
+      <ReceiptDetailsModal 
+        isOpen={!!selectedReceipt} 
+        onClose={() => setSelectedReceipt(null)} 
+        receipt={selectedReceipt} 
+      />
     </div>
   );
 }
