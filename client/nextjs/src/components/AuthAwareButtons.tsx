@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createSPAClient } from "@/lib/supabase/client";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { User } from "@supabase/supabase-js";
@@ -15,6 +15,7 @@ export default function AuthAwareButtons({
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(!!initialUser);
   const [loading, setLoading] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const t = useTranslations("homepage");
 
   useEffect(() => {
@@ -44,19 +45,17 @@ export default function AuthAwareButtons({
     return null;
   }
 
-  const createAccount = () => {
-    // Navigate to register (handled by Link)
-  };
-
   // Navigation buttons for the header
   if (variant === "nav") {
     return isAuthenticated ? (
       <Link
         href="/dashboard"
-        className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-all font-medium"
+        onClick={() => setIsNavigating(true)}
+        className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-all font-medium flex items-center gap-2"
         data-testid="nav-dashboard-link"
       >
-        {t("hero.goToDashboard")}{" "}
+        {isNavigating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        {t("hero.goToDashboard")}
       </Link>
     ) : (
       <>
@@ -75,11 +74,13 @@ export default function AuthAwareButtons({
   return isAuthenticated ? (
     <Link
       href="/dashboard"
+      onClick={() => setIsNavigating(true)}
       className="inline-flex items-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all"
       data-testid="hero-dashboard-link"
     >
+      {isNavigating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
       {t("hero.goToDashboard")}
-      <ArrowRight className="ml-2 h-5 w-5" />
+      {!isNavigating && <ArrowRight className="ml-2 h-5 w-5" />}
     </Link>
   ) : (
     <>

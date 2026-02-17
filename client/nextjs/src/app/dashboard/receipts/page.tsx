@@ -151,11 +151,11 @@ export default function ReceiptsPage() {
         // Translation wrapper for the service
         const tWrapper = (key: string) => {
              if (key === 'receipts.title') return tUserSettings('googleSheets.fileTitle') || 'Receipts';
-             if (key === 'receipts.receiptDate') return 'Date';
-             if (key === 'receipts.merchant') return 'Merchant';
-             if (key === 'receipts.total') return 'Total';
-             if (key === 'receipts.link') return 'Standard Link'; 
-             if (key === 'receipts.id') return 'ID';
+             if (key === 'receipts.receiptDate') return tUserSettings('googleSheets.columns.date');
+             if (key === 'receipts.merchant') return tUserSettings('googleSheets.columns.merchant');
+             if (key === 'receipts.total') return tUserSettings('googleSheets.columns.total');
+             if (key === 'receipts.link') return tUserSettings('googleSheets.columns.link'); 
+             if (key === 'receipts.id') return tUserSettings('googleSheets.columns.id');
              return key;
         };
 

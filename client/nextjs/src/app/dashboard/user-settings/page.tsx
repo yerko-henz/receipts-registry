@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { createSPASassClientAuthenticated as createSPASassClient } from '@/lib/supabase/client';
-import { Key, User, CheckCircle, FileSpreadsheet, Globe, MapPin, Palette, Mail, Loader2, Link as LinkIcon, Check } from 'lucide-react';
+import { Key, User, CheckCircle, FileSpreadsheet, Globe, MapPin, Palette, Mail, Loader2, Link as LinkIcon, Check, Trash2 } from 'lucide-react';
 import { MFASetup } from '@/components/MFASetup';
 import { useTranslations, useLocale } from 'next-intl';
 import Script from 'next/script';
@@ -19,12 +19,15 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getAllReceiptsForSync } from '@/lib/services/receipts';
+import { syncReceiptsToSheet } from '@/lib/services/google-sheets';
 import { Label } from "@/components/ui/label"
 import { useModal } from "@/lib/context/ModalContext";
 
 export default function UserSettingsPage() {
     const { user, loading: globalLoading, region, setRegion } = useGlobal();
     const t = useTranslations('userSettings');
+    const tCommon = useTranslations('common');
     const locale = useLocale();
     const { openModal, closeModal } = useModal();
     
@@ -49,6 +52,73 @@ export default function UserSettingsPage() {
         }
     }, [user]);
 
+    const handleInitialSync = async (spreadsheetId: string) => {
+        setGoogleLoading(true);
+        
+        // Show syncing state
+        openModal({
+            title: t('googleSheets.syncing') || 'Syncing...',
+            description: t('googleSheets.syncingDescription') || 'Please wait while we sync your receipts...',
+            actions: [], // No actions while syncing
+            children: (
+                <div className="flex justify-center items-center py-6">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            )
+        });
+
+        try {
+             // Translation wrapper for the service
+             const tWrapper = (key: string) => {
+                if (key === 'receipts.title') return t('googleSheets.fileTitle') || 'Receipts';
+                if (key === 'receipts.receiptDate') return t('googleSheets.columns.date');
+                if (key === 'receipts.merchant') return t('googleSheets.columns.merchant');
+                if (key === 'receipts.total') return t('googleSheets.columns.total');
+                if (key === 'receipts.link') return t('googleSheets.columns.link'); 
+                if (key === 'receipts.id') return t('googleSheets.columns.id');
+                return key;
+           };
+
+           // Fetch ALL receipts for the user
+           const receipts = await getAllReceiptsForSync(user!.id);
+           
+           // Sync them (append mode, though sheet should be empty or we are appending to it)
+           // pass null as lastSyncDate to force checking all, or we could pass null to rely on sheet check
+           const result = await syncReceiptsToSheet(receipts, null, tWrapper);
+           
+           if (user?.id) {
+               localStorage.setItem(`last_export_date_${user.id}`, result.timestamp);
+           }
+
+           openModal({
+                title: t('googleSheets.success'),
+                description: t('googleSheets.exportSuccessMessage') || 'Your receipts have been successfully exported to Google Sheets.',
+                actions: [
+                    { label: tCommon('close') || 'Close', onClick: closeModal, variant: 'outline' },
+                    { 
+                        label: t('googleSheets.openSheet') || 'Open Sheet', 
+                        onClick: () => {
+                            window.open(result.url, '_blank');
+                            closeModal();
+                        },
+                        variant: 'default'
+                    }
+                ]
+            });
+
+        } catch (error) {
+            console.error('Initial sync failed:', error);
+            setError('Failed to sync existing receipts');
+             openModal({
+                title: 'Error',
+                description: 'Failed to sync existing receipts',
+                actions: [{ label: 'OK', onClick: closeModal, variant: 'default' }]
+            });
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
+
     const handleGoogleSync = async () => {
         if (!user?.id) return;
 
@@ -57,11 +127,11 @@ export default function UserSettingsPage() {
         try {
             const tWrapper = (key: string) => {
                  if (key === 'receipts.title') return t('googleSheets.fileTitle') || 'Receipts';
-                 if (key === 'receipts.receiptDate') return 'Date';
-                 if (key === 'receipts.merchant') return 'Merchant';
-                 if (key === 'receipts.total') return 'Total';
-                 if (key === 'receipts.link') return 'Standard Link'; 
-                 if (key === 'receipts.id') return 'ID';
+                 if (key === 'receipts.receiptDate') return t('googleSheets.columns.date');
+                 if (key === 'receipts.merchant') return t('googleSheets.columns.merchant');
+                 if (key === 'receipts.total') return t('googleSheets.columns.total');
+                 if (key === 'receipts.link') return t('googleSheets.columns.link'); 
+                 if (key === 'receipts.id') return t('googleSheets.columns.id');
                  return key;
             };
 
@@ -70,9 +140,20 @@ export default function UserSettingsPage() {
             setSuccess(t('googleSheets.success'));
 
             openModal({
-                title: t('googleSheets.success') || 'Success',
-                description: t('googleSheets.permissionsGranted') || 'Permissions granted successfully.',
-                actions: [{ label: 'OK', onClick: closeModal, variant: 'default' }]
+                title: t('googleSheets.initialSyncTitle') || 'Connect Successful',
+                description: t('googleSheets.initialSyncDescription') || 'Would you like to sync your existing receipts to this sheet now?',
+                actions: [
+                    { 
+                        label: tCommon('close') || 'Close', 
+                        onClick: closeModal, 
+                        variant: 'outline' 
+                    },
+                    { 
+                        label: t('googleSheets.syncNow') || 'Sync Existing Receipts', 
+                        onClick: () => handleInitialSync(id), 
+                        variant: 'default' 
+                    }
+                ]
             });
         } catch (err: any) {
             console.error(err);
@@ -88,6 +169,33 @@ export default function UserSettingsPage() {
         }
     };
 
+
+    const handleDisconnect = () => {
+        if (!user?.id) return;
+
+        openModal({
+            title: t('googleSheets.disconnectConfirmTitle') || 'Disconnect Google Sheets',
+            description: t('googleSheets.disconnectConfirmDescription') || 'Are you sure you want to disconnect? You can reconnect at any time.',
+            actions: [
+                { 
+                    label: tCommon('cancel') || 'Cancel', 
+                    onClick: closeModal, 
+                    variant: 'outline' 
+                },
+                { 
+                    label: t('googleSheets.disconnect') || 'Disconnect', 
+                    onClick: () => {
+                        localStorage.removeItem(`google_sheet_id_${user.id}`);
+                        localStorage.removeItem(`last_export_date_${user.id}`);
+                        setSheetId(null);
+                        setSuccess(''); 
+                        closeModal();
+                    }, 
+                    variant: 'destructive' 
+                }
+            ]
+        });
+    };
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -202,16 +310,36 @@ export default function UserSettingsPage() {
                                         </>
                                     )}
                                 </div>
-                                <button 
-                                    onClick={handleGoogleSync}
-                                    disabled={!!sheetId || googleLoading}
-                                    className="flex items-center gap-1.5 outline-none"
-                                >
-                                    <div className={`h-2 w-2 rounded-full ${sheetId ? 'bg-[#10B981]' : 'bg-[#64748b]'}`} />
-                                    <span className={`text-sm ${sheetId ? 'font-medium text-foreground' : 'font-semibold text-[#1ab8a0]'}`}>
-                                        {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (sheetId ? t('googleSheets.synced') : t('googleSheets.connect'))}
-                                    </span>
-                                </button>
+                                {sheetId ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-100">
+                                            <div className="h-2 w-2 rounded-full bg-[#10B981]" />
+                                            <span className="text-sm font-medium text-emerald-700">
+                                                {t('googleSheets.synced')}
+                                            </span>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={handleDisconnect}
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            title={t('googleSheets.disconnect')}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <button 
+                                        onClick={handleGoogleSync}
+                                        disabled={googleLoading}
+                                        className="flex items-center gap-1.5 outline-none hover:bg-slate-50 px-2 py-1 rounded-md transition-colors"
+                                    >
+                                        <div className="h-2 w-2 rounded-full bg-[#64748b]" />
+                                        <span className="text-sm font-semibold text-[#1ab8a0]">
+                                            {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('googleSheets.connect')}
+                                        </span>
+                                    </button>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

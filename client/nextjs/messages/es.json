@@ -17,7 +17,9 @@
     "alreadyHaveAccount": "¿Ya tienes una cuenta?",
     "dontHaveAccount": "¿No tienes una cuenta?",
     "returnToLogin": "Volver al inicio de sesión",
-    "urlSiteName": "placeholder.app/"
+    "urlSiteName": "placeholder.app/",
+    "cancel": "Cancelar",
+    "close": "Cerrar"
   },
   "homepage": {
     "nav": {
@@ -379,9 +381,25 @@
       "synced": "Sincronizado",
       "connected": "Conectado",
       "disconnect": "Desconectar",
+      "disconnectConfirmTitle": "Desconectar Google Sheets",
+      "disconnectConfirmDescription": "¿Estás seguro de que deseas desconectar? Puedes volver a conectarte en cualquier momento.",
       "fileTitle": "Recibos",
       "success": "Conexión exitosa con Google Sheets",
-      "permissionsGranted": "Permisos concedidos exitosamente."
+      "syncNow": "Sincronizar Recibos Existentes",
+      "syncing": "Sincronizando...",
+      "syncingDescription": "Por favor espera mientras sincronizamos tus recibos...",
+      "initialSyncTitle": "Conexión Exitosa",
+      "initialSyncDescription": "¿Te gustaría sincronizar tus recibos existentes a esta hoja ahora?",
+      "exportSuccessMessage": "Tus recibos han sido exportados exitosamente a Google Sheets.",
+      "openSheet": "Abrir Hoja",
+      "permissionsGranted": "Permisos concedidos exitosamente.",
+      "columns": {
+        "date": "Fecha",
+        "merchant": "Comercio",
+        "total": "Total",
+        "link": "Enlace del Recibo",
+        "id": "ID del Recibo"
+      }
     },
     "verifyEmail": {
       "title": "Verificar correo",

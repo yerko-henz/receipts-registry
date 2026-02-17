@@ -17,7 +17,9 @@
     "alreadyHaveAccount": "Already have an account?",
     "dontHaveAccount": "Don't have an account?",
     "returnToLogin": "Return to login",
-    "urlSiteName": "placeholder.app/"
+    "urlSiteName": "placeholder.app/",
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "homepage": {
     "nav": {
@@ -379,9 +381,25 @@
       "synced": "Synced",
       "connected": "Connected",
       "disconnect": "Disconnect",
+      "disconnectConfirmTitle": "Disconnect Google Sheets",
+      "disconnectConfirmDescription": "Are you sure you want to disconnect? You can reconnect at any time.",
       "fileTitle": "Receipts",
       "success": "Successfully connected to Google Sheets",
-      "permissionsGranted": "Permissions granted successfully."
+      "syncNow": "Sync Existing Receipts",
+      "syncing": "Syncing...",
+      "syncingDescription": "Please wait while we sync your receipts...",
+      "initialSyncTitle": "Connect Successful",
+      "initialSyncDescription": "Would you like to sync your existing receipts to this sheet now?",
+      "exportSuccessMessage": "Your receipts have been successfully exported to Google Sheets.",
+      "openSheet": "Open Sheet",
+      "permissionsGranted": "Permissions granted successfully.",
+      "columns": {
+        "date": "Date",
+        "merchant": "Merchant",
+        "total": "Total",
+        "link": "Receipt Link",
+        "id": "Receipt ID"
+      }
     },
     "verifyEmail": {
       "title": "Verify Email",

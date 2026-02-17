@@ -187,6 +187,22 @@ export const getReceiptsByUserId = async (
   };
 };
 
+export const getAllReceiptsForSync = async (userId: string) => {
+  const supabase = createSPAClient();
+  
+  const { data, error } = await supabase
+    .from('receipts')
+    .select('*, receipt_items(*)')
+    .eq('user_id', userId)
+    .order('transaction_date', { ascending: false });
+
+  if (error) throw error;
+
+  // We DO sign images here because the sheet sync needs signed URLs
+  const signedData = await signReceiptImages(data as Receipt[]);
+  return signedData;
+};
+
 export const createReceipt = async (params: NewReceiptWithItems) => {
   const supabase = createSPAClient();
   
