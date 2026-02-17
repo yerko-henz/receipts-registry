@@ -3,7 +3,7 @@
 
 import { createSPASassClient } from '@/lib/supabase/client';
 import {useEffect, useState} from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SSOButtons from '@/components/SSOButtons';
 import { useTranslations } from 'next-intl';
@@ -15,6 +15,8 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [showMFAPrompt, setShowMFAPrompt] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const next = searchParams.get('next');
     const tCommon = useTranslations('common');
     const tAuth = useTranslations('auth.login');
 
@@ -39,7 +41,11 @@ export default function LoginPage() {
                 setShowMFAPrompt(true);
             } else {
                 const { data: { user } } = await supabase.auth.getUser();
-                router.push('/dashboard');
+                if (next) {
+                    router.push(next);
+                } else {
+                    router.push('/dashboard');
+                }
                 return;
             }
         } catch (err) {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 type Provider = "google" | "facebook" | "apple";
 
@@ -84,14 +85,22 @@ function getEnabledProviders(): Provider[] {
 export default function SSOButtons({ onError, showDisclaimer = true }: SSOButtonsProps) {
   const t = useTranslations("auth.sso");
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next');
 
   const handleSSOLogin = async (provider: Provider) => {
     console.log("Starting SSO login for:", provider);
     setLoadingProvider(provider);
     try {
+      // Set cookie for redirect if next param exists
+      if (next) {
+        document.cookie = `auth-next-redirect=${encodeURIComponent(next)}; path=/; max-age=600; SameSite=Lax`;
+      }
+    
       const supabase = createSPAClient();
       const redirectTo = `${window.location.origin}/api/auth/callback`;
       console.log("SSO Redirect URL:", redirectTo);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
