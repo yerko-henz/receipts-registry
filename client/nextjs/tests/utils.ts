@@ -3,7 +3,7 @@ import { Page } from '@playwright/test';
 // Export mockSupabaseAuth
 export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
   if (process.env.USE_REAL_DATA === 'true') {
-    await realLoginSupabase(page);
+    // Session is handled globally by auth.setup.ts and storageState
     return;
   }
   const defaultUser = {
@@ -137,10 +137,18 @@ export const realLoginSupabase = async (page: Page) => {
         throw new Error('SUPABASE_TEST_USER_EMAIL and SUPABASE_TEST_USER_PASSWORD are required for real login.');
     }
 
+    // Ensure we are in English to avoid locator mismatches
+    await page.context().addCookies([{
+        name: 'NEXT_LOCALE',
+        value: 'en',
+        domain: 'localhost', // Playwright's default or we can use the current URL
+        path: '/',
+    }]);
+
     await page.goto('/auth/login');
-    await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel(/password/i).fill(password);
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByTestId('email-input').fill(email);
+    await page.getByTestId('password-input').fill(password);
+    await page.getByTestId('login-submit').click();
     
     // Wait for redirect to dashboard
     await page.waitForURL('**/dashboard', { timeout: 15000 });

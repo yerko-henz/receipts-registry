@@ -18,8 +18,10 @@ export default defineConfig({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retryon CI only */
+  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
+  /* Stop the suite after 10 failures in CI to fail fast */
+  maxFailures: process.env.CI ? 10 : undefined,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -31,23 +33,33 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+    
+    /* Use the saved storage state if available */
+    storageState: process.env.USE_REAL_DATA === 'true' ? path.join(__dirname, 'playwright/.auth/user.json') : undefined,
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      dependencies: ['setup'],
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      dependencies: ['setup'],
     },
 
     /* Test against mobile viewports. */
