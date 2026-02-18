@@ -46,15 +46,16 @@ test.describe('Settings Page', () => {
         await expect(page.getByTestId('settings-title')).toBeVisible();
 
         // 1. Change to Chile (es-CL) -> Expect 1.000
-        // The component uses window.location.reload(), so we should wait for that or just expect the new state
         await page.getByTestId('region-select').selectOption('es-CL');
-        await page.waitForLoadState('networkidle'); // wait for reload if applicable
+        // Wait for page to reload and settle
+        await page.waitForLoadState('networkidle');
         
         // Navigate to Dashboard to check formatting
         await page.goto('/dashboard');
-        // Wait for stats to load
-        const stat = page.getByTestId('stat-total-spent');
+        // Wait for stats to load - use more specific locator to avoid duplication issues in some environments
+        const stat = page.getByRole('main').getByTestId('stat-total-spent').filter({ visible: true });
         await expect(stat).toBeVisible();
+        
         await expect(stat).toContainText('1.000'); // Dot separator
 
         // 2. Change back to US (en-US) -> Expect 1,000
@@ -63,7 +64,9 @@ test.describe('Settings Page', () => {
         await page.waitForLoadState('networkidle');
 
         await page.goto('/dashboard');
-        await expect(stat).toContainText('1,000'); // Comma separator
+        const statEn = page.getByRole('main').getByTestId('stat-total-spent').filter({ visible: true });
+        await expect(statEn).toBeVisible();
+        await expect(statEn).toContainText('1,000'); // Comma separator
     });
 
     test('should change language', async ({ page }) => {

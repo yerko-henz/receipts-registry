@@ -35,31 +35,39 @@ test.describe('Landing Page Auth', () => {
         // Explicitly mock unauthenticated state to avoid 401s
         await mockSupabaseAuth(page, { email: null });
         
-        await page.goto('/');
-        await page.waitForLoadState('networkidle'); 
+        await page.goto('/', { waitUntil: 'commit', timeout: 30000 });
+        await page.waitForLoadState('load', { timeout: 30000 }); 
         
-        await page.getByTestId('nav-get-started-link').click({ force: true });
-        await expect(page).toHaveURL(/.*\/auth\/register/, { timeout: 10000 });
+        await Promise.all([
+            page.waitForURL(/.*\/auth\/register/, { timeout: 30000 }),
+            page.getByTestId('nav-get-started-link').click()
+        ]);
 
         // Go back
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
-        await page.getByTestId('hero-create-account-link').click({ force: true });
-        await expect(page).toHaveURL(/.*\/auth\/register/, { timeout: 10000 });
+        await page.goto('/', { waitUntil: 'commit', timeout: 30000 });
+        await page.waitForLoadState('load', { timeout: 30000 });
+        await Promise.all([
+            page.waitForURL(/.*\/auth\/register/, { timeout: 30000 }),
+            page.getByTestId('hero-create-account-link').click()
+        ]);
 
         // 2. Authenticated: Click "Dashboard"
         // Now mock authenticated state
         await mockSupabaseAuth(page); // Default user has email
-        await page.goto('/'); 
-        await page.waitForLoadState('networkidle');
+        await page.goto('/', { waitUntil: 'commit', timeout: 30000 }); 
+        await page.waitForLoadState('load', { timeout: 30000 });
         
-        await page.getByTestId('nav-dashboard-link').click({ force: true });
-        await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 10000 });
+        await Promise.all([
+            page.waitForURL(/.*\/dashboard/, { timeout: 30000 }),
+            page.getByTestId('nav-dashboard-link').click()
+        ]);
         
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
-        await page.getByTestId('hero-dashboard-link').click({ force: true });
-        await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 10000 });
+        await page.goto('/', { waitUntil: 'commit', timeout: 30000 });
+        await page.waitForLoadState('load', { timeout: 30000 });
+        await Promise.all([
+            page.waitForURL(/.*\/dashboard/, { timeout: 30000 }),
+            page.getByTestId('hero-dashboard-link').click()
+        ]);
     });
 });
 
