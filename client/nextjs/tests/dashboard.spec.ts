@@ -1,7 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { mockSupabaseAuth, mockReceiptsResponse } from './utils';
+import path from 'path';
+
+const authFile = path.resolve(__dirname, '../playwright/.auth/user.json');
 
 test.describe('Dashboard Page', () => {
+    test.use({ storageState: process.env.USE_REAL_DATA === 'true' ? authFile : undefined });
+
 
     test.beforeEach(async ({ page }) => {
         await mockSupabaseAuth(page);

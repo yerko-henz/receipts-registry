@@ -1,7 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { mockSupabaseAuth, mockReceiptsResponse } from './utils';
+import path from 'path';
+
+const authFile = path.resolve(__dirname, '../playwright/.auth/user.json');
 
 test.describe('Settings Page', () => {
+    test.use({ storageState: process.env.USE_REAL_DATA === 'true' ? authFile : undefined });
+
 
     // FIXME: This test fails in E2E environment because the user override is not correctly applied
     // despite attempts to inject it via localStorage. The component logic is correct.

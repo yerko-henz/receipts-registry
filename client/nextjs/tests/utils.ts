@@ -3,7 +3,12 @@ import { Page } from '@playwright/test';
 // Export mockSupabaseAuth
 export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
   if (process.env.USE_REAL_DATA === 'true') {
-    // Session is handled globally by auth.setup.ts and storageState
+    if (userOverride.email === null) {
+      // Explicitly want to be logged out
+      await page.context().clearCookies();
+      await page.addInitScript(() => window.localStorage.clear());
+    }
+    // Session is otherwise assumed to be handled by storageState in the test file/block
     return;
   }
   const defaultUser = {

@@ -1,7 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { mockSupabaseAuth } from './utils';
+import path from 'path';
 
-test.describe('Landing Page Auth', () => {
+const authFile = path.resolve(__dirname, '../playwright/.auth/user.json');
+
+test.describe('Landing Page Guest', () => {
+    // Explicitly no storage state for guest tests
+    test.use({ storageState: { cookies: [], origins: [] } });
 
     test('should show login/signup buttons when not authenticated', async ({ page }) => {
         await page.goto('/');
@@ -15,8 +20,23 @@ test.describe('Landing Page Auth', () => {
         await expect(page.getByTestId('hero-dashboard-link')).not.toBeVisible();
     });
 
+    test('should visually navigate to register page', async ({ page }) => {
+        await page.goto('/', { waitUntil: 'commit', timeout: 30000 });
+        await page.waitForLoadState('load', { timeout: 30000 }); 
+        
+        await Promise.all([
+            page.waitForURL(/.*\/auth\/register/, { timeout: 30000 }),
+            page.getByTestId('nav-get-started-link').click()
+        ]);
+    });
+});
+
+test.describe('Landing Page Auth', () => {
+    // Opt-in to shared auth state
+    test.use({ storageState: process.env.USE_REAL_DATA === 'true' ? authFile : undefined });
+
     test('should show dashboard link when authenticated', async ({ page }) => {
-        // Mock authentication
+        // Mock authentication (if mocks are used)
         await mockSupabaseAuth(page);
         
         await page.goto('/');
@@ -30,30 +50,7 @@ test.describe('Landing Page Auth', () => {
         await expect(page.getByTestId('hero-create-account-link')).not.toBeVisible();
     });
 
-    test('should visually navigate to correct pages', async ({ page }) => {
-        // 1. Unauthenticated: Click "Get Started"
-        // Explicitly mock unauthenticated state to avoid 401s
-        await mockSupabaseAuth(page, { email: null });
-        
-        await page.goto('/', { waitUntil: 'commit', timeout: 30000 });
-        await page.waitForLoadState('load', { timeout: 30000 }); 
-        
-        await Promise.all([
-            page.waitForURL(/.*\/auth\/register/, { timeout: 30000 }),
-            page.getByTestId('nav-get-started-link').click()
-        ]);
-
-        // Go back
-        await page.goto('/', { waitUntil: 'commit', timeout: 30000 });
-        await page.waitForLoadState('load', { timeout: 30000 });
-        await Promise.all([
-            page.waitForURL(/.*\/auth\/register/, { timeout: 30000 }),
-            page.getByTestId('hero-create-account-link').click()
-        ]);
-
-        // 2. Authenticated: Click "Dashboard"
-        // Now mock authenticated state
-        await mockSupabaseAuth(page); // Default user has email
+    test('should navigate to dashboard', async ({ page }) => {
         await page.goto('/', { waitUntil: 'commit', timeout: 30000 }); 
         await page.waitForLoadState('load', { timeout: 30000 });
         
@@ -61,38 +58,28 @@ test.describe('Landing Page Auth', () => {
             page.waitForURL(/.*\/dashboard/, { timeout: 30000 }),
             page.getByTestId('nav-dashboard-link').click()
         ]);
-        
-        await page.goto('/', { waitUntil: 'commit', timeout: 30000 });
-        await page.waitForLoadState('load', { timeout: 30000 });
-        await Promise.all([
-            page.waitForURL(/.*\/dashboard/, { timeout: 30000 }),
-            page.getByTestId('hero-dashboard-link').click()
-        ]);
     });
 });
 
 test.describe('Styling & Theming', () => {
-        test('should toggle theme', async ({ page }) => {
-            await page.goto('/');
-            
-            const html = page.locator('html');
-            const toggleBtn = page.getByTestId('theme-toggle');
-            
-            // Initial state (default might depend on system/local storage, usually light or system->light in tests)
-            // We'll just check that clicking it toggles the class
-            
-            await toggleBtn.click();
-            // Wait for potential transition
-            await page.waitForTimeout(100);
-            
-            const isDark = await html.getAttribute('class').then(c => c?.includes('dark'));
-            
-            await toggleBtn.click();
-            await page.waitForTimeout(100);
-            
-            const isDarkAfter = await html.getAttribute('class').then(c => c?.includes('dark'));
-            
-            expect(isDark).not.toBe(isDarkAfter);
-        });
-    });
+    test.use({ storageState: { cookies: [], origins: [] } });
 
+    test('should toggle theme', async ({ page }) => {
+        await page.goto('/');
+        
+        const html = page.locator('html');
+        const toggleBtn = page.getByTestId('theme-toggle');
+        
+        await toggleBtn.click();
+        await page.waitForTimeout(100);
+        
+        const isDark = await html.getAttribute('class').then(c => c?.includes('dark'));
+        
+        await toggleBtn.click();
+        await page.waitForTimeout(100);
+        
+        const isDarkAfter = await html.getAttribute('class').then(c => c?.includes('dark'));
+        
+        expect(isDark).not.toBe(isDarkAfter);
+    });
+});

@@ -43,28 +43,19 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { 
-        ...devices['Desktop Chrome'],
-        storageState: process.env.USE_REAL_DATA === 'true' ? path.join(__dirname, 'playwright/.auth/user.json') : undefined,
-      },
+      use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
     },
 
     {
       name: 'firefox',
-      use: { 
-        ...devices['Desktop Firefox'],
-        storageState: process.env.USE_REAL_DATA === 'true' ? path.join(__dirname, 'playwright/.auth/user.json') : undefined,
-      },
+      use: { ...devices['Desktop Firefox'] },
       dependencies: ['setup'],
     },
 
     {
       name: 'webkit',
-      use: { 
-        ...devices['Desktop Safari'],
-        storageState: process.env.USE_REAL_DATA === 'true' ? path.join(__dirname, 'playwright/.auth/user.json') : undefined,
-      },
+      use: { ...devices['Desktop Safari'] },
       dependencies: ['setup'],
     },
 
