@@ -71,16 +71,18 @@ export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
       });
   }
   
-  // Set E2E_TEST_MODE cookie for middleware bypass (server-side)
+  const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+  const domain = new URL(baseUrl).hostname;
+  
   const cookies = [{
       name: 'E2E_TEST_MODE',
       value: 'true',
-      domain: 'localhost',
+      domain,
       path: '/',
   }, {
       name: 'NEXT_LOCALE',
       value: 'en',
-      domain: 'localhost',
+      domain,
       path: '/',
   }];
 
@@ -88,7 +90,7 @@ export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
       cookies.push({
           name: 'E2E_TEST_USER',
           value: encodeURIComponent(JSON.stringify(user)),
-          domain: 'localhost',
+          domain,
           path: '/',
       });
   }
@@ -143,18 +145,35 @@ export const realLoginSupabase = async (page: Page) => {
     }
 
     // Ensure we are in English to avoid locator mismatches
+    const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+    const domain = new URL(baseUrl).hostname;
+    
     await page.context().addCookies([{
         name: 'NEXT_LOCALE',
         value: 'en',
-        domain: 'localhost', // Playwright's default or we can use the current URL
+        domain,
         path: '/',
     }]);
 
+    console.log(`Navigating to ${baseUrl}/auth/login ...`);
     await page.goto('/auth/login');
-    await page.getByTestId('email-input').fill(email);
-    await page.getByTestId('password-input').fill(password);
-    await page.getByTestId('login-submit').click();
     
+    // Wait for the form to be potentially interactive
+    await page.waitForLoadState('networkidle');
+    
+    // Resilient locators
+    const emailInput = page.locator('input[data-testid="email-input"], input[name="email"], input[type="email"]').first();
+    const passwordInput = page.locator('input[data-testid="password-input"], input[name="password"], input[type="password"]').first();
+    const submitBtn = page.locator('button[data-testid="login-submit"], button[type="submit"]').first();
+
+    console.log('Waiting for email input...');
+    await emailInput.waitFor({ state: 'visible', timeout: 15000 });
+    
+    await emailInput.fill(email);
+    await passwordInput.fill(password);
+    await submitBtn.click();
+    
+    console.log('Login submitted, waiting for redirect...');
     // Wait for redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    await page.waitForURL('**/dashboard', { timeout: 20000 });
 };

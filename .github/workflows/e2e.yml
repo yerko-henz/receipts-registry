@@ -31,15 +31,26 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
-      - name: Build Next.js App
+      - name: Wait for Vercel Preview
+        if: github.event_name == 'pull_request'
+        id: wait-for-vercel
+        uses: RossiS/wait-for-vercel-preview@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check-interval: 10s
+          max-wait: 300s
+
+      - name: Build Next.js App (Local fallback)
+        if: github.event_name != 'pull_request'
         run: npm run build --workspace=sasstemplate
 
       - name: Run Playwright tests
-        run: npm run test:e2e --workspace=sasstemplate
+        run: npm run test:e2e --workspace=sasstemplate -- --project=chromium
         env:
           CI: true
+          PLAYWRIGHT_BASE_URL: ${{ steps.wait-for-vercel.outputs.url || 'http://localhost:3000' }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

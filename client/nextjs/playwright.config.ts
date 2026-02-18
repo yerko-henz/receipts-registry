@@ -12,6 +12,11 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+console.log('--- Playwright Config Load ---');
+console.log('USE_REAL_DATA:', process.env.USE_REAL_DATA);
+console.log('PLAYWRIGHT_BASE_URL:', process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000');
+console.log('------------------------------');
+
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
@@ -29,7 +34,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3000',
+    baseURL: (process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000').replace(/\/$/, ''),
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -45,18 +50,21 @@ export default defineConfig({
     },
     {
       name: 'chromium',
+      testIgnore: /.*\.setup\.ts/,
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
     },
 
     {
       name: 'firefox',
+      testIgnore: /.*\.setup\.ts/,
       use: { ...devices['Desktop Firefox'] },
       dependencies: ['setup'],
     },
 
     {
       name: 'webkit',
+      testIgnore: /.*\.setup\.ts/,
       use: { ...devices['Desktop Safari'] },
       dependencies: ['setup'],
     },
@@ -73,7 +81,7 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
     command: process.env.CI ? 'npm run start' : 'npm run dev',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
