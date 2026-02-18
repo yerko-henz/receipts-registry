@@ -33,9 +33,6 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    
-    /* Use the saved storage state if available */
-    storageState: process.env.USE_REAL_DATA === 'true' ? path.join(__dirname, 'playwright/.auth/user.json') : undefined,
   },
 
   /* Configure projects for major browsers */
@@ -46,19 +43,28 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        storageState: process.env.USE_REAL_DATA === 'true' ? path.join(__dirname, 'playwright/.auth/user.json') : undefined,
+      },
       dependencies: ['setup'],
     },
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { 
+        ...devices['Desktop Firefox'],
+        storageState: process.env.USE_REAL_DATA === 'true' ? path.join(__dirname, 'playwright/.auth/user.json') : undefined,
+      },
       dependencies: ['setup'],
     },
 
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: { 
+        ...devices['Desktop Safari'],
+        storageState: process.env.USE_REAL_DATA === 'true' ? path.join(__dirname, 'playwright/.auth/user.json') : undefined,
+      },
       dependencies: ['setup'],
     },
 
