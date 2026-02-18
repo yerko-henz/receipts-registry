@@ -2,6 +2,10 @@ import { Page } from '@playwright/test';
 
 // Export mockSupabaseAuth
 export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
+  if (process.env.USE_REAL_DATA === 'true') {
+    await realLoginSupabase(page);
+    return;
+  }
   const defaultUser = {
     id: 'test-user-id',
     email: 'test@example.com',
@@ -91,6 +95,10 @@ export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
 };
 
 export const mockReceiptsResponse = async (page: Page, receipts: any[], totalCount?: number) => {
+  if (process.env.USE_REAL_DATA === 'true') {
+    console.log('USE_REAL_DATA is true, skipping Receipts Response mocking.');
+    return;
+  }
   await page.route('**/rest/v1/receipts?*', async (route) => {
     // We can filter based on route.request().url() query params if we want strictly mocked filtering
     // or just return the data we expect for the test case.
@@ -119,4 +127,21 @@ export const mockReceiptsResponse = async (page: Page, receipts: any[], totalCou
         }
     });
   });
+};
+
+export const realLoginSupabase = async (page: Page) => {
+    const email = process.env.SUPABASE_TEST_USER_EMAIL;
+    const password = process.env.SUPABASE_TEST_USER_PASSWORD;
+
+    if (!email || !password) {
+        throw new Error('SUPABASE_TEST_USER_EMAIL and SUPABASE_TEST_USER_PASSWORD are required for real login.');
+    }
+
+    await page.goto('/auth/login');
+    await page.getByLabel(/email/i).fill(email);
+    await page.getByLabel(/password/i).fill(password);
+    await page.getByRole('button', { name: /sign in/i }).click();
+    
+    // Wait for redirect to dashboard
+    await page.waitForURL('**/dashboard', { timeout: 15000 });
 };

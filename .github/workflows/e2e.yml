@@ -10,6 +10,14 @@ jobs:
   test-e2e:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      USE_REAL_DATA: true
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_PRODUCTNAME: ${{ vars.NEXT_PUBLIC_PRODUCTNAME }}
+      NEXT_PUBLIC_THEME: ${{ vars.NEXT_PUBLIC_THEME }}
+      SUPABASE_TEST_USER_EMAIL: ${{ secrets.SUPABASE_TEST_USER_EMAIL }}
+      SUPABASE_TEST_USER_PASSWORD: ${{ secrets.SUPABASE_TEST_USER_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
