@@ -31,16 +31,21 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: (process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000').replace(/\/$/, ''),
+    /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+    use: {
+      /* Base URL to use in actions like `await page.goto('/')`. */
+      baseURL: (process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000').replace(/\/$/, ''),
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
-    /* Record video only on failure to optimize storage and performance while maintaining debuggability. */
-    video: 'retain-on-failure',
-  },
+      /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+      trace: 'on-first-retry',
+      /* Record video only on failure to optimize storage and performance while maintaining debuggability. */
+      video: 'retain-on-failure',
+
+      /* Dynamic bypass for Vercel Deployment Protection */
+      extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET 
+        ? { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET }
+        : undefined,
+    },
 
   /* Configure projects for major browsers */
   projects: [

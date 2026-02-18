@@ -40,6 +40,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           max_timeout: 300
+          check_interval: 10
 
       - name: Build Next.js App (Local fallback)
         if: github.event_name != 'pull_request'
@@ -50,6 +51,7 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: ${{ steps.wait-for-vercel.outputs.url || 'http://localhost:3000' }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
