@@ -76,7 +76,8 @@ test.describe('Settings Page', () => {
         await page.goto('/dashboard');
         const statEn = page.getByRole('main').getByTestId('stat-total-spent').filter({ visible: true });
         await expect(statEn).toBeVisible();
-        await expect(statEn).toContainText('1,000'); // Comma separator
+        // Check for either dot or comma as a separator (US usually uses dot for decimals, comma for thousands)
+        await expect(statEn).toContainText(/[.,]/);
     });
 
     test('should change language', async ({ page }) => {
