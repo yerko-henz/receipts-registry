@@ -36,11 +36,10 @@ jobs:
       - name: Wait for Vercel Preview
         if: github.event_name == 'pull_request'
         id: wait-for-vercel
-        uses: RossiS/wait-for-vercel-preview@v1
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          check-interval: 10s
-          max-wait: 300s
+          max_timeout: 300
 
       - name: Build Next.js App (Local fallback)
         if: github.event_name != 'pull_request'
