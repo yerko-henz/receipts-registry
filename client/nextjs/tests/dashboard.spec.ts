@@ -66,6 +66,10 @@ test.describe('Dashboard Page', () => {
     });
 
     test('should show correct empty state messages', async ({ page }) => {
+        if (process.env.USE_REAL_DATA === 'true') {
+            console.log('Skipping empty state test in Real Data mode.');
+            return;
+        }
         // Mock empty receipts
         await mockReceiptsResponse(page, []);
         

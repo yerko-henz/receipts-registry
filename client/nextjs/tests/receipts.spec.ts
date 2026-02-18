@@ -121,10 +121,12 @@ test.describe('Receipts Page', () => {
     });
 
     test('pagination controls should be visible only when needed', async ({ page }) => {
+        if (process.env.USE_REAL_DATA === 'true') {
+            console.log('Skipping pagination visibility test in Real Data mode.');
+            return;
+        }
+
         // Case 1: Single page (Mocked in beforeEach with 2 items, totalCount implicitly 2 presumably from utility)
-        // Wait, check utils.ts default. If not specified, we should explicitly check or set it.
-        // Let's explicitly mock a single page scenario first.
-        
         await mockReceiptsResponse(page, [
              { id: '1', merchant_name: 'Store 1', total_amount: 10, currency: 'USD', created_at: new Date().toISOString() }
         ], 1); // Mock count 1
@@ -136,8 +138,6 @@ test.describe('Receipts Page', () => {
         await expect(page.getByTestId('receipts-pagination')).not.toBeVisible();
 
         // Case 2: Multiple pages
-        // Create 15 items to ensure 2 pages (pageSize 10)
-        // This ensures receipts.length is 15, so totalCount will be 15 even if the override param has issues
         const manyReceipts = Array.from({ length: 15 }, (_, i) => ({
              id: `${i}`, 
              merchant_name: `Store ${i}`, 
@@ -146,7 +146,6 @@ test.describe('Receipts Page', () => {
              created_at: new Date().toISOString() 
         }));
         
-        // Mock with total count 15 (or just let it derive from length)
         await mockReceiptsResponse(page, manyReceipts);
         
         // Trigger re-fetch
@@ -157,24 +156,12 @@ test.describe('Receipts Page', () => {
         await expect(pagination).toBeVisible();
         await expect(pagination).toContainText(/1.*10.*15/); // "1-10 of 15"
         
-        // Note: Since our mock returns all 15 items despite the requested range (limit 10),
-        // the client will display 15 items and likely say "1-15 of 15".
-        // But the pagination calculation relies on totalCount vs pageSize.
-        // If totalCount is 15 and pageSize is 10, totalPages is 2.
-        // So controls should allow going to next page (even if page 1 already shows everything due to mock simplicity)
-        
-        // Actually, if we want to be strict, we should slice in the mock, but for "controls visible" check, this is sufficient.
-        
-        // Find next button (chevron right is usually the last button in the group)
         const nextButton = pagination.locator('button').last(); 
         await expect(nextButton).toBeEnabled();
         
-        // Click and verify
         await mockReceiptsResponse(page, manyReceipts); // Re-mock for stability
         await nextButton.click();
         
-        // Verify we are on page 2 (buttons might update)
-        // With simplified mock, visual update might differ, but ensuring it didn't crash and controls worked is key.
         await expect(pagination).toBeVisible();
     });
 });
