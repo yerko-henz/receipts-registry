@@ -335,7 +335,7 @@ export default function ReceiptsUnifiedScreen() {
     }, [])
   )
 
-  const filters = ['All', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Shopping']
+  const filters = ['All', 'Food', 'Dining', 'Transport', 'Utilities', 'Entertainment', 'Shopping', 'Groceries', 'Gas']
 
   // Get the appropriate locale for date formatting
   const { i18n } = useTranslation()

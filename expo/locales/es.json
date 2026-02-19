@@ -50,6 +50,7 @@
   },
   "common": {
     "or": "O",
+    "success": "Éxito",
     "error": "Error"
   },
   "home": {
@@ -126,7 +127,7 @@
     "passwordUpdated": "Contraseña actualizada exitosamente",
     "userId": "ID de usuario",
     "languages": {
-      "english": "English",
+      "english": "Inglés",
       "spanish": "Español"
     },
     "theme": "Tema",
@@ -188,10 +189,15 @@
     "filters": {
       "All": "Todos",
       "Food": "Comida",
+      "Dining": "Restaurantes",
       "Transport": "Transporte",
       "Utilities": "Servicios",
       "Entertainment": "Entretenimiento",
-      "Shopping": "Compras"
+      "Shopping": "Compras",
+      "Groceries": "Supermercado",
+      "Gas": "Gasolina",
+      "Health": "Salud",
+      "Other": "Otros"
     }
   },
   "scanner": {

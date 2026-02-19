@@ -111,7 +111,7 @@ export default function ReceiptsPage() {
   const categoryLabels = React.useMemo(() => {
     return RECEIPT_CATEGORIES.reduce((acc, cat) => {
       const lowerCat = cat.toLowerCase();
-      if (['food', 'transport', 'utilities', 'entertainment', 'shopping', 'health', 'other'].includes(lowerCat)) {
+      if (['food', 'dining', 'transport', 'utilities', 'entertainment', 'shopping', 'groceries', 'gas', 'health', 'other'].includes(lowerCat)) {
         acc[cat] = tCategories(lowerCat as any);
       } else {
         acc[cat] = cat;

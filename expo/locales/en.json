@@ -128,7 +128,7 @@
     "userId": "User ID",
     "languages": {
       "english": "English",
-      "spanish": "Español"
+      "spanish": "Spanish"
     },
     "theme": "Theme",
     "themes": {
@@ -189,10 +189,15 @@
     "filters": {
       "All": "All",
       "Food": "Food",
+      "Dining": "Dining",
       "Transport": "Transport",
       "Utilities": "Utilities",
       "Entertainment": "Entertainment",
-      "Shopping": "Shopping"
+      "Shopping": "Shopping",
+      "Groceries": "Groceries",
+      "Gas": "Gas",
+      "Health": "Health",
+      "Other": "Other"
     }
   },
   "scanner": {

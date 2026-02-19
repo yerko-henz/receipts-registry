@@ -117,10 +117,13 @@
     },
     "categories": {
       "food": "Food",
+      "dining": "Dining",
       "transport": "Transport",
       "utilities": "Utilities",
       "entertainment": "Entertainment",
       "shopping": "Shopping",
+      "groceries": "Groceries",
+      "gas": "Gas",
       "health": "Health",
       "other": "Other"
     },

@@ -117,10 +117,13 @@
     },
     "categories": {
       "food": "Comida",
+      "dining": "Restaurantes",
       "transport": "Transporte",
       "utilities": "Servicios",
       "entertainment": "Entretenimiento",
       "shopping": "Compras",
+      "groceries": "Supermercado",
+      "gas": "Gasolina",
       "health": "Salud",
       "other": "Otros"
     },
