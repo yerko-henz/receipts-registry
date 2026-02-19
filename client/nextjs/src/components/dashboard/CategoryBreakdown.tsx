@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { DayData } from "@/lib/date";
-import { getCategoryIcon } from "@/constants/categories";
+import { getCategoryIcon, CATEGORY_COLORS, ReceiptCategory, RECEIPT_CATEGORIES } from "@/constants/categories";
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
@@ -93,7 +93,17 @@ export default function CategoryBreakdown({ data, viewMode = 'weekly', testId }:
                                 </span>
                              </div>
                              {/* Progress bar with custom color matching category or just blue/primary */}
-                             <Progress value={item.percentage} className="h-1.5 bg-gray-100" indicatorClassName="bg-blue-500" />
+                             <Progress 
+                               value={item.percentage} 
+                               className="h-1.5 bg-gray-100" 
+                               indicatorClassName="transition-all"
+                               style={{ 
+                                 // @ts-ignore - indicatorStyle is custom for our Progress component
+                                 indicatorStyle: { 
+                                   backgroundColor: CATEGORY_COLORS[(RECEIPT_CATEGORIES.find(c => c.toLowerCase() === item.category.toLowerCase()) || 'Other') as ReceiptCategory] 
+                                 } 
+                               }} 
+                             />
                         </div>
                     );
                 })}

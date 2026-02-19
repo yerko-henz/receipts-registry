@@ -28,6 +28,19 @@ export const CATEGORY_ICONS: Record<ReceiptCategory, LucideIcon> = {
   Other: FileText,
 };
 
+export const CATEGORY_COLORS: Record<ReceiptCategory, string> = {
+  Food: '#10B981',
+  Dining: '#F97316',
+  Transport: '#0EA5E9',
+  Utilities: '#8B5CF6',
+  Entertainment: '#D946EF',
+  Shopping: '#F59E0B',
+  Groceries: '#22C55E',
+  Gas: '#EF4444',
+  Health: '#06B6D4',
+  Other: '#6366F1',
+};
+
 export const DEFAULT_CATEGORY_ICON = FileText;
 
 export const getCategoryIcon = (category: string): LucideIcon => {

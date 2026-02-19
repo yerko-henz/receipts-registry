@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
 import { CommonStyles } from '@/constants/Styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getCategoryIcon } from '@/constants/categories';
+import { getCategoryIcon, CATEGORY_COLORS, RECEIPT_CATEGORIES, ReceiptCategory } from '@/constants/categories';
 import { ProgressBar } from '@/components/receiptAnalizer/components/ProgressBar';
 
 import { DayData } from '@/lib/date';
@@ -87,7 +87,11 @@ export default function CategoryBreakdown({ data }: Props) {
 
               {/* Row 2: Progress Bar */}
               <View style={styles.progressBarContainer}>
-                  <ProgressBar progress={item.percentage} color={colors.tint} style={{ marginBottom: 0 }} />
+                  <ProgressBar 
+                    progress={item.percentage} 
+                    color={CATEGORY_COLORS[(RECEIPT_CATEGORIES.find(c => c.toLowerCase() === item.category.toLowerCase()) || 'Other') as ReceiptCategory]} 
+                    style={{ marginBottom: 0 }} 
+                  />
               </View>
             </View>
           );
