@@ -33,15 +33,44 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Get Vercel Preview URL
+        if: github.event_name == 'pull_request'
+        id: vercel-url
+        uses: unly/vercel-action-get-preview-url@v1.2.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Wait for Vercel Preview
         if: github.event_name == 'pull_request'
-        id: wait-for-vercel
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          max_timeout: 300
-          check_interval: 10
-          vercel_protection_bypass_header: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          URL="${{ steps.vercel-url.outputs.vercel_preview_url }}"
+          SECRET="${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}"
+          if [ -z "$URL" ]; then
+            echo "Error: Could not find Vercel preview URL"
+            exit 1
+          fi
+          if [ -z "$SECRET" ]; then
+            echo "Error: VERCEL_AUTOMATION_BYPASS_SECRET is not set in GitHub Secrets"
+            exit 1
+          fi
+          
+          # Add bypass to URL for double verification if header is not enough
+          BYPASS_URL="${URL}?x-vercel-protection-bypass=${SECRET}&x-vercel-set-bypass-cookie=true"
+          
+          echo "Waiting for $URL to be ready (using Double Bypass)..."
+          # Max 30 attempts, 10s between = 5 mins
+          for i in {1..30}; do
+            # We use the Bypass URL but ALSO send the header for double-duty
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "x-vercel-protection-bypass: ${SECRET}" "$BYPASS_URL")
+            if [ "$STATUS" == "200" ]; then
+              echo "URL is ready with Status 200!"
+              exit 0
+            fi
+            echo "Attempt $i: Status $STATUS. Retrying in 10s..."
+            sleep 10
+          done
+          echo "Timeout reached: URL did not return 200 status."
+          exit 1
 
       - name: Build Next.js App (Local fallback)
         if: github.event_name != 'pull_request'
@@ -51,7 +80,7 @@ jobs:
         run: npm run test:e2e --workspace=sasstemplate -- --project=chromium
         env:
           CI: true
-          PLAYWRIGHT_BASE_URL: ${{ steps.wait-for-vercel.outputs.url || 'http://localhost:3000' }}
+          PLAYWRIGHT_BASE_URL: ${{ steps.vercel-url.outputs.vercel_preview_url || 'http://localhost:3000' }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Upload Playwright report
