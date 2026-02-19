@@ -1,13 +1,12 @@
 name: Playwright E2E Tests
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  deployment_status:
 
 jobs:
   test-e2e:
+    # Only run on successful deployments to Preview or Production
+    if: github.event.deployment_status.state == 'success'
     timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
@@ -18,6 +17,8 @@ jobs:
       NEXT_PUBLIC_THEME: ${{ vars.NEXT_PUBLIC_THEME }}
       SUPABASE_TEST_USER_EMAIL: ${{ secrets.SUPABASE_TEST_USER_EMAIL }}
       SUPABASE_TEST_USER_PASSWORD: ${{ secrets.SUPABASE_TEST_USER_PASSWORD }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      PLAYWRIGHT_BASE_URL: ${{ github.event.deployment_status.environment_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,62 +34,10 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Get and Wait for Vercel Preview URL
-        if: github.event_name == 'pull_request'
-        id: vercel-url
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          SHA="${{ github.event.pull_request.head.sha }}"
-          REPO="${{ github.repository }}"
-          SECRET="${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}"
-          
-          echo "Searching for Vercel deployment for SHA: $SHA"
-          
-          # 1. Capture the URL from GitHub Deployments API
-          # We retry a few times in case GitHub hasn't registered the Vercel deployment yet
-          URL=""
-          for j in {1..12}; do
-            URL=$(gh api "repos/$REPO/deployments?sha=$SHA" --jq '.[0].payload.web_url // .[0].environment_url // ""')
-            if [ -n "$URL" ]; then break; fi
-            echo "Attempt $j: Deployment not found in GitHub API yet. Waiting 10s..."
-            sleep 10
-          done
-
-          if [ -z "$URL" ]; then
-            echo "Error: Could not find Vercel deployment URL for this SHA after 2 minutes."
-            exit 1
-          fi
-          
-          echo "vercel_url=$URL" >> $GITHUB_OUTPUT
-          echo "Found Vercel URL: $URL"
-          
-          # 2. Wait for the URL to be ready (Double Bypass)
-          echo "Waiting for $URL to be ready..."
-          BYPASS_URL="${URL}?x-vercel-protection-bypass=${SECRET}&x-vercel-set-bypass-cookie=true"
-          
-          for i in {1..30}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "x-vercel-protection-bypass: ${SECRET}" "$BYPASS_URL")
-            if [ "$STATUS" == "200" ]; then
-              echo "URL is ready with Status 200!"
-              exit 0
-            fi
-            echo "Attempt $i: Status $STATUS. Retrying in 10s..."
-            sleep 10
-          done
-          echo "Timeout reached: URL did not return 200 status."
-          exit 1
-
-      - name: Build Next.js App (Local fallback)
-        if: github.event_name != 'pull_request'
-        run: npm run build --workspace=sasstemplate
-
       - name: Run Playwright tests
         run: npm run test:e2e --workspace=sasstemplate -- --project=chromium
         env:
           CI: true
-          PLAYWRIGHT_BASE_URL: ${{ steps.vercel-url.outputs.vercel_url || 'http://localhost:3000' }}
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
