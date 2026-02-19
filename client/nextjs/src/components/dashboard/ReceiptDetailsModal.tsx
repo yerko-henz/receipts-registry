@@ -111,12 +111,12 @@ export default function ReceiptDetailsModal({
             {/* Right Column: Details */}
             <div className="flex-1 flex flex-col space-y-6 pt-6 md:pt-0">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">{receipt.merchant_name}</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold" data-testid="modal-merchant-name">{receipt.merchant_name}</DialogTitle>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Icon className="h-4 w-4" />
-                        <span>{receipt.category}</span>
+                        <span data-testid="modal-category">{receipt.category}</span>
                         <span>•</span>
-                        <span>{formattedDate}</span>
+                        <span data-testid="modal-date">{formattedDate}</span>
                     </div>
                 </DialogHeader>
 
@@ -124,7 +124,7 @@ export default function ReceiptDetailsModal({
                 <div className="bg-muted/30 p-4 rounded-lg space-y-2">
                      <div className="flex justify-between items-center text-lg font-semibold">
                         <span>{t('total')}</span>
-                        <span className="text-primary">{formatPrice(receipt.total_amount || 0, region, receipt.currency)}</span>
+                        <span className="text-primary" data-testid="modal-total-amount">{formatPrice(receipt.total_amount || 0, region, receipt.currency)}</span>
                      </div>
                      {receipt.tax_amount !== undefined && receipt.tax_amount !== null && (
                          <div className="flex justify-between items-center text-sm text-muted-foreground">

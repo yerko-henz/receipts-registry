@@ -2,6 +2,15 @@ import { Page } from '@playwright/test';
 
 // Export mockSupabaseAuth
 export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
+  if (process.env.USE_REAL_DATA === 'true') {
+    if (userOverride.email === null) {
+      // Explicitly want to be logged out
+      await page.context().clearCookies();
+      await page.addInitScript(() => window.localStorage.clear());
+    }
+    // Session is otherwise assumed to be handled by storageState in the test file/block
+    return;
+  }
   const defaultUser = {
     id: 'test-user-id',
     email: 'test@example.com',
@@ -62,16 +71,18 @@ export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
       });
   }
   
-  // Set E2E_TEST_MODE cookie for middleware bypass (server-side)
+  const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+  const domain = new URL(baseUrl).hostname;
+  
   const cookies = [{
       name: 'E2E_TEST_MODE',
       value: 'true',
-      domain: 'localhost',
+      domain,
       path: '/',
   }, {
       name: 'NEXT_LOCALE',
       value: 'en',
-      domain: 'localhost',
+      domain,
       path: '/',
   }];
 
@@ -79,7 +90,7 @@ export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
       cookies.push({
           name: 'E2E_TEST_USER',
           value: encodeURIComponent(JSON.stringify(user)),
-          domain: 'localhost',
+          domain,
           path: '/',
       });
   }
@@ -91,6 +102,10 @@ export const mockSupabaseAuth = async (page: Page, userOverride: any = {}) => {
 };
 
 export const mockReceiptsResponse = async (page: Page, receipts: any[], totalCount?: number) => {
+  if (process.env.USE_REAL_DATA === 'true') {
+    console.log('USE_REAL_DATA is true, skipping Receipts Response mocking.');
+    return;
+  }
   await page.route('**/rest/v1/receipts?*', async (route) => {
     // We can filter based on route.request().url() query params if we want strictly mocked filtering
     // or just return the data we expect for the test case.
@@ -119,4 +134,46 @@ export const mockReceiptsResponse = async (page: Page, receipts: any[], totalCou
         }
     });
   });
+};
+
+export const realLoginSupabase = async (page: Page) => {
+    const email = process.env.SUPABASE_TEST_USER_EMAIL;
+    const password = process.env.SUPABASE_TEST_USER_PASSWORD;
+
+    if (!email || !password) {
+        throw new Error('SUPABASE_TEST_USER_EMAIL and SUPABASE_TEST_USER_PASSWORD are required for real login.');
+    }
+
+    // Ensure we are in English to avoid locator mismatches
+    const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+    const domain = new URL(baseUrl).hostname;
+    
+    await page.context().addCookies([{
+        name: 'NEXT_LOCALE',
+        value: 'en',
+        domain,
+        path: '/',
+    }]);
+
+    console.log(`Navigating to ${baseUrl}/auth/login ...`);
+    await page.goto('/auth/login');
+    
+    // Wait for the form to be potentially interactive
+    await page.waitForLoadState('networkidle');
+    
+    // Resilient locators
+    const emailInput = page.locator('input[data-testid="email-input"], input[name="email"], input[type="email"]').first();
+    const passwordInput = page.locator('input[data-testid="password-input"], input[name="password"], input[type="password"]').first();
+    const submitBtn = page.locator('button[data-testid="login-submit"], button[type="submit"]').first();
+
+    console.log('Waiting for email input...');
+    await emailInput.waitFor({ state: 'visible', timeout: 15000 });
+    
+    await emailInput.fill(email);
+    await passwordInput.fill(password);
+    await submitBtn.click();
+    
+    console.log('Login submitted, waiting for redirect...');
+    // Wait for redirect to dashboard
+    await page.waitForURL('**/dashboard', { timeout: 20000 });
 };

@@ -32,6 +32,15 @@ export function GlobalProvider({ children, initialUser }: { children: React.Reac
     const [region, setRegion] = useState<string>('es-CL');
 
     useEffect(() => {
+        // Load region from cookie
+        const getCookie = (name: string) => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop()?.split(';').shift();
+        }
+        const regionCookie = getCookie('NEXT_REGION');
+        if (regionCookie) setRegion(regionCookie);
+
         if (initialUser) return;
 
         async function loadData() {
@@ -63,15 +72,6 @@ export function GlobalProvider({ children, initialUser }: { children: React.Reac
                 setLoading(false);
             }
         }
-
-        // Load region from cookie
-        const getCookie = (name: string) => {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop()?.split(';').shift();
-        }
-        const regionCookie = getCookie('NEXT_REGION');
-        if (regionCookie) setRegion(regionCookie);
 
         loadData();
     }, []);

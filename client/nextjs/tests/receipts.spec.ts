@@ -1,41 +1,25 @@
 import { test, expect } from '@playwright/test';
 import { mockSupabaseAuth, mockReceiptsResponse } from './utils';
 import { format } from 'date-fns';
+import path from 'path';
+
+const authFile = path.resolve(__dirname, '../playwright/.auth/user.json');
 
 test.describe('Receipts Page', () => {
+    test.use({ storageState: process.env.USE_REAL_DATA === 'true' ? authFile : undefined });
+
 
     test.beforeEach(async ({ page }) => {
         await mockSupabaseAuth(page);
-        
-        // Mock receipts data
-        const receipts = [
-            {
-                id: '1',
-                created_at: new Date().toISOString(),
-                transaction_date: new Date().toISOString(),
-                merchant_name: 'Test Store 1',
-                total_amount: 100,
-                currency: 'USD',
-                category: 'Food',
-                user_id: 'test-user-id',
-            },
-            {
-                id: '2',
-                created_at: new Date().toISOString(),
-                transaction_date: new Date().toISOString(),
-                merchant_name: 'Test Store 2',
-                total_amount: 50,
-                currency: 'USD',
-                category: 'Transport',
-                user_id: 'test-user-id',
-            }
-        ];
-        
-        await mockReceiptsResponse(page, receipts);
-        await page.goto('/dashboard/receipts');
     });
 
+    const setupMockAndNavigate = async (page: any, data: any[] = []) => {
+        await mockReceiptsResponse(page, data);
+        await page.goto('/dashboard/receipts');
+    };
+
     test('should display receipt table structure', async ({ page }) => {
+        await setupMockAndNavigate(page);
         await expect(page.getByTestId('receipts-title')).toBeVisible(); 
         
         // Check table headers
@@ -47,6 +31,10 @@ test.describe('Receipts Page', () => {
     });
 
     test('should filter receipts by search', async ({ page }) => {
+        await setupMockAndNavigate(page, [
+            { id: '1', merchant_name: 'Test Store 1', total_amount: 100, currency: 'USD', created_at: new Date().toISOString() },
+            { id: '2', merchant_name: 'Test Store 2', total_amount: 50, currency: 'USD', created_at: new Date().toISOString() }
+        ]);
         const searchInput = page.getByTestId('search-input');
         await searchInput.fill('Store 1');
         
@@ -73,6 +61,7 @@ test.describe('Receipts Page', () => {
     });
 
     test('should verify category filter options', async ({ page }) => {
+         await setupMockAndNavigate(page);
          // Open Select
          const trigger = page.getByTestId('category-filter');
          await expect(trigger).toBeVisible();
@@ -97,6 +86,7 @@ test.describe('Receipts Page', () => {
     });
 
     test('should verify date picker opens', async ({ page }) => {
+        await setupMockAndNavigate(page);
         const wrapper = page.getByTestId('date-range-filter');
         await expect(wrapper).toBeVisible();
         
@@ -116,23 +106,22 @@ test.describe('Receipts Page', () => {
     });
 
     test('pagination controls should be visible only when needed', async ({ page }) => {
+        if (process.env.USE_REAL_DATA === 'true') {
+            console.log('Skipping pagination visibility test in Real Data mode.');
+            return;
+        }
+
         // Case 1: Single page (Mocked in beforeEach with 2 items, totalCount implicitly 2 presumably from utility)
-        // Wait, check utils.ts default. If not specified, we should explicitly check or set it.
-        // Let's explicitly mock a single page scenario first.
-        
         await mockReceiptsResponse(page, [
              { id: '1', merchant_name: 'Store 1', total_amount: 10, currency: 'USD', created_at: new Date().toISOString() }
-        ], 1); // Mock count 1
+        ], 1); 
         
-        // Trigger re-fetch or reload
-        await page.reload();
+        await page.goto('/dashboard/receipts');
         await page.waitForTimeout(500); // Wait for load
         
         await expect(page.getByTestId('receipts-pagination')).not.toBeVisible();
 
         // Case 2: Multiple pages
-        // Create 15 items to ensure 2 pages (pageSize 10)
-        // This ensures receipts.length is 15, so totalCount will be 15 even if the override param has issues
         const manyReceipts = Array.from({ length: 15 }, (_, i) => ({
              id: `${i}`, 
              merchant_name: `Store ${i}`, 
@@ -141,35 +130,95 @@ test.describe('Receipts Page', () => {
              created_at: new Date().toISOString() 
         }));
         
-        // Mock with total count 15 (or just let it derive from length)
         await mockReceiptsResponse(page, manyReceipts);
         
-        // Trigger re-fetch
-        await page.reload();
+        await page.goto('/dashboard/receipts');
         await page.waitForTimeout(500);
 
         const pagination = page.getByTestId('receipts-pagination');
         await expect(pagination).toBeVisible();
         await expect(pagination).toContainText(/1.*10.*15/); // "1-10 of 15"
         
-        // Note: Since our mock returns all 15 items despite the requested range (limit 10),
-        // the client will display 15 items and likely say "1-15 of 15".
-        // But the pagination calculation relies on totalCount vs pageSize.
-        // If totalCount is 15 and pageSize is 10, totalPages is 2.
-        // So controls should allow going to next page (even if page 1 already shows everything due to mock simplicity)
-        
-        // Actually, if we want to be strict, we should slice in the mock, but for "controls visible" check, this is sufficient.
-        
-        // Find next button (chevron right is usually the last button in the group)
         const nextButton = pagination.locator('button').last(); 
         await expect(nextButton).toBeEnabled();
         
-        // Click and verify
         await mockReceiptsResponse(page, manyReceipts); // Re-mock for stability
         await nextButton.click();
         
-        // Verify we are on page 2 (buttons might update)
-        // With simplified mock, visual update might differ, but ensuring it didn't crash and controls worked is key.
         await expect(pagination).toBeVisible();
+    });
+
+    test('should verify real data row count and modal details match DB', async ({ page }) => {
+        if (process.env.USE_REAL_DATA !== 'true') {
+            console.log('Skipping real data DB verification (USE_REAL_DATA not true)');
+            return;
+        }
+
+        // 1. Setup interception BEFORE the navigation that triggers it
+        const responsePromise = page.waitForResponse(response => 
+            response.url().includes('/rest/v1/receipts') && 
+            response.request().method() === 'GET' &&
+            response.url().includes('select=')
+        );
+        
+        // 2. Clear cache to ensure we get a fresh response and not a disk cache hit (can cause protocol errors)
+        const baseUrl = (process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
+        const domain = new URL(baseUrl).hostname;
+        
+        await page.context().addCookies([{
+            name: 'playwright-cache-bust',
+            value: Date.now().toString(),
+            domain,
+            path: '/'
+        }]);
+
+        console.log(`Navigating to ${baseUrl}/dashboard/receipts ...`);
+        await page.goto('/dashboard/receipts');
+        
+        // 3. Capture the data immediately
+        const response = await responsePromise;
+        const receipts = await response.json();
+        
+        await page.waitForLoadState('networkidle');
+
+        console.log(`Captured ${receipts.length} receipts from DB response`);
+
+        // 2. Check Row count (should have 8 or more)
+        // Note: The UI might be paginated (10 per page), so we check the count from DB response too
+        expect(receipts.length).toBeGreaterThanOrEqual(8);
+        
+        const rowLocator = page.locator('tr[data-testid^="receipt-row-"]');
+        const visibleRowCount = await rowLocator.count();
+        expect(visibleRowCount).toBeGreaterThanOrEqual(8);
+
+        // 3. Extract a specific receipt (take the first one)
+        const targetReceipt = receipts[0];
+        console.log(`Testing with Receipt ID: ${targetReceipt.id}, Merchant: ${targetReceipt.merchant_name}`);
+
+        const targetRow = page.getByTestId(`receipt-row-${targetReceipt.id}`);
+        await expect(targetRow).toBeVisible();
+        
+        // 4. Verify row data matches (Merchant Name)
+        await expect(page.getByTestId(`merchant-${targetReceipt.id}`)).toContainText(targetReceipt.merchant_name);
+
+        // 5. Click view button in that row to open modal
+        await targetRow.locator('button').click();
+
+        // 6. Verify Modal Content matches database JSON exactly
+        const modal = page.getByRole('dialog');
+        await expect(modal).toBeVisible();
+        
+        // Use resilient role-based locators that work even if data-testid isn't in prod yet
+        const modalMerchant = modal.getByRole('heading').first();
+        await expect(modalMerchant).toContainText(targetReceipt.merchant_name);
+        
+        // Category check - looking for the text directly in the modal
+        await expect(modal.getByText(targetReceipt.category, { exact: false }).first()).toBeVisible();
+        
+        // For amount, we check if the raw value (e.g. 1000) exists in the formatted string (e.g. $1,000.00)
+        const rawAmount = targetReceipt.total_amount.toString();
+        // Look for the element that contains the price
+        const amountDisplay = modal.locator('span, div').filter({ hasText: new RegExp(rawAmount.replace(/\./g, '[,.]')) }).first();
+        await expect(amountDisplay).toBeVisible();
     });
 });
