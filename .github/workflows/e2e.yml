@@ -33,34 +33,39 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Get Vercel Preview URL
+      - name: Get and Wait for Vercel Preview URL
         if: github.event_name == 'pull_request'
         id: vercel-url
-        uses: unly/vercel-action-get-preview-url@v1.2.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Wait for Vercel Preview
-        if: github.event_name == 'pull_request'
         run: |
-          URL="${{ steps.vercel-url.outputs.vercel_preview_url }}"
+          SHA="${{ github.event.pull_request.head.sha }}"
+          REPO="${{ github.repository }}"
           SECRET="${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}"
+          
+          echo "Searching for Vercel deployment for SHA: $SHA"
+          
+          # 1. Capture the URL from GitHub Deployments API
+          # We retry a few times in case GitHub hasn't registered the Vercel deployment yet
+          URL=""
+          for j in {1..12}; do
+            URL=$(gh api "repos/$REPO/deployments?sha=$SHA" --jq '.[0].payload.web_url // .[0].environment_url // ""')
+            if [ -n "$URL" ]; then break; fi
+            echo "Attempt $j: Deployment not found in GitHub API yet. Waiting 10s..."
+            sleep 10
+          done
+
           if [ -z "$URL" ]; then
-            echo "Error: Could not find Vercel preview URL"
-            exit 1
-          fi
-          if [ -z "$SECRET" ]; then
-            echo "Error: VERCEL_AUTOMATION_BYPASS_SECRET is not set in GitHub Secrets"
+            echo "Error: Could not find Vercel deployment URL for this SHA after 2 minutes."
             exit 1
           fi
           
-          # Add bypass to URL for double verification if header is not enough
+          echo "vercel_url=$URL" >> $GITHUB_OUTPUT
+          echo "Found Vercel URL: $URL"
+          
+          # 2. Wait for the URL to be ready (Double Bypass)
+          echo "Waiting for $URL to be ready..."
           BYPASS_URL="${URL}?x-vercel-protection-bypass=${SECRET}&x-vercel-set-bypass-cookie=true"
           
-          echo "Waiting for $URL to be ready (using Double Bypass)..."
-          # Max 30 attempts, 10s between = 5 mins
           for i in {1..30}; do
-            # We use the Bypass URL but ALSO send the header for double-duty
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "x-vercel-protection-bypass: ${SECRET}" "$BYPASS_URL")
             if [ "$STATUS" == "200" ]; then
               echo "URL is ready with Status 200!"
@@ -80,7 +85,7 @@ jobs:
         run: npm run test:e2e --workspace=sasstemplate -- --project=chromium
         env:
           CI: true
-          PLAYWRIGHT_BASE_URL: ${{ steps.vercel-url.outputs.vercel_preview_url || 'http://localhost:3000' }}
+          PLAYWRIGHT_BASE_URL: ${{ steps.vercel-url.outputs.vercel_url || 'http://localhost:3000' }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Upload Playwright report
