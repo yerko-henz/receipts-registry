@@ -36,6 +36,8 @@ jobs:
       - name: Get and Wait for Vercel Preview URL
         if: github.event_name == 'pull_request'
         id: vercel-url
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           SHA="${{ github.event.pull_request.head.sha }}"
           REPO="${{ github.repository }}"
