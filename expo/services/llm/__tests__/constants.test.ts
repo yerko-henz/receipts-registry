@@ -1,17 +1,17 @@
-import { GEMINI_MODELS, DEFAULT_GEMINI_MODEL } from '../constants';
+import { OPENROUTER_MODELS, DEFAULT_OPENROUTER_MODEL } from '../constants';
 
 describe('llm/constants', () => {
-  it('GEMINI_MODELS is an array of model names', () => {
-    expect(Array.isArray(GEMINI_MODELS)).toBe(true);
-    expect(GEMINI_MODELS.length).toBeGreaterThan(0);
+  it('OPENROUTER_MODELS is an array of model names', () => {
+    expect(Array.isArray(OPENROUTER_MODELS)).toBe(true);
+    expect(OPENROUTER_MODELS.length).toBeGreaterThan(0);
   });
 
-  it('DEFAULT_GEMINI_MODEL is the first model', () => {
-    expect(DEFAULT_GEMINI_MODEL).toBe(GEMINI_MODELS[0]);
+  it('DEFAULT_OPENROUTER_MODEL is the first model', () => {
+    expect(DEFAULT_OPENROUTER_MODEL).toBe(OPENROUTER_MODELS[0]);
   });
 
   it('all models are strings', () => {
-    GEMINI_MODELS.forEach(model => {
+    OPENROUTER_MODELS.forEach((model: string) => {
       expect(typeof model).toBe('string');
     });
   });
