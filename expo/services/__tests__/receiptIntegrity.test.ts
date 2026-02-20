@@ -7,11 +7,13 @@ describe('receiptIntegrity', () => {
     date: '2024-01-15',
     total: 100,
     items: [
-      { name: 'Item 1', quantity: 2, unitPrice: 25, totalPrice: 50, category: 'groceries' },
-      { name: 'Item 2', quantity: 1, unitPrice: 50, totalPrice: 50, category: 'groceries' },
+      { name: 'Item 1', quantity: 2, unitPrice: 25, totalPrice: 50 },
+      { name: 'Item 2', quantity: 1, unitPrice: 50, totalPrice: 50 },
     ],
     taxAmount: 0,
     discount: 0,
+    currency: 'USD',
+    category: 'Food',
     ...overrides,
   });
 
@@ -54,7 +56,7 @@ describe('receiptIntegrity', () => {
 
     it('penalizes line item mismatch', () => {
       const receipt = createMockReceipt({
-        items: [{ name: 'Bad Item', quantity: 2, unitPrice: 10, totalPrice: 50, category: 'groceries' }], // 2*10=20 != 50
+        items: [{ name: 'Bad Item', quantity: 2, unitPrice: 10, totalPrice: 50 }], // 2*10=20 != 50
         total: 50,
       });
       const score = calculateReceiptIntegrity(receipt);

@@ -2,7 +2,7 @@ import { getReceiptItems, deleteReceiptItem } from '../receiptItems';
 
 // Mock supabase
 const mockSelect = jest.fn();
-const mockFrom = jest.fn(() => ({
+const mockFrom = jest.fn((_table: string) => ({
   select: mockSelect,
   delete: jest.fn(() => ({
     eq: jest.fn().mockResolvedValue({ error: null })

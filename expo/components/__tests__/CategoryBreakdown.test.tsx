@@ -11,9 +11,13 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string, options?: any) => options?.defaultValue || key }),
 }));
 
-jest.mock('@/constants/categories', () => ({
-  getCategoryIcon: jest.fn().mockReturnValue(() => null), // Return a component that renders null
-}));
+jest.mock('@/constants/categories', () => {
+  const actual = jest.requireActual('@/constants/categories');
+  return {
+    ...actual,
+    getCategoryIcon: jest.fn().mockReturnValue(() => null),
+  };
+});
 
 jest.mock('@/components/receiptAnalizer/components/ProgressBar', () => ({
   ProgressBar: () => null,
