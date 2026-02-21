@@ -50,6 +50,7 @@
   },
   "common": {
     "or": "O",
+    "success": "Éxito",
     "error": "Error"
   },
   "home": {
@@ -120,13 +121,17 @@
     "confirmNewPassword": "Confirmar nueva contraseña",
     "enterNewPassword": "Ingresa nueva contraseña",
     "confirmNewPasswordPlaceholder": "Confirma nueva contraseña",
+    "currentPassword": "Contraseña actual",
+    "enterCurrentPassword": "Ingresa tu contraseña actual",
+    "wrongCurrentPassword": "La contraseña actual es incorrecta",
+    "updatingPassword": "Actualizando contraseña…",
     "updatePassword": "Actualizar contraseña",
     "passwordsDoNotMatch": "Las contraseñas no coinciden",
     "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
     "passwordUpdated": "Contraseña actualizada exitosamente",
     "userId": "ID de usuario",
     "languages": {
-      "english": "English",
+      "english": "Inglés",
       "spanish": "Español"
     },
     "theme": "Tema",
@@ -188,10 +193,15 @@
     "filters": {
       "All": "Todos",
       "Food": "Comida",
+      "Dining": "Restaurantes",
       "Transport": "Transporte",
       "Utilities": "Servicios",
       "Entertainment": "Entretenimiento",
-      "Shopping": "Compras"
+      "Shopping": "Compras",
+      "Groceries": "Supermercado",
+      "Gas": "Gasolina",
+      "Health": "Salud",
+      "Other": "Otros"
     }
   },
   "scanner": {

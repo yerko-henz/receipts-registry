@@ -59,7 +59,9 @@ export default function DayDetailsModal({
                     </div>
                     <div>
                       <p className="font-medium text-sm">{receipt.merchant_name || 'Unknown Merchant'}</p>
-                      <p className="text-xs text-muted-foreground">{receipt.category}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {receipt.category ? t(`categories.${receipt.category.toLowerCase()}`, { defaultValue: receipt.category }) : t('charts.uncategorized')}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">

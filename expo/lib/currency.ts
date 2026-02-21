@@ -43,7 +43,7 @@ export const formatPrice = (amount: number, currencyCode?: string): string => {
       style: 'currency',
       currency: currency, 
       currencyDisplay: 'code', // We'll replace the code manually to be safe
-      minimumFractionDigits: 2,
+      minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).formatToParts(amount);
 
@@ -55,6 +55,7 @@ export const formatPrice = (amount: number, currencyCode?: string): string => {
 
   } catch (error) {
     // Fallback if Intl fails
-    return `${symbol}${amount.toFixed(2)}`;
+    const formattedAmount = amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2);
+    return `${symbol}${formattedAmount}`;
   }
 };

@@ -31,6 +31,7 @@ export default function ReceiptDetailsModal({
   const { region } = useGlobal();
   const t = useTranslations('dashboard.receipts');
   const tCommon = useTranslations('common');
+  const tCategories = useTranslations('dashboard.categories');
   const [imageLoading, setImageLoading] = useState(true);
   const deleteMutation = useDeleteReceipt();
   const { openModal, closeModal } = useModal();
@@ -114,7 +115,9 @@ export default function ReceiptDetailsModal({
                     <DialogTitle className="text-2xl font-bold" data-testid="modal-merchant-name">{receipt.merchant_name}</DialogTitle>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Icon className="h-4 w-4" />
-                        <span data-testid="modal-category">{receipt.category}</span>
+                        <span data-testid="modal-category">
+                            {receipt.category ? tCategories(receipt.category.toLowerCase() as any, { defaultValue: receipt.category }) : tCategories('uncategorized' as any)}
+                        </span>
                         <span>•</span>
                         <span data-testid="modal-date">{formattedDate}</span>
                     </div>
