@@ -218,9 +218,9 @@
       "settings": "Configuración",
       "userSettings": "Configuración de usuario",
       "dropdown": {
-          "signedInAs": "Sesión iniciada como",
-          "changePassword": "Cambiar contraseña",
-          "signOut": "Cerrar sesión"
+        "signedInAs": "Sesión iniciada como",
+        "changePassword": "Cambiar contraseña",
+        "signOut": "Cerrar sesión"
       }
     },
     "analyze": {
@@ -337,13 +337,17 @@
     "changePassword": {
       "title": "Cambiar contraseña",
       "subtitle": "Actualiza la contraseña de tu cuenta",
+      "currentPassword": "Contraseña actual",
       "newPassword": "Nueva contraseña",
       "confirmNewPassword": "Confirmar nueva contraseña",
       "button": "Actualizar contraseña",
       "loading": "Actualizando...",
       "error": {
         "mismatch": "Las nuevas contraseñas no coinciden",
-        "generic": "No se pudo actualizar la contraseña"
+        "generic": "No se pudo actualizar la contraseña",
+        "wrongCurrentPassword": "Contraseña actual incorrecta. Por favor inténtalo de nuevo.",
+        "missingCurrentPassword": "Ingresa tu contraseña actual",
+        "newPasswordMustDiffer": "La nueva contraseña debe ser distinta a la actual."
       },
       "success": "Contraseña actualizada correctamente"
     },
@@ -439,13 +443,35 @@
     }
   },
   "auth": {
+    "verifyEmail": {
+      "title": "Revisa tu correo",
+      "description": "Te hemos enviado un código de 6 dígitos a {email}. Ingrésalo abajo para verificar tu cuenta.",
+      "descriptionFallback": "Te hemos enviado un código de 6 dígitos a tu correo. Ingrésalo abajo para verificar tu cuenta.",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verificar correo",
+      "verifyingButton": "Verificando...",
+      "resendPrompt": "¿No recibiste el código?",
+      "resendButton": "Reenviar",
+      "resendingButton": "Enviando...",
+      "resendSuccess": "¡Se ha enviado un nuevo código a tu correo!",
+      "returnToLogin": "Volver al inicio de sesión",
+      "loading": "Cargando...",
+      "error": {
+        "invalidCode": "Por favor ingresa el código de 6 dígitos enviado a tu correo.",
+        "noEmail": "No se encontró dirección de correo. Por favor regresa y regístrate nuevamente.",
+        "resendFailed": "No se pudo reenviar. Por favor intenta de nuevo.",
+        "unknown": "Ocurrió un error desconocido"
+      }
+    },
     "login": {
       "button": {
         "signingIn": "Iniciando sesión...",
         "signIn": "Iniciar sesión"
       },
       "error": {
-        "unknown": "Ocurrió un error desconocido"
+        "unknown": "Ocurrió un error desconocido",
+        "emailNotConfirmed": "Por favor verifica tu correo antes de iniciar sesión. Revisa tu bandeja de entrada para el enlace de confirmación.",
+        "invalidCredentials": "Correo o contraseña incorrectos. Por favor inténtalo de nuevo."
       },
       "link": {
         "forgotPassword": "¿Olvidaste tu contraseña?",

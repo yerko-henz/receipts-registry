@@ -1,31 +1,37 @@
-import { Colors } from '@/constants/theme'
-import { CommonStyles } from '@/constants/Styles'
-import { formatPrice } from '@/lib/currency'
-import { DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories'
-import { useTranslation } from 'react-i18next'
-import { useColorScheme } from '@/hooks/use-color-scheme'
-import { useReceiptsStore } from '@/store/useReceiptsStore'
-import { useGlobalStore } from '@/store/useGlobalStore'
-import { Receipt } from '@/services/receipts'
-import { useInfiniteReceipts, useDeleteReceipt } from '@/hooks/queries/useReceipts'
-import { format, isToday, isYesterday, parseISO } from 'date-fns'
-import { enUS, es } from 'date-fns/locale'
-import { useFocusEffect } from 'expo-router'
-import { Store, Search, ChevronDown, ChevronUp, Trash2, TrendingUp, Eye, RefreshCw } from 'lucide-react-native'
-import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
-import { RefreshControl, StyleSheet, Text, View, Pressable, TextInput, ScrollView, LayoutAnimation, Platform, UIManager, Image, Modal, ActivityIndicator, Linking } from 'react-native'
-import { FlashList } from '@shopify/flash-list'
-import { DateRangeFilter } from '@/components/DateRangeFilter'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated'
+import { Colors } from '@/constants/theme';
+import { CommonStyles } from '@/constants/Styles';
+import { formatPrice } from '@/lib/currency';
+import { DEFAULT_CATEGORY_ICON, getCategoryIcon } from '@/constants/categories';
+import { useTranslation } from 'react-i18next';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useReceiptsStore } from '@/store/useReceiptsStore';
+import { useGlobalStore } from '@/store/useGlobalStore';
+import { Receipt } from '@/services/receipts';
+import { useInfiniteReceipts, useDeleteReceipt } from '@/hooks/queries/useReceipts';
+import { format, isToday, isYesterday, parseISO } from 'date-fns';
+import { enUS, es } from 'date-fns/locale';
+import { useFocusEffect } from 'expo-router';
+import { Store, Search, ChevronDown, ChevronUp, Trash2, TrendingUp, Eye, RefreshCw } from 'lucide-react-native';
+import { ENABLE_TRANSACTION_DATE_FILTER } from '@/constants/featureFlags';
+
+// ... existing code ...
+
+import { debounce } from 'lodash';
+
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import { RefreshControl, StyleSheet, Text, View, Pressable, ActivityIndicator, Linking } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { DateRangeFilter } from '@/components/DateRangeFilter';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { syncReceiptsToSheet } from '@/services/google-sheets';
 import { useAlertStore } from '@/store/useAlertStore';
 
-const AnimatedImage = Animated.createAnimatedComponent(Image)
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+const AnimatedImage = Animated.createAnimatedComponent(Image);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -33,699 +39,662 @@ if (Platform.OS === 'android') {
   }
 }
 
-import { ENABLE_TRANSACTION_DATE_FILTER } from '@/constants/featureFlags'
+import { ENABLE_TRANSACTION_DATE_FILTER } from '@/constants/featureFlags';
 
 // ... existing code ...
 
-import { debounce } from 'lodash'
+import { debounce } from 'lodash';
 
 // ...
 
 export default function ReceiptsUnifiedScreen() {
-  const { t } = useTranslation()
-  const showAlert = useAlertStore(state => state.showAlert)
+  const { t } = useTranslation();
+  const showAlert = useAlertStore((state) => state.showAlert);
 
-  const colorScheme = useColorScheme()
-  const colors = Colors[colorScheme ?? 'light']
-  const user = useGlobalStore(state => state.user)
-  const region = useGlobalStore(state => state.region)
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const user = useGlobalStore((state) => state.user);
+  const region = useGlobalStore((state) => state.region);
 
-
-  const [refreshing, setRefreshing] = useState(false)
-  const [exporting, setExporting] = useState(false)
-  const [sheetId, setSheetId] = useState<string | null>(null)
-  const [lastExport, setLastExport] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [sheetId, setSheetId] = useState<string | null>(null);
+  const [lastExport, setLastExport] = useState<string | null>(null);
 
   // Load Saved Sheet State
-  useEffect(() => {
+
+
+// ... existing   de ...
+
+
+
+couseEffect(() => {
     AsyncStorage.multiGet(['google_sheet_id', 'last_export_date']).then(([[_, id], [__, date]]) => {
-      if (id) setSheetId(id)
-      if (date) setLastExport(date)
-    })
-  }, [])
-  
-  // Dashboard State (Filters)
-  const [activeFilter, setActiveFilter] = useState('All')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  
-  // Date Range State
-  const [startDate, setStartDate] = useState<string | null>(null)
-  const [endDate, setEndDate] = useState<string | null>(null)
-  
-  const [dateMode, setDateMode] = useState<'transaction' | 'created'>('created')
-  const actions = useReceiptsStore(state => state.actions)
+      if (id) setSheetId(id);
+      if (date) setLastExport(date);
+    });
+  }, []);  const [activeFilter, setActiveFilter] = useState('All');
+t[u
+,= useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
+
+  const [dateMode, setDateMode] = useState<'transaction' | 'created'>('created');
+  const actions = useReceiptsStore((state) => state.actions);
 
   // Sync dateMode to store so Dashboard respects it
   useEffect(() => {
-      actions.setFilters({ dateMode })
-  }, [dateMode])
+    actions.setFilters({ dateMode });
+  }, [dateMode]);
 
   // Debounced Filter State for Query
-  const [debouncedSearch] = useState(() => debounce((val: string) => {
-      // triggers re-render via state update? 
-      // React Query will react to state changes in options. 
+  const [debouncedSearch] = useState(() =>
+    debounce((val: string) => {
+      // triggers re-render via state update?
+      // React Query will react to state changes in options.
       // We need to keep a separate state for the ACTUAL query param if we want debounce.
-  }, 500));
+    }, 500)
+  );
   // Proper debounce implies setting a value that is used in the query after a delay.
-  const [querySearch, setQuerySearch] = useState('')
-  
+  const [querySearch, setQuerySearch] = useState('');
+
   useEffect(() => {
-      const handler = setTimeout(() => {
-          setQuerySearch(searchQuery)
-      }, 500)
-      return () => clearTimeout(handler)
-  }, [searchQuery])
+    const handler = setTimeout(() => {
+      setQuerySearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   // Queries
-  const { 
-      data, 
-      fetchNextPage, 
-      hasNextPage, 
-      isLoading, 
-      refetch 
-  } = useInfiniteReceipts(user?.id, 20, {
-      category: activeFilter, 
-      searchQuery: querySearch, 
-      startDate: startDate || undefined, // Typescript hygiene
-      endDate: endDate || undefined,
-      dateMode 
+  const { data, fetchNextPage, hasNextPage, isLoading, refetch } = useInfiniteReceipts(user?.id, 20, {
+    category: activeFilter,
+    searchQuery: querySearch,
+    startDate: startDate || undefined, // Typescript hygiene
+    endDate: endDate || undefined,
+    dateMode
   });
 
   const deleteReceiptMutation = useDeleteReceipt();
 
   const receipts = useMemo(() => {
-      return data?.pages.flatMap(p => p.data) || [];
+    return data?.pages.flatMap((p) => p.data) || [];
   }, [data]);
-  
+
   const totalCount = data?.pages[0]?.count || 0;
 
   const hasUnsyncedChanges = useMemo(() => {
-      if (receipts.length === 0) return false;
-      if (!lastExport) return true; 
-      return receipts.some(r => r.created_at > lastExport);
-  }, [receipts, lastExport])
-
+    if (receipts.length === 0) return false;
+    if (!lastExport) return true;
+    return receipts.some((r) => r.created_at > lastExport);
+  }, [receipts, lastExport]);
 
   // Modal & Gesture Helpers... (omitted for brevity in replacement if unchanged)
   // ... (keep existing modal/gesture code) ...
   // Since I am replacing a huge chunk, I need to be careful.
   // The tool instructions say "Reimplement filtering".
-  
-  // ... existing Modal State ...
-  const [modalReceipt, setModalReceipt] = useState<Receipt | null>(null)
-  const [imageLoading, setImageLoading] = useState(true)
 
-  const scale = useSharedValue(1)
-  const savedScale = useSharedValue(1)
-  const translateX = useSharedValue(0)
-  const translateY = useSharedValue(0)
-  const savedTranslateX = useSharedValue(0)
-  const savedTranslateY = useSharedValue(0)
+  // ... existing Modal State ...
+  const [modalReceipt, setModalReceipt] = useState<Receipt | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
+
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
 
   const pinchGesture = Gesture.Pinch()
     .onUpdate((e) => {
-      scale.value = savedScale.value * e.scale
+      scale.value = savedScale.value * e.scale;
     })
     .onEnd(() => {
       if (scale.value < 1.1) {
-        scale.value = withSpring(1)
-        savedScale.value = 1
-        translateX.value = withSpring(0)
-        savedTranslateX.value = 0
-        translateY.value = withSpring(0)
-        savedTranslateY.value = 0
+        scale.value = withSpring(1);
+        savedScale.value = 1;
+        translateX.value = withSpring(0);
+        savedTranslateX.value = 0;
+        translateY.value = withSpring(0);
+        savedTranslateY.value = 0;
       } else {
-        savedScale.value = scale.value
+        savedScale.value = scale.value;
       }
-    })
+    });
 
   const panGesture = Gesture.Pan()
     .onUpdate((e) => {
-        if (scale.value > 1) {
-            translateX.value = savedTranslateX.value + e.translationX
-            translateY.value = savedTranslateY.value + e.translationY
-        }
+      if (scale.value > 1) {
+        translateX.value = savedTranslateX.value + e.translationX;
+        translateY.value = savedTranslateY.value + e.translationY;
+      }
     })
     .onEnd(() => {
-        savedTranslateX.value = translateX.value
-        savedTranslateY.value = translateY.value
-    })
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    });
 
-  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture)
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { scale: scale.value }
-      ],
-    }
-  })
-  
+      transform: [{ translateX: translateX.value }, { translateY: translateY.value }, { scale: scale.value }]
+    };
+  });
+
   const closeButtonStyle = useAnimatedStyle(() => {
-      return {
-          opacity: withTiming(scale.value > 1.1 ? 0 : 1),
-      }
-  })
+    return {
+      opacity: withTiming(scale.value > 1.1 ? 0 : 1)
+    };
+  });
 
   // Sync Icon Animation
-  const rotation = useSharedValue(0)
+  const rotation = useSharedValue(0);
 
   const spinStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ rotate: `${rotation.value}deg` }],
-    }
-  })
+      transform: [{ rotate: `${rotation.value}deg` }]
+    };
+  });
 
   useEffect(() => {
     if (exporting) {
-        rotation.value = withRepeat(
-            withTiming(360, { duration: 1000, easing: Easing.linear }),
-            -1
-        )
+      rotation.value = withRepeat(withTiming(360, { duration: 1000, easing: Easing.linear }), -1);
     } else {
-        cancelAnimation(rotation);
-        rotation.value = 0;
+      cancelAnimation(rotation);
+      rotation.value = 0;
     }
-  }, [exporting])
+  }, [exporting]);
 
   useEffect(() => {
     if (modalReceipt) {
-      setImageLoading(true)
-      scale.value = 1
-      savedScale.value = 1
-      translateX.value = 0
-      translateY.value = 0
-      savedTranslateX.value = 0
-      savedTranslateY.value = 0
+      setImageLoading(true);
+      scale.value = 1;
+      savedScale.value = 1;
+      translateX.value = 0;
+      translateY.value = 0;
+      savedTranslateX.value = 0;
+      savedTranslateY.value = 0;
     }
-  }, [modalReceipt, scale, savedScale, translateX, translateY, savedTranslateX, savedTranslateY])
+  }, [modalReceipt, scale, savedScale, translateX, translateY, savedTranslateX, savedTranslateY]);
 
-  const flashListRef = useRef<any>(null)
+  const flashListRef = useRef<any>(null);
 
   // Auto-scroll to top when filters change
   useEffect(() => {
     if (receipts.length > 0 && flashListRef.current) {
-         flashListRef.current.scrollToOffset({ offset: 0, animated: true })
+      flashListRef.current.scrollToOffset({ offset: 0, animated: true });
     }
-  }, [activeFilter, searchQuery, dateMode])
+  }, [activeFilter, searchQuery, dateMode]);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true)
-    await refetch()
-    setRefreshing(false)
-  }, [refetch])
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const onEndReached = useCallback(() => {
-      if (hasNextPage) {
-          fetchNextPage()
-      }
-  }, [hasNextPage, fetchNextPage])
+    if (hasNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, fetchNextPage]);
 
   const handleDelete = (id: string) => {
-    showAlert(
-      t('receipts.deleteTitle'),
-      t('receipts.deleteConfirm'),
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-              style: 'destructive',
-              onPress: async () => {
-                deleteReceiptMutation.mutate(id, {
-                    onError: () => {
-                        showAlert('Error', t('receipts.deleteError'))
-                    }
-                })
-              }
+    showAlert(t('receipts.deleteTitle'), t('receipts.deleteConfirm'), [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          deleteReceiptMutation.mutate(id, {
+            onError: () => {
+              showAlert('Error', t('receipts.deleteError'));
             }
-      ]
-    )
-  }
-
+          });
+        }
+      }
+    ]);
+  };
 
   const handleExport = async () => {
-    // Export acts on *Client Filtered* list usually? 
+    // Export acts on *Client Filtered* list usually?
     // With server pagination, we might want to export ALL matching the filter.
-    // SyncReceiptsToSheet takes a list. 
+    // SyncReceiptsToSheet takes a list.
     // If we only have loaded items, we only export loaded items.
-    // For now, use `receipts` (loaded items). 
+    // For now, use `receipts` (loaded items).
     // Ideally we'd fetch ALL for export, but let's stick to loaded for simplicity or warn user.
-    // Or maybe the user expects only what they see. 
+    // Or maybe the user expects only what they see.
     // Given the previous logic was `filteredReceipts`, this preserves behavior for loaded items.
-    
+
     if (receipts.length === 0) {
-      showAlert(t('common.error'), t('receipts.noReceiptsToExport'))
-      return
+      showAlert(t('common.error'), t('receipts.noReceiptsToExport'));
+      return;
     }
 
     try {
-      setExporting(true)
-      const result = await syncReceiptsToSheet(receipts, lastExport, t)
-      
+      setExporting(true);
+      const result = await syncReceiptsToSheet(receipts, lastExport, t);
+
       // Save State
       await AsyncStorage.multiSet([
-          ['google_sheet_id', result.spreadsheetId],
-          ['last_export_date', result.timestamp]
-      ])
-      setSheetId(result.spreadsheetId)
-      setLastExport(result.timestamp)
+        ['google_sheet_id', result.spreadsheetId],
+        ['last_export_date', result.timestamp]
+      ]);
+      setSheetId(result.spreadsheetId);
+      setLastExport(result.timestamp);
 
       if (result.syncedCount === 0) {
-          showAlert(
-            t('common.info', { defaultValue: 'Info' }),
-            t('receipts.alreadySynced'),
-            [{ text: 'OK' }]
-          )
+        showAlert(t('common.info', { defaultValue: 'Info' }), t('receipts.alreadySynced'), [{ text: 'OK' }]);
       } else {
-          showAlert(
-            t('common.success'),
-            t('receipts.exportSuccess'),
-            [
-              { text: t('receipts.openSheet'), onPress: () => Linking.openURL(result.url) },
-              { text: 'OK', style: 'cancel' }
-            ]
-          )
+        showAlert(t('common.success'), t('receipts.exportSuccess'), [
+          {
+            text: t('receipts.openSheet'),
+            onPress: () => Linking.openURL(result.url)
+          },
+          { text: 'OK', style: 'cancel' }
+        ]);
       }
     } catch (error: unknown) {
-      console.error(error)
-      const message = error instanceof Error ? error.message : String(error)
-      showAlert(t('receipts.exportError'), message || 'Could not export to Google Sheets')
+      console.error(error);
+      const message = error instanceof Error ? error.message : String(error);
+      showAlert(t('receipts.exportError'), message || 'Could not export to Google Sheets');
     } finally {
-      setExporting(false)
+      setExporting(false);
     }
-  }
+  };
 
   const handleOpenSheet = () => {
-      if (sheetId) {
-          Linking.openURL(`https://docs.google.com/spreadsheets/d/${sheetId}`)
-      }
-  }
+    if (sheetId) {
+      Linking.openURL(`https://docs.google.com/spreadsheets/d/${sheetId}`);
+    }
+  };
 
   // Initial Load
   // Initial Load (and Refetch on Focus)
   useFocusEffect(
     useCallback(() => {
-        // Refetch on focus if needed, or let Query handle it. 
-        // With useInfiniteQuery, explicit refetch might be too aggressive if data is fresh.
-        // But ensures updates from other screens (e.g. scanner).
-        // refetch(); 
+      // Refetch on focus if needed, or let Query handle it.
+      // With useInfiniteQuery, explicit refetch might be too aggressive if data is fresh.
+      // But ensures updates from other screens (e.g. scanner).
+      // refetch();
     }, [])
-  )
+  );
 
-  const filters = ['All', 'Food', 'Dining', 'Transport', 'Utilities', 'Entertainment', 'Shopping', 'Groceries', 'Gas']
+  const filters = ['All', 'Food', 'Dining', 'Transport', 'Utilities', 'Entertainment', 'Shopping', 'Groceries', 'Gas'];
 
   // Get the appropriate locale for date formatting
-  const { i18n } = useTranslation()
-  const dateLocale = i18n.language === 'es' ? es : enUS
+  const { i18n } = useTranslation();
+  const dateLocale = i18n.language === 'es' ? es : enUS;
 
   // 2. Grouping Logic with Dynamic Date Field
   // Use 'receipts' which is now the source of truth (server side filtered/paginated)
   const groupedData = useMemo(() => {
-    const groups: { title: string; data: Receipt[] }[] = []
-    
-    receipts.forEach((receipt) => {
-      const dateString = dateMode === 'transaction' ? receipt.transaction_date : receipt.created_at
-      if (!dateString) return
-      
-      const date = parseISO(dateString)
-      let title = format(date, 'MMMM d, yyyy', { locale: dateLocale })
-      
-      if (isToday(date)) title = t('receipts.today')
-      else if (isYesterday(date)) title = t('receipts.yesterday')
+    const groups: { title: string; data: Receipt[] }[] = [];
 
-      const existingGroup = groups.find(g => g.title === title)
+    receipts.forEach((receipt) => {
+      const dateString = dateMode === 'transaction' ? receipt.transaction_date : receipt.created_at;
+      if (!dateString) return;
+
+      const date = parseISO(dateString);
+      let title = format(date, 'MMMM d, yyyy', { locale: dateLocale });
+
+      if (isToday(date)) title = t('receipts.today');
+      else if (isYesterday(date)) title = t('receipts.yesterday');
+
+      const existingGroup = groups.find((g) => g.title === title);
       if (existingGroup) {
-        existingGroup.data.push(receipt)
+        existingGroup.data.push(receipt);
       } else {
-        groups.push({ title, data: [receipt] })
+        groups.push({ title, data: [receipt] });
       }
-    })
-    
+    });
+
     // Flatten for FlashList
-    const flatList: (string | Receipt)[] = []
-    groups.forEach(group => {
-      flatList.push(group.title) // Header
-      flatList.push(...group.data) // Items
-    })
-    return flatList
-  }, [receipts, dateMode, dateLocale, t])
+    const flatList: (string | Receipt)[] = [];
+    groups.forEach((group) => {
+      flatList.push(group.title); // Header
+      flatList.push(...group.data); // Items
+    });
+    return flatList;
+  }, [receipts, dateMode, dateLocale, t]);
 
   const totalSpent = useMemo(() => {
-    return receipts.reduce((sum, r) => sum + (r.total_amount ?? 0), 0)
-  }, [receipts])
+    return receipts.reduce((sum, r) => sum + (r.total_amount ?? 0), 0);
+  }, [receipts]);
 
-  const itemRefs = useRef<Record<string, View | null>>({})
-  const scrollY = useRef(0)
-  const listContainerRef = useRef<View>(null)
+  const itemRefs = useRef<Record<string, View | null>>({});
+  const scrollY = useRef(0);
+  const listContainerRef = useRef<View>(null);
 
   const toggleExpand = (id: string) => {
-    const isExpanding = expandedId !== id
+    const isExpanding = expandedId !== id;
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedId(isExpanding ? id : null);
 
     if (isExpanding) {
-        // Wait for layout animation to finish and new layout to settle
-        setTimeout(() => {
-            const itemRef = itemRefs.current[id];
-            
-            if (itemRef && listContainerRef.current) {
-                // Measure item position relative to the screen
-                itemRef.measure((x, y, width, height, pageX, pageY) => {
-                    // Measure list container position relative to the screen
-                    listContainerRef.current?.measure((lx, ly, lWidth, lHeight, listPageX, listPageY) => {
-                        // Calculate where the item is relative to the list's viewport top
-                        const relativeY = pageY - listPageY;
-                        
-                        // Current scroll position
-                        const currentScroll = scrollY.current;
-                        
-                        // We want to scroll so that relativeY becomes 0 (top of list)
-                        // New Offset = Current Offset + Relative Position
-                        const targetOffset = currentScroll + relativeY;
-                        
-                        flashListRef.current?.scrollToOffset({ offset: targetOffset, animated: true });
-                    })
-                })
-            } else {
-                 // Fallback if refs aren't ready (e.g. item scrolled out of view immediately?)
-                 const index = groupedData.findIndex(item => typeof item !== 'string' && item.id === id)
-                 if (index !== -1) {
-                    flashListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 }) 
-                 }
-            }
-        }, 350) // slightly larger than animation duration (300ms)
-    }
-  }
+      // Wait for layout animation to finish and new layout to settle
+      setTimeout(() => {
+        const itemRef = itemRefs.current[id];
 
-  const renderItem = useCallback(({ item }: { item: string | Receipt }) => {
-    if (typeof item === 'string') {
+        if (itemRef && listContainerRef.current) {
+          // Measure item position relative to the screen
+          itemRef.measure((x, y, width, height, pageX, pageY) => {
+            // Measure list container position relative to the screen
+            listContainerRef.current?.measure((lx, ly, lWidth, lHeight, listPageX, listPageY) => {
+              // Calculate where the item is relative to the list's viewport top
+              const relativeY = pageY - listPageY;
+
+              // Current scroll position
+              const currentScroll = scrollY.current;
+
+              // We want to scroll so that relativeY becomes 0 (top of list)
+              // New Offset = Current Offset + Relative Position
+              const targetOffset = currentScroll + relativeY;
+
+              flashListRef.current?.scrollToOffset({
+                offset: targetOffset,
+                animated: true
+              });
+            });
+          });
+        } else {
+          // Fallback if refs aren't ready (e.g. item scrolled out of view immediately?)
+          const index = groupedData.findIndex((item) => typeof item !== 'string' && item.id === id);
+          if (index !== -1) {
+            flashListRef.current?.scrollToIndex({
+              index,
+              animated: true,
+              viewPosition: 0
+            });
+          }
+        }
+      }, 350); // slightly larger than animation duration (300ms)
+    }
+  };
+
+  const renderItem = useCallback(
+    ({ item }: { item: string | Receipt }) => {
+      if (typeof item === 'string') {
+        return (
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.icon }]}>{item}</Text>
+          </View>
+        );
+      }
+
+      const isExpanded = expandedId === item.id;
+      const hasImage = !!item.image_url;
+
       return (
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.icon }]}>{item}</Text>
-        </View>
-      )
-    }
-
-    const isExpanded = expandedId === item.id;
-    const hasImage = !!item.image_url;
-
-    return (
-      <Pressable 
-        ref={(el) => {
+        <Pressable
+          ref={(el) => {
             // @ts-ignore
-            itemRefs.current[item.id] = el
-        }}
-        style={[
-            CommonStyles.getFlatCardStyle(colors), 
-            { borderColor: isExpanded ? colors.tint : colors.border }
-        ]}
-        onPress={() => toggleExpand(item.id)}
-      >
-        <View style={styles.cardMain}>
+            itemRefs.current[item.id] = el;
+          }}
+          style={[CommonStyles.getFlatCardStyle(colors), { borderColor: isExpanded ? colors.tint : colors.border }]}
+          onPress={() => toggleExpand(item.id)}
+        >
+          <View style={styles.cardMain}>
             <View style={styles.cardLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
-                    {(() => {
-                        const CategoryIcon = item.category ? getCategoryIcon(item.category) : DEFAULT_CATEGORY_ICON
-                        return <CategoryIcon size={20} color={colors.icon} />
-                    })()}
+              <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
+                {(() => {
+                  const CategoryIcon = item.category ? getCategoryIcon(item.category) : DEFAULT_CATEGORY_ICON;
+                  return <CategoryIcon size={20} color={colors.icon} />;
+                })()}
+              </View>
+
+              <View style={styles.textContainer}>
+                <Text style={[styles.merchantName, { color: colors.text }]}>{item.merchant_name || t('chart.unknownMerchant')}</Text>
+                <View style={styles.categoryRow}>
+                  <Text style={[styles.category, { color: colors.icon }]}>
+                    {item.category
+                      ? t(`receipts.filters.${item.category}`, {
+                          defaultValue: item.category
+                        })
+                      : t('chart.uncategorized')}
+                  </Text>
                 </View>
-                
-                <View style={styles.textContainer}>
-                    <Text style={[styles.merchantName, { color: colors.text }]}>
-                    {item.merchant_name || t('chart.unknownMerchant')}
-                    </Text>
-                    <View style={styles.categoryRow}>
-                        <Text style={[styles.category, { color: colors.icon }]}>
-                            {item.category ? t(`receipts.filters.${item.category}`, { defaultValue: item.category }) : t('chart.uncategorized')}
-                        </Text>
-                    </View>
-                </View>
+              </View>
             </View>
             <View style={styles.cardRight}>
-                 <Text style={[styles.amount, { color: colors.text }]}>
-                    {formatPrice(item.total_amount ?? 0)}
-                 </Text>
-                 {isExpanded ? <ChevronUp size={18} color={colors.icon} /> : <ChevronDown size={18} color={colors.icon} />}
+              <Text style={[styles.amount, { color: colors.text }]}>{formatPrice(item.total_amount ?? 0)}</Text>
+              {isExpanded ? <ChevronUp size={18} color={colors.icon} /> : <ChevronDown size={18} color={colors.icon} />}
             </View>
-        </View>
+          </View>
 
-        {isExpanded && (
+          {isExpanded && (
             <View style={[styles.expandedContent, { borderTopColor: colors.border }]}>
-                {/* Date Fields */}
+              {/* Date Fields */}
+              <View style={styles.detailRow}>
+                <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.receiptDate')}</Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>{item.transaction_date ? format(new Date(item.transaction_date), 'MMM d, yyyy') : 'N/A'}</Text>
+              </View>
+              {dateMode === 'created' && (
                 <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.receiptDate')}</Text>
-                    <Text style={[styles.detailValue, { color: colors.text }]}>
-                        {item.transaction_date ? format(new Date(item.transaction_date), 'MMM d, yyyy') : 'N/A'}
-                    </Text>
+                  <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.uploaded')}</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>{format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}</Text>
                 </View>
-                {dateMode === 'created' && (
-                     <View style={styles.detailRow}>
-                        <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.uploaded')}</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>
-                            {format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}
-                        </Text>
-                    </View>
-                )}
-                
-                <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.tax')}</Text>
-                    <Text style={[styles.detailValue, { color: colors.text }]}>
-                        {formatPrice(item.tax_amount ?? 0)}
-                    </Text>
+              )}
+
+              <View style={styles.detailRow}>
+                <Text style={[styles.detailLabel, { color: colors.icon }]}>{t('receipts.tax')}</Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>{formatPrice(item.tax_amount ?? 0)}</Text>
+              </View>
+
+              {/* Items List */}
+              {item.receipt_items && item.receipt_items.length > 0 && (
+                <View style={styles.itemsSection}>
+                  <Text style={[styles.itemsHeader, { color: colors.icon }]}>{t('receipts.items')}</Text>
+                  {item.receipt_items.map(
+                    (
+                      rItem: {
+                        description?: string | null;
+                        name?: string;
+                        quantity?: number | null;
+                        unit_price?: number | null;
+                        total_price?: number | null;
+                      },
+                      idx: number
+                    ) => (
+                      <View key={idx} style={styles.itemRow}>
+                        <View style={styles.itemInfo}>
+                          <Text style={[styles.itemName, { color: colors.text }]}>{rItem.description || rItem.name || 'Item'}</Text>
+                          <Text style={[styles.itemQty, { color: colors.icon }]}>
+                            {rItem.quantity} x {formatPrice(rItem.unit_price ?? 0)}
+                          </Text>
+                        </View>
+                        <Text style={[styles.itemTotal, { color: colors.text }]}>{formatPrice(rItem.total_price ?? 0)}</Text>
+                      </View>
+                    )
+                  )}
                 </View>
+              )}
 
-                {/* Items List */}
-                {item.receipt_items && item.receipt_items.length > 0 && (
-                    <View style={styles.itemsSection}>
-                        <Text style={[styles.itemsHeader, { color: colors.icon }]}>{t('receipts.items')}</Text>
-                        {item.receipt_items.map((rItem: { description?: string | null, name?: string, quantity?: number | null, unit_price?: number | null, total_price?: number | null }, idx: number) => (
-                            <View key={idx} style={styles.itemRow}>
-                                <View style={styles.itemInfo}>
-                                    <Text style={[styles.itemName, { color: colors.text }]}>
-                                        {rItem.description || rItem.name || 'Item'}
-                                    </Text>
-                                    <Text style={[styles.itemQty, { color: colors.icon }]}>
-                                        {rItem.quantity} x {formatPrice(rItem.unit_price ?? 0)}
-                                    </Text>
-                                </View>
-                                <Text style={[styles.itemTotal, { color: colors.text }]}>
-                                    {formatPrice(rItem.total_price ?? 0)}
-                                </Text>
-                            </View>
-                        ))}
-                    </View>
+              <View style={styles.actionsRow}>
+                {hasImage && (
+                  <Pressable style={[styles.actionBtn, { borderColor: colors.border }]} onPress={() => setModalReceipt(item)}>
+                    <Eye size={14} color={colors.text} />
+                    <Text style={[styles.actionBtnText, { color: colors.text }]}>
+                      {t('receipts.viewReceipt', {
+                        defaultValue: 'View Receipt'
+                      })}
+                    </Text>
+                  </Pressable>
                 )}
 
-                 <View style={styles.actionsRow}>
-                    {hasImage && (
-                        <Pressable 
-                            style={[styles.actionBtn, { borderColor: colors.border }]}
-                            onPress={() => setModalReceipt(item)}
-                        >
-                            <Eye size={14} color={colors.text} />
-                            <Text style={[styles.actionBtnText, { color: colors.text }]}>{t('receipts.viewReceipt', { defaultValue: 'View Receipt' })}</Text>
-                        </Pressable>
-                    )}
-
-                    <Pressable 
-                        style={[styles.deleteBtn, { backgroundColor: colors.notification + '15' }]}
-                        onPress={() => handleDelete(item.id)}
-                    >
-                        <Trash2 size={14} color={colors.notification} />
-                        <Text style={[styles.deleteBtnText, { color: colors.notification }]}>{t('receipts.delete')}</Text>
-                    </Pressable>
-                 </View>
+                <Pressable style={[styles.deleteBtn, { backgroundColor: colors.notification + '15' }]} onPress={() => handleDelete(item.id)}>
+                  <Trash2 size={14} color={colors.notification} />
+                  <Text style={[styles.deleteBtnText, { color: colors.notification }]}>{t('receipts.delete')}</Text>
+                </Pressable>
+              </View>
             </View>
-        )}
-      </Pressable>
-    )
-  }, [expandedId, colors, dateMode, handleDelete, t, toggleExpand])
+          )}
+        </Pressable>
+      );
+    },
+    [expandedId, colors, dateMode, handleDelete, t, toggleExpand]
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header with Total */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <View style={{ flex: 1, paddingRight: 12 }}>
-             <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{t('receipts.title')}</Text>
-             <Text style={[styles.headerSubtitle, { color: colors.icon }]} numberOfLines={1} adjustsFontSizeToFit>
-                {receipts.length} {t('receipts.itemsFound')}
-             </Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
+            {t('receipts.title')}
+          </Text>
+          <Text style={[styles.headerSubtitle, { color: colors.icon }]} numberOfLines={1} adjustsFontSizeToFit>
+            {receipts.length} {t('receipts.itemsFound')}
+          </Text>
         </View>
         <View style={styles.headerRight}>
-             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                <View style={[styles.totalBadge, { backgroundColor: colors.tint + '20' }]}>
-                    <TrendingUp size={16} color={colors.tint} />
-                    <Text style={[styles.totalAmount, { color: colors.tint }]}>
-                        {formatPrice(totalSpent)}
-                    </Text>
-                </View>
-             </View>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <View style={[styles.totalBadge, { backgroundColor: colors.tint + '20' }]}>
+              <TrendingUp size={16} color={colors.tint} />
+              <Text style={[styles.totalAmount, { color: colors.tint }]}>{formatPrice(totalSpent)}</Text>
+            </View>
+          </View>
         </View>
       </View>
 
       {/* Controls Container */}
       <View style={styles.controlsContainer}>
-          {/* Search */}
-          <View style={[styles.searchBar, { backgroundColor: colors.card }]}>
-              <Search size={20} color={colors.icon} />
-              <TextInput 
-                  placeholder={t('receipts.searchPlaceholder')}
-                  placeholderTextColor={colors.icon}
-                  style={[styles.searchInput, { color: colors.text }]}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-              />
-          </View>
-          
-          {/* Filters */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={styles.filterContainer}
-          >
-            {filters.map(filter => (
-                <Pressable 
-                    key={filter} 
-                    style={[
-                        styles.filterChip, 
-                        { 
-                            backgroundColor: activeFilter === filter ? colors.tint : colors.card,
-                            borderColor: activeFilter === filter ? colors.tint : colors.border
-                        }
-                    ]}
-                    onPress={() => setActiveFilter(filter)}
-                >
-                    <Text style={[
-                        styles.filterText, 
-                        { color: activeFilter === filter ? '#FFF' : colors.text }
-                    ]}>
-                        {t(`receipts.filters.${filter}`, { defaultValue: filter })}
-                    </Text>
-                </Pressable>
-            ))}
-          </ScrollView>
+        {/* Search */}
+        <View style={[styles.searchBar, { backgroundColor: colors.card }]}>
+          <Search size={20} color={colors.icon} />
+          <TextInput placeholder={t('receipts.searchPlaceholder')} placeholderTextColor={colors.icon} style={[styles.searchInput, { color: colors.text }]} value={searchQuery} onChangeText={setSearchQuery} />
+        </View>
 
-          {/* Sort Toggles - Only show if enabled */}
-          {ENABLE_TRANSACTION_DATE_FILTER && (
-              <View style={[styles.sortContainer, { borderColor: colors.border }]}>
-                 <Pressable 
-                    style={[styles.sortBtn, dateMode === 'transaction' && { backgroundColor: colors.card }]}
-                    onPress={() => setDateMode('transaction')}
-                 >
-                    <Text style={[styles.sortBtnText, { color: dateMode === 'transaction' ? colors.tint : colors.icon }]}>
-                        {t('receipts.receiptDate')}
-                    </Text>
-                 </Pressable>
-                 <Pressable 
-                    style={[styles.sortBtn, dateMode === 'created' && { backgroundColor: colors.card }]}
-                    onPress={() => setDateMode('created')}
-                 >
-                    <Text style={[styles.sortBtnText, { color: dateMode === 'created' ? colors.tint : colors.icon }]}>
-                        {t('receipts.uploadDate')}
-                    </Text>
-                 </Pressable>
-              </View>
-          )}
-          
-          <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
-            <DateRangeFilter 
-                startDate={startDate} 
-                endDate={endDate} 
-                onRangeChange={(start, end) => {
-                    setStartDate(start)
-                    setEndDate(end)
-                }} 
-            />
+        {/* Filters */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContainer}>
+          {filters.map((filter) => (
+            <Pressable
+              key={filter}
+              style={[
+                styles.filterChip,
+                {
+                  backgroundColor: activeFilter === filter ? colors.tint : colors.card,
+                  borderColor: activeFilter === filter ? colors.tint : colors.border
+                }
+              ]}
+              onPress={() => setActiveFilter(filter)}
+            >
+              <Text style={[styles.filterText, { color: activeFilter === filter ? '#FFF' : colors.text }]}>{t(`receipts.filters.${filter}`, { defaultValue: filter })}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {/* Sort Toggles - Only show if enabled */}
+        {ENABLE_TRANSACTION_DATE_FILTER && (
+          <View style={[styles.sortContainer, { borderColor: colors.border }]}>
+            <Pressable style={[styles.sortBtn, dateMode === 'transaction' && { backgroundColor: colors.card }]} onPress={() => setDateMode('transaction')}>
+              <Text
+                style={[
+                  styles.sortBtnText,
+                  {
+                    color: dateMode === 'transaction' ? colors.tint : colors.icon
+                  }
+                ]}
+              >
+                {t('receipts.receiptDate')}
+              </Text>
+            </Pressable>
+            <Pressable style={[styles.sortBtn, dateMode === 'created' && { backgroundColor: colors.card }]} onPress={() => setDateMode('created')}>
+              <Text style={[styles.sortBtnText, { color: dateMode === 'created' ? colors.tint : colors.icon }]}>{t('receipts.uploadDate')}</Text>
+            </Pressable>
           </View>
+        )}
+
+        <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onRangeChange={(start, end) => {
+              setStartDate(start);
+              setEndDate(end);
+            }}
+          />
+        </View>
       </View>
 
       <View style={{ flex: 1 }} ref={listContainerRef} collapsable={false}>
-          <FlashList
-            ref={flashListRef}
-            data={groupedData}
-            extraData={[expandedId, region]}
-            renderItem={renderItem}
-            getItemType={(item) => (typeof item === 'string' ? 'header' : 'row')}
-            // @ts-ignore
-            estimatedItemSize={85}
-            keyExtractor={(item, index) => (typeof item === 'string' ? `header-${item}` : item.id)}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            onScroll={(e) => {
-                scrollY.current = e.nativeEvent.contentOffset.y;
-            }}
-            scrollEventThrottle={16}
-            onEndReached={onEndReached}
-            onEndReachedThreshold={0.5}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tint} />
-            }
-            ListEmptyComponent={
-              isLoading ? (
-                  <View style={{ paddingTop: 100, alignItems: 'center', justifyContent: 'center' }}>
-                      <ActivityIndicator size="large" color={colors.tint} />
-                  </View>
-              ) : (
-                  <View style={styles.emptyContainer}>
-                    <View style={[styles.emptyIconContainer, { backgroundColor: colors.card }]}>
-                      <Store size={48} color={colors.icon} />
-                    </View>
-                    <Text style={[styles.emptyText, { color: colors.text }]}>{t('receipts.noReceipts')}</Text>
-                    <Text style={[styles.emptySubtext, { color: colors.icon }]}>
-                       {t('receipts.adjustFilters')}
-                    </Text>
-                  </View>
-              )
-            }
-            ListFooterComponent={
-                isLoading && receipts.length > 0 ? (
-                    <View style={{ padding: 20, alignItems: 'center' }}>
-                        <ActivityIndicator size="small" color={colors.tint} />
-                    </View>
-                ) : null
-            }
-          />
+        <FlashList
+          ref={flashListRef}
+          data={groupedData}
+          extraData={[expandedId, region]}
+          renderItem={renderItem}
+          getItemType={(item) => (typeof item === 'string' ? 'header' : 'row')}
+          // @ts-ignore
+          estimatedItemSize={85}
+          keyExtractor={(item, index) => (typeof item === 'string' ? `header-${item}` : item.id)}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          onScroll={(e) => {
+            scrollY.current = e.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.5}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tint} />}
+          ListEmptyComponent={
+            isLoading ? (
+              <View
+                style={{
+                  paddingTop: 100,
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <ActivityIndicator size="large" color={colors.tint} />
+              </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <View style={[styles.emptyIconContainer, { backgroundColor: colors.card }]}>
+                  <Store size={48} color={colors.icon} />
+                </View>
+                <Text style={[styles.emptyText, { color: colors.text }]}>{t('receipts.noReceipts')}</Text>
+                <Text style={[styles.emptySubtext, { color: colors.icon }]}>{t('receipts.adjustFilters')}</Text>
+              </View>
+            )
+          }
+          ListFooterComponent={
+            isLoading && receipts.length > 0 ? (
+              <View style={{ padding: 20, alignItems: 'center' }}>
+                <ActivityIndicator size="small" color={colors.tint} />
+              </View>
+            ) : null
+          }
+        />
       </View>
 
-       {/* Global Modal for Image View */}
-       <Modal visible={!!modalReceipt} transparent={true} animationType="fade" onRequestClose={() => setModalReceipt(null)}>
-            <View style={styles.modalContainer}>
-                <Pressable style={styles.modalCloseArea} onPress={() => setModalReceipt(null)} />
-                <GestureHandlerRootView style={{ width: '100%', height: '100%' }}>
-                    <View style={styles.modalContent}>
-                        {imageLoading && (
-                            <View style={styles.loaderContainer}>
-                                <ActivityIndicator size="large" color={colors.tint} />
-                            </View>
-                        )}
-                        {modalReceipt?.image_url && (
-                            <GestureDetector gesture={composedGesture}>
-                                <AnimatedImage 
-                                    source={{ uri: modalReceipt.image_url }} 
-                                    style={[styles.fullImage, animatedStyle]} 
-                                    resizeMode="contain" 
-                                    onLoadEnd={() => setImageLoading(false)}
-                                />
-                            </GestureDetector>
-                        )}
-                        <AnimatedPressable style={[styles.closeButton, closeButtonStyle]} onPress={() => setModalReceipt(null)}>
-                            <Text style={styles.closeButtonText}>{t('settings.close')}</Text>
-                        </AnimatedPressable>
-                    </View>
-                </GestureHandlerRootView>
+      {/* Global Modal for Image View */}
+      <Modal visible={!!modalReceipt} transparent={true} animationType="fade" onRequestClose={() => setModalReceipt(null)}>
+        <View style={styles.modalContainer}>
+          <Pressable style={styles.modalCloseArea} onPress={() => setModalReceipt(null)} />
+          <GestureHandlerRootView style={{ width: '100%', height: '100%' }}>
+            <View style={styles.modalContent}>
+              {imageLoading && (
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="large" color={colors.tint} />
+                </View>
+              )}
+              {modalReceipt?.image_url && (
+                <GestureDetector gesture={composedGesture}>
+                  <AnimatedImage source={{ uri: modalReceipt.image_url }} style={[styles.fullImage, animatedStyle]} resizeMode="contain" onLoadEnd={() => setImageLoading(false)} />
+                </GestureDetector>
+              )}
+              <AnimatedPressable style={[styles.closeButton, closeButtonStyle]} onPress={() => setModalReceipt(null)}>
+                <Text style={styles.closeButtonText}>{t('settings.close')}</Text>
+              </AnimatedPressable>
             </View>
-        </Modal>
-
+          </GestureHandlerRootView>
+        </View>
+      </Modal>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1
   },
   header: {
     paddingHorizontal: 20,
@@ -733,111 +702,111 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
+    borderBottomWidth: 1
   },
   headerTitle: {
     fontSize: 28,
-    fontFamily: 'Manrope_700Bold',
+    fontFamily: 'Manrope_700Bold'
   },
   headerSubtitle: {
-       fontSize: 14,
-       fontFamily: 'Manrope_500Medium',
-       marginTop: 2,
+    fontSize: 14,
+    fontFamily: 'Manrope_500Medium',
+    marginTop: 2
   },
   headerRight: {
-      alignItems: 'flex-end',
+    alignItems: 'flex-end'
   },
   totalBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-      gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6
   },
   totalAmount: {
-      fontSize: 16,
-      fontFamily: 'Manrope_700Bold',
+    fontSize: 16,
+    fontFamily: 'Manrope_700Bold'
   },
   controlsContainer: {
-     paddingTop: 12,
+    paddingTop: 12
   },
   searchBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      borderRadius: 12,
-      gap: 10,
-      marginHorizontal: 20,
-      marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 10,
+    marginHorizontal: 20,
+    marginBottom: 12
   },
   searchInput: {
-      flex: 1,
-      fontFamily: 'Manrope_500Medium',
-      fontSize: 16,
+    flex: 1,
+    fontFamily: 'Manrope_500Medium',
+    fontSize: 16
   },
   filterContainer: {
-      paddingHorizontal: 20,
-      gap: 8,
-      paddingBottom: 12,
+    paddingHorizontal: 20,
+    gap: 8,
+    paddingBottom: 12
   },
   filterChip: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1
   },
   filterText: {
-      fontFamily: 'Manrope_600SemiBold',
-      fontSize: 14,
+    fontFamily: 'Manrope_600SemiBold',
+    fontSize: 14
   },
   sortContainer: {
-      flexDirection: 'row',
-      marginHorizontal: 20,
-      marginBottom: 8,
-      borderRadius: 12,
-      backgroundColor: 'rgba(0,0,0,0.03)',
-      padding: 4,
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginBottom: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    padding: 4
   },
   sortBtn: {
-      flex: 1,
-      paddingVertical: 8,
-      alignItems: 'center',
-      borderRadius: 8,
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8
   },
   sortBtnText: {
-      fontSize: 13,
-      fontFamily: 'Manrope_600SemiBold',
+    fontSize: 13,
+    fontFamily: 'Manrope_600SemiBold'
   },
   listContent: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 100
   },
   sectionHeader: {
     marginTop: 16,
     marginBottom: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 4
   },
   sectionTitle: {
     fontSize: 14,
     fontFamily: 'Manrope_700Bold',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1
   },
   card: {
-    marginBottom: 10,
+    marginBottom: 10
   },
   cardMain: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: 16
   },
   cardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    flex: 1
   },
   iconContainer: {
     width: 42,
@@ -845,7 +814,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 14
   },
   thumbnailContainer: {
     width: 42,
@@ -854,71 +823,71 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginRight: 14,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: 'rgba(0,0,0,0.05)'
   },
   thumbnail: {
-      width: '100%',
-      height: '100%',
+    width: '100%',
+    height: '100%'
   },
   textContainer: {
     justifyContent: 'center',
-    flex: 1,
+    flex: 1
   },
   merchantName: {
     fontSize: 16,
     fontFamily: 'Manrope_600SemiBold',
-    marginBottom: 2,
+    marginBottom: 2
   },
   categoryRow: {
-      flexDirection: 'row',
+    flexDirection: 'row'
   },
   category: {
     fontSize: 12,
-    fontFamily: 'Manrope_500Medium',
+    fontFamily: 'Manrope_500Medium'
   },
   cardRight: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
   },
   amount: {
     fontSize: 16,
-    fontFamily: 'Manrope_800ExtraBold',
+    fontFamily: 'Manrope_800ExtraBold'
   },
   expandedContent: {
-      padding: 16,
-      paddingTop: 0,
-      borderTopWidth: 1,
+    padding: 16,
+    paddingTop: 0,
+    borderTopWidth: 1
   },
   detailRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12
   },
   detailLabel: {
-      fontSize: 14,
-      fontFamily: 'Manrope_500Medium',
+    fontSize: 14,
+    fontFamily: 'Manrope_500Medium'
   },
   detailValue: {
-      fontSize: 14,
-      fontFamily: 'Manrope_600SemiBold',
+    fontSize: 14,
+    fontFamily: 'Manrope_600SemiBold'
   },
 
   actionButton: {
-      marginTop: 12,
-      paddingVertical: 10,
-      borderRadius: 10,
-      alignItems: 'center',
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center'
   },
   actionButtonText: {
-      fontFamily: 'Manrope_700Bold',
-      fontSize: 14,
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 14
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 80,
+    paddingTop: 80
   },
   emptyIconContainer: {
     width: 80,
@@ -926,92 +895,92 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 16
   },
   emptyText: {
     fontSize: 20,
     fontFamily: 'Manrope_700Bold',
-    marginBottom: 8,
+    marginBottom: 8
   },
   emptySubtext: {
     fontSize: 14,
-    fontFamily: 'Manrope_500Medium',
+    fontFamily: 'Manrope_500Medium'
   },
-  
+
   // Modal
   modalContainer: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.9)',
-      justifyContent: 'center',
-      alignItems: 'center',
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   modalCloseArea: {
-      ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFillObject
   },
   modalContent: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20
   },
   fullImage: {
-      width: '100%',
-      height: '80%',
-      borderRadius: 8,
+    width: '100%',
+    height: '80%',
+    borderRadius: 8
   },
   closeButton: {
-      position: 'absolute',
-      top: 50,
-      right: 20,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      borderRadius: 20,
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20
   },
   closeButtonText: {
-      color: '#FFF',
-      fontFamily: 'Manrope_600SemiBold',
+    color: '#FFF',
+    fontFamily: 'Manrope_600SemiBold'
   },
   itemsSection: {
-      marginTop: 16,
-      paddingTop: 16,
-      borderTopWidth: 1,
-      borderTopColor: 'rgba(0,0,0,0.05)',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)'
   },
   itemsHeader: {
-      fontSize: 12,
-      fontFamily: 'Manrope_700Bold',
-      textTransform: 'uppercase',
-      marginBottom: 8,
-      letterSpacing: 0.5,
+    fontSize: 12,
+    fontFamily: 'Manrope_700Bold',
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    letterSpacing: 0.5
   },
   itemRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4
   },
   itemInfo: {
-      flex: 1,
-      marginRight: 12,
+    flex: 1,
+    marginRight: 12
   },
   itemName: {
-      fontSize: 14,
-      fontFamily: 'Manrope_600SemiBold',
+    fontSize: 14,
+    fontFamily: 'Manrope_600SemiBold'
   },
   itemQty: {
-      fontSize: 12,
-      fontFamily: 'Manrope_500Medium',
+    fontSize: 12,
+    fontFamily: 'Manrope_500Medium'
   },
   itemTotal: {
-      fontSize: 14,
-      fontFamily: 'Manrope_700Bold',
+    fontSize: 14,
+    fontFamily: 'Manrope_700Bold'
   },
   actionsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 20,
+    marginTop: 20
   },
   actionBtn: {
     flex: 1,
@@ -1021,11 +990,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderWidth: 1,
     borderRadius: 10,
-    gap: 8,
+    gap: 8
   },
   actionBtnText: {
     fontSize: 14,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'Manrope_600SemiBold'
   },
   deleteBtn: {
     flex: 1,
@@ -1034,17 +1003,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     borderRadius: 10,
-    gap: 8,
+    gap: 8
   },
   deleteBtnText: {
     fontSize: 13,
-    fontFamily: 'Manrope_700Bold',
+    fontFamily: 'Manrope_700Bold'
   },
   loaderContainer: {
-      ...StyleSheet.absoluteFillObject,
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1,
-  },
-})
-
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1
+  }
+});

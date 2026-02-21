@@ -337,13 +337,17 @@
     "changePassword": {
       "title": "Change Password",
       "subtitle": "Update your account password",
+      "currentPassword": "Current Password",
       "newPassword": "New Password",
       "confirmNewPassword": "Confirm New Password",
       "button": "Update Password",
       "loading": "Updating...",
       "error": {
         "mismatch": "New passwords don't match",
-        "generic": "Failed to update password"
+        "generic": "Failed to update password",
+        "wrongCurrentPassword": "Current password is incorrect. Please try again.",
+        "missingCurrentPassword": "Please enter your current password",
+        "newPasswordMustDiffer": "New password should be different from the old password."
       },
       "success": "Password updated successfully"
     },
@@ -439,13 +443,35 @@
     }
   },
   "auth": {
+    "verifyEmail": {
+      "title": "Check your email",
+      "description": "We've sent a 6-digit code to {email}. Enter it below to verify your account.",
+      "descriptionFallback": "We've sent a 6-digit code to your email. Enter it below to verify your account.",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verify Email",
+      "verifyingButton": "Verifying...",
+      "resendPrompt": "Didn't receive the code?",
+      "resendButton": "Resend",
+      "resendingButton": "Sending...",
+      "resendSuccess": "A new code has been sent to your email!",
+      "returnToLogin": "Return to login",
+      "loading": "Loading...",
+      "error": {
+        "invalidCode": "Please enter the 6-digit code sent to your email.",
+        "noEmail": "No email address found. Please go back and register again.",
+        "resendFailed": "Failed to resend. Please try again.",
+        "unknown": "An unknown error occurred"
+      }
+    },
     "login": {
       "button": {
         "signingIn": "Signing in...",
         "signIn": "Sign in"
       },
       "error": {
-        "unknown": "An unknown error occurred"
+        "unknown": "An unknown error occurred",
+        "emailNotConfirmed": "Please verify your email before signing in. Check your inbox for the confirmation link.",
+        "invalidCredentials": "Invalid email or password. Please try again."
       },
       "link": {
         "forgotPassword": "Forgot your password?",
