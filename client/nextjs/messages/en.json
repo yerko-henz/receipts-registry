@@ -249,7 +249,13 @@
         "qty": "Qty",
         "price": "Price",
         "empty": "No recent receipts found."
-      }
+      },
+      "analysisResults": "Analysis Results",
+      "saveAll": "Save All",
+      "remove": "Remove",
+      "retry": "Retry",
+      "waiting": "Waiting to analyze...",
+      "processing": "Analyzing..."
     }
   },
   "storage": {

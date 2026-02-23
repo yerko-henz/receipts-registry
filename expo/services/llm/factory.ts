@@ -1,21 +1,31 @@
-import { ReceiptAnalysisProvider } from "./types";
-import { OpenRouterProvider } from "./OpenRouterProvider";
-import { DEFAULT_OPENROUTER_MODEL } from "./constants";
+import { ReceiptAnalysisProvider } from './types';
+import { GeminiProvider } from './GeminiProvider';
+import { OpenRouterProvider } from './OpenRouterProvider';
+import { DEFAULT_GEMINI_MODEL, DEFAULT_OPENROUTER_MODEL } from './constants';
 
-export const getLLMProvider = (model?: string): ReceiptAnalysisProvider => {
-  const providerType = process.env.EXPO_PUBLIC_LLM_PROVIDER || 'openrouter';
+export const getLLMProvider = (): ReceiptAnalysisProvider => {
+  const providerType = process.env.EXPO_PUBLIC_LLM_PROVIDER || 'gemini';
 
   switch (providerType.toLowerCase()) {
+    case 'gemini':
+      const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+      if (!geminiKey) {
+        console.warn('EXPO_PUBLIC_GEMINI_API_KEY is not set.');
+      }
+      return new GeminiProvider(geminiKey, DEFAULT_GEMINI_MODEL);
+
     case 'openrouter':
       const openRouterKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY || '';
       if (!openRouterKey) {
-          console.warn("EXPO_PUBLIC_OPENROUTER_API_KEY is not set.");
+        console.warn('EXPO_PUBLIC_OPENROUTER_API_KEY is not set.');
       }
-      return new OpenRouterProvider(openRouterKey, model || DEFAULT_OPENROUTER_MODEL);
+      return new OpenRouterProvider(openRouterKey, DEFAULT_OPENROUTER_MODEL);
+
+    // Future providers can be added here
+    // case 'openai':
+    //   return new OpenAIProvider(...);
 
     default:
-      // Default to OpenRouter for all cases to support all models via proxy
-      const defaultKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY || '';
-      return new OpenRouterProvider(defaultKey, model || DEFAULT_OPENROUTER_MODEL);
+      throw new Error(`Unsupported LLM provider: ${providerType}. Please check your EXPO_PUBLIC_LLM_PROVIDER environment variable.`);
   }
 };

@@ -5,6 +5,7 @@ import { useGlobal } from '@/lib/context/GlobalContext';
 import { analyzeReceiptAction } from '@/app/actions/analyze';
 import { createReceipt, uploadReceiptImage as uploadImageService } from '@/lib/services/receipts';
 import { ReceiptData } from '@/lib/types/receipt';
+import { RECEIPT_CATEGORIES, ReceiptCategory } from '@/constants/categories';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,20 +18,32 @@ import { useReceipts } from '@/lib/hooks/useReceipts';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
+type AnalysisStatus = 'pending' | 'processing' | 'completed' | 'error';
+
+interface FileAnalysis {
+  file: File;
+  status: AnalysisStatus;
+  result?: ReceiptData;
+  error?: string;
+}
+
+function isValidCategory(category: string): category is ReceiptCategory {
+  return RECEIPT_CATEGORIES.includes(category as ReceiptCategory);
+}
+
 export default function AnalyzePage() {
-  const { user, loading: globalLoading } = useGlobal();
+  const { user } = useGlobal();
   const t = useTranslations('dashboard.analyze');
   const router = useRouter();
 
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<ReceiptData | null>(null);
+  const [analyses, setAnalyses] = useState<FileAnalysis[]>([]);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const queryClient = useQueryClient();
 
-  // Fetch recently uploaded receipts (fixed list version)
+  // Fetch recently uploaded receipts
   const { data: recentData } = useReceipts(user?.id, 1, 3);
   const recentReceipts = recentData?.data || [];
 
@@ -41,60 +54,139 @@ export default function AnalyzePage() {
       queryClient.invalidateQueries({ queryKey: ['recent_receipts'] });
       router.push(`/dashboard/receipts`);
     },
-    onError: (err: any) => {
-      setError(err.message);
+    onError: (err: unknown) => {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to save receipt');
+      }
       setIsSaving(false);
     }
   });
 
-  const handleFileSelect = (selectedFile: File) => {
-    setFile(selectedFile);
+  const handleFileSelect = (selectedFiles: File[]) => {
     setError(null);
-    setResult(null);
 
-    // Auto-analyze on select
-    handleAnalyze(selectedFile);
+    // Initialize analyses for each file
+    const newAnalyses: FileAnalysis[] = selectedFiles.map((file) => ({
+      file,
+      status: 'pending'
+    }));
+    setAnalyses(newAnalyses);
+
+    // Auto-analyze all files
+    selectedFiles.forEach((file, index) => {
+      analyzeFile(file, index);
+    });
   };
 
-  const handleAnalyze = (fileToAnalyze: File) => {
-    setError(null);
+  const analyzeFile = (fileToAnalyze: File, index: number) => {
+    // Update status to processing
+    setAnalyses((prev) => prev.map((analysis, i) => (i === index ? { ...analysis, status: 'processing' } : analysis)));
+
     const formData = new FormData();
     formData.append('file', fileToAnalyze);
 
     startTransition(async () => {
-      const resp = await analyzeReceiptAction(formData);
-      if (resp.error) {
-        setError(resp.error);
-      } else if (resp.data) {
-        setResult(resp.data);
+      try {
+        const resp = await analyzeReceiptAction(formData);
+        if (resp.error) {
+          setAnalyses((prev) => prev.map((analysis, i) => (i === index ? { ...analysis, status: 'error', error: resp.error } : analysis)));
+        } else if (resp.data) {
+          setAnalyses((prev) => prev.map((analysis, i) => (i === index ? { ...analysis, status: 'completed', result: resp.data } : analysis)));
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setAnalyses((prev) => prev.map((analysis, i) => (i === index ? { ...analysis, status: 'error', error: message } : analysis)));
       }
     });
   };
 
-  const handleSave = async () => {
-    if (!result || !file) return;
+  const handleSave = async (index: number) => {
+    const analysis = analyses[index];
+    if (!analysis.result || !analysis.file) return;
     setIsSaving(true);
 
     try {
-      const publicUrl = await uploadImageService(file);
+      const publicUrl = await uploadImageService(analysis.file);
+
+      // Ensure category is valid
+      const category = isValidCategory(analysis.result.category || '') ? (analysis.result.category as ReceiptCategory) : 'Other';
 
       await createMutation.mutateAsync({
-        merchant_name: result.merchantName,
-        total: result.total,
-        currency: result.currency,
-        date: result.date,
-        category: result.category as any,
-        tax_amount: result.taxAmount || 0,
+        merchant_name: analysis.result.merchantName,
+        total: analysis.result.total,
+        currency: analysis.result.currency,
+        date: analysis.result.date,
+        category,
+        tax_amount: analysis.result.taxAmount ?? 0,
         image_url: publicUrl,
-        raw_ai_output: result,
-        items: result.items
+        raw_ai_output: analysis.result,
+        items: analysis.result.items
       });
-    } catch (err: any) {
+
+      // Remove saved file from the list
+      setAnalyses((prev) => prev.filter((_, i) => i !== index));
+    } catch (err: unknown) {
       console.error('Save Error', err);
-      setError(err.message);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to save receipt');
+      }
       setIsSaving(false);
     }
   };
+
+  const handleSaveAll = async () => {
+    const completedAnalyses = analyses.filter((a) => a.status === 'completed' && a.result);
+    if (completedAnalyses.length === 0) return;
+
+    setIsSaving(true);
+
+    try {
+      // Save all completed receipts one by one
+      for (const analysis of completedAnalyses) {
+        if (!analysis.result || !analysis.file) continue;
+
+        const publicUrl = await uploadImageService(analysis.file);
+
+        // Ensure category is valid
+        const category = isValidCategory(analysis.result.category || '') ? (analysis.result.category as ReceiptCategory) : 'Other';
+
+        await createMutation.mutateAsync({
+          merchant_name: analysis.result.merchantName,
+          total: analysis.result.total,
+          currency: analysis.result.currency,
+          date: analysis.result.date,
+          category,
+          tax_amount: analysis.result.taxAmount ?? 0,
+          image_url: publicUrl,
+          raw_ai_output: analysis.result,
+          items: analysis.result.items
+        });
+      }
+
+      // Clear all after successful batch save
+      setAnalyses([]);
+    } catch (err: unknown) {
+      console.error('Batch Save Error', err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to save receipts');
+      }
+      setIsSaving(false);
+    }
+  };
+
+  const handleRetry = (index: number) => {
+    if (analyses[index]) {
+      analyzeFile(analyses[index].file, index);
+    }
+  };
+
+  const hasCompleted = analyses.some((a) => a.status === 'completed');
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 py-10 px-6">
@@ -104,9 +196,9 @@ export default function AnalyzePage() {
         <p className="text-muted-foreground text-lg">{t('dragDrop')}</p>
       </div>
 
-      {/* Main Uploader / Result area */}
+      {/* Main Uploader / Results area */}
       <div className="space-y-8">
-        {!result ? (
+        {analyses.length === 0 ? (
           <FileUploader
             onFileSelect={handleFileSelect}
             isLoading={isPending}
@@ -118,81 +210,122 @@ export default function AnalyzePage() {
             }}
           />
         ) : (
-          <Card className="overflow-hidden border-2 border-primary/20 bg-card shadow-lg animate-in fade-in zoom-in duration-300">
-            <CardContent className="p-0">
-              <div className="p-8 space-y-8">
-                <div className="flex items-center justify-between border-b pb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-full">
-                      <CheckCircle className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-foreground">{t('success')}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t('integrity')}: <span className={result.integrityScore && result.integrityScore > 80 ? 'text-green-600 font-bold' : 'text-yellow-600 font-bold'}>{result.integrityScore}%</span>
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => setResult(null)}>
-                    {t('label')}
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('merchant')}</span>
-                    <p className="text-lg font-bold text-foreground">{result.merchantName}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('date')}</span>
-                    <p className="text-lg font-bold text-foreground">{result.date}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('total')}</span>
-                    <p className="text-2xl font-black text-primary">
-                      {result.total} {result.currency}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('category')}</span>
-                    <p className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">{result.category}</p>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border bg-muted/30 overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-muted/50">
-                      <TableRow>
-                        <TableHead className="font-bold">{t('table.item')}</TableHead>
-                        <TableHead className="text-right font-bold w-[100px]">{t('table.qty')}</TableHead>
-                        <TableHead className="text-right font-bold w-[150px]">{t('table.price')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {result.items.map((item, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell className="text-right">{item.quantity}</TableCell>
-                          <TableCell className="text-right font-mono font-bold">{item.totalPrice}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <Button onClick={handleSave} className="w-full h-14 text-lg font-bold shadow-lg" disabled={isSaving}>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">{t('analysisResults')}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {analyses.filter((a) => a.status === 'completed').length} of {analyses.length} completed
+                </p>
+              </div>
+              {hasCompleted && (
+                <Button onClick={handleSaveAll} disabled={isSaving} className="bg-green-600 hover:bg-green-700 text-white">
                   {isSaving ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      {t('saving')}
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
                     </>
                   ) : (
-                    t('save')
+                    <>Save All ({analyses.filter((a) => a.status === 'completed').length})</>
                   )}
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {analyses.map((analysis, index) => (
+                <Card key={index} className="overflow-hidden border">
+                  <CardContent className="p-0">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          {analysis.status === 'pending' && <Clock className="h-5 w-5 text-muted-foreground" />}
+                          {analysis.status === 'processing' && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+                          {analysis.status === 'completed' && <CheckCircle className="h-5 w-5 text-green-600" />}
+                          {analysis.status === 'error' && <AlertCircle className="h-5 w-5 text-destructive" />}
+
+                          <div>
+                            <h3 className="font-semibold text-foreground">{analysis.file.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {analysis.status === 'pending' && 'Waiting to analyze...'}
+                              {analysis.status === 'processing' && 'Analyzing...'}
+                              {analysis.status === 'completed' && `${analysis.result?.merchantName} - ${analysis.result?.total} ${analysis.result?.currency}`}
+                              {analysis.status === 'error' && analysis.error}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {analysis.status === 'completed' && (
+                            <Button onClick={() => handleSave(index)} disabled={isSaving} size="sm">
+                              Save
+                            </Button>
+                          )}
+                          {analysis.status === 'error' && (
+                            <Button onClick={() => handleRetry(index)} size="sm" variant="outline">
+                              Retry
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={() => setAnalyses((prev) => prev.filter((_, i) => i !== index))}>
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+
+                      {analysis.status === 'completed' && analysis.result && (
+                        <div className="mt-4 pt-4 border-t">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">{t('merchant')}</span>
+                              <p className="font-medium">{analysis.result.merchantName}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t('date')}</span>
+                              <p className="font-medium">{analysis.result.date}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t('total')}</span>
+                              <p className="font-bold text-primary">
+                                {analysis.result.total.toFixed(2)} {analysis.result.currency}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t('category')}</span>
+                              <p className="font-medium">{analysis.result.category}</p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4">
+                            <h4 className="text-sm font-semibold mb-2">{t('table.items')}</h4>
+                            <div className="rounded-lg border bg-muted/30 overflow-hidden max-h-48 overflow-y-auto">
+                              <Table>
+                                <TableHeader className="bg-muted/50">
+                                  <TableRow>
+                                    <TableHead className="font-bold text-xs">{t('table.item')}</TableHead>
+                                    <TableHead className="text-right font-bold text-xs w-[80px]">{t('table.qty')}</TableHead>
+                                    <TableHead className="text-right font-bold text-xs w-[120px]">{t('table.price')}</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {analysis.result.items.map((item, idx) => (
+                                    <TableRow key={idx}>
+                                      <TableCell className="text-sm font-medium">{item.name}</TableCell>
+                                      <TableCell className="text-right text-sm">{item.quantity}</TableCell>
+                                      <TableCell className="text-right font-mono text-sm font-bold">{item.totalPrice.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Error Message */}
@@ -208,7 +341,7 @@ export default function AnalyzePage() {
       </div>
 
       {/* Recently Uploaded Section */}
-      {!result && !isPending && (
+      {analyses.length === 0 && (
         <div className="space-y-6 pt-12 border-t">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -241,6 +374,7 @@ export default function AnalyzePage() {
                         currency: receipt.currency || 'CLP'
                       }).format(receipt.total_amount || 0)}
                     </span>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-primary/70 bg-primary/5 px-2 py-0.5 rounded-full">{receipt.category}</span>
                     <span className="text-[10px] uppercase font-bold tracking-widest text-primary/70 bg-primary/5 px-2 py-0.5 rounded-full">{receipt.category}</span>
                   </div>
                 </div>

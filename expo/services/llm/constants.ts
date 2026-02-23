@@ -1,7 +1,6 @@
-export const OPENROUTER_MODELS = [
-  "google/gemini-2.0-flash-001",
-  "anthropic/claude-3.5-sonnet",
-  "openai/gpt-4o-mini",
-];
+export const GEMINI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 
-export const DEFAULT_OPENROUTER_MODEL = OPENROUTER_MODELS[0];
+export const OPENROUTER_GEMINI_MODELS = ['google/gemini-2.5-flash-lite', 'google/gemini-2.5-flash', 'google/gemini-1.5-flash', 'google/gemini-1.5-pro'];
+
+export const DEFAULT_GEMINI_MODEL = GEMINI_MODELS[0];
+export const DEFAULT_OPENROUTER_MODEL = OPENROUTER_GEMINI_MODELS[0];

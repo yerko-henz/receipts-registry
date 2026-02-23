@@ -249,7 +249,13 @@
         "qty": "Cant.",
         "price": "Precio",
         "empty": "No se encontraron recibos recientes."
-      }
+      },
+      "analysisResults": "Resultados del Análisis",
+      "saveAll": "Guardar Todo",
+      "remove": "Eliminar",
+      "retry": "Reintentar",
+      "waiting": "Esperando análisis...",
+      "processing": "Analizando..."
     }
   },
   "storage": {
