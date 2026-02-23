@@ -1,109 +1,103 @@
-"use client";
-import React, { useMemo, useEffect } from "react";
-import { useGlobal } from "@/lib/context/GlobalContext";
-import {
-  DollarSign,
-  FileCheck,
-  History,
-  TrendingUp,
-} from "lucide-react";
-import { useTranslations } from "next-intl";
-import { createSPASassClientAuthenticated as createSPASassClient } from "@/lib/supabase/client";
-import ReceiptActivityChart from "@/components/dashboard/ReceiptActivityChart";
-import CategoryBreakdown from "@/components/dashboard/CategoryBreakdown";
-import StatCard from "@/components/dashboard/StatCard";
-import { groupReceiptsByDay } from "@/lib/date";
-import { useRecentReceipts } from "@/lib/hooks/useReceipts";
-import { formatPrice } from "@/lib/utils/currency";
-import { startOfWeek, startOfMonth, endOfMonth, subMonths, parseISO, isAfter, isBefore, isSameDay } from "date-fns";
+'use client';
+import React, { useMemo, useEffect } from 'react';
+import { useGlobal } from '@/lib/context/GlobalContext';
+import { DollarSign, FileCheck, History, TrendingUp } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { createSPASassClientAuthenticated as createSPASassClient } from '@/lib/supabase/client';
+import ReceiptActivityChart from '@/components/dashboard/ReceiptActivityChart';
+import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
+import StatCard from '@/components/dashboard/StatCard';
+import { groupReceiptsByDay } from '@/lib/date';
+import { useRecentReceipts } from '@/lib/hooks/useReceipts';
+import { formatPrice } from '@/lib/utils/currency';
+import { startOfWeek, startOfMonth, endOfMonth, subMonths, parseISO, isAfter, isBefore, isSameDay } from 'date-fns';
 
 export default function DashboardContent() {
   const { loading, user, region } = useGlobal();
-  const t = useTranslations("dashboard");
+  const t = useTranslations('dashboard');
   const [viewMode, setViewMode] = React.useState<'weekly' | 'monthly'>('weekly');
-  
+
   // Fetch 90 days to ensure we have enough history for previous months
   const { data: recentReceipts = [] } = useRecentReceipts(user?.id, 90);
-  
+
   const dailyData = useMemo(() => {
     // Weekly: Rolling 7 Days
     // Monthly: Calendar Month to Date (e.g., Feb 1 to Today)
     const days = viewMode === 'weekly' ? 7 : new Date().getDate();
     return groupReceiptsByDay(recentReceipts, days, 'en');
   }, [recentReceipts, viewMode]);
-  
+
   const stats = useMemo(() => {
     // 1. Derive main stats directly from dailyData (Chart Data) to ensure 100% consistency
     const totalSpent = dailyData.reduce((sum, day) => sum + day.totalSpent, 0);
     const itemsProcessed = dailyData.reduce((sum, day) => sum + day.count, 0);
-    
+
     // Find today's stats from dailyData
-    const todayData = dailyData.find(d => d.isToday);
+    const todayData = dailyData.find((d) => d.isToday);
     const newScansToday = todayData ? todayData.count : 0;
 
     // 2. Calculate Trends
     const now = new Date();
-    
-    const getPreviousPeriodReceipts = () => {
-        if (viewMode === 'weekly') {
-            // Compare vs previous 7 days
-            const startDate = new Date(now);
-            startDate.setDate(now.getDate() - 13); // 14 days ago (7 days current + 7 days prev)
-            startDate.setHours(0, 0, 0, 0);
 
-            const endDate = new Date(now);
-            endDate.setDate(now.getDate() - 7); // 7 days ago
-            endDate.setHours(23, 59, 59, 999);
-            
-            return recentReceipts.filter(r => {
-                const dateStr = r.transaction_date || r.created_at;
-                if (!dateStr) return false;
-                const rDate = parseISO(dateStr);
-                return isAfter(rDate, startDate) && (isBefore(rDate, endDate) || isSameDay(rDate, endDate));
-            });
-        } else {
-            // Compare vs Previous Calendar Month (Full)
-            const prevMonthDate = subMonths(now, 1);
-            const startDate = startOfMonth(prevMonthDate);
-            const endDate = endOfMonth(prevMonthDate);
-            
-            return recentReceipts.filter(r => {
-                const dateStr = r.transaction_date || r.created_at;
-                if (!dateStr) return false;
-                const rDate = parseISO(dateStr);
-                return (isAfter(rDate, startDate) || isSameDay(rDate, startDate)) && 
-                       (isBefore(rDate, endDate) || isSameDay(rDate, endDate));
-            });
-        }
+    const getPreviousPeriodReceipts = () => {
+      if (viewMode === 'weekly') {
+        // Compare vs previous 7 days
+        const startDate = new Date(now);
+        startDate.setDate(now.getDate() - 13); // 14 days ago (7 days current + 7 days prev)
+        startDate.setHours(0, 0, 0, 0);
+
+        const endDate = new Date(now);
+        endDate.setDate(now.getDate() - 7); // 7 days ago
+        endDate.setHours(23, 59, 59, 999);
+
+        return recentReceipts.filter((r) => {
+          const dateStr = r.transaction_date || r.created_at;
+          if (!dateStr) return false;
+          const rDate = parseISO(dateStr);
+          return isAfter(rDate, startDate) && (isBefore(rDate, endDate) || isSameDay(rDate, endDate));
+        });
+      } else {
+        // Compare vs Previous Calendar Month (Full)
+        const prevMonthDate = subMonths(now, 1);
+        const startDate = startOfMonth(prevMonthDate);
+        const endDate = endOfMonth(prevMonthDate);
+
+        return recentReceipts.filter((r) => {
+          const dateStr = r.transaction_date || r.created_at;
+          if (!dateStr) return false;
+          const rDate = parseISO(dateStr);
+          return (isAfter(rDate, startDate) || isSameDay(rDate, startDate)) && (isBefore(rDate, endDate) || isSameDay(rDate, endDate));
+        });
+      }
     };
 
     const previousReceipts = getPreviousPeriodReceipts();
-    
+
     const calculateStats = (receipts: typeof recentReceipts) => ({
-        totalSpent: receipts.reduce((sum, r) => sum + (r.total_amount || 0), 0),
-        count: receipts.length
+      totalSpent: receipts.reduce((sum, r) => sum + (r.total_amount || 0), 0),
+      count: receipts.length
     });
 
     const previous = calculateStats(previousReceipts);
 
     const calculateTrend = (curr: number, prev: number) => {
-        if (prev === 0) return null;
-        return ((curr - prev) / prev) * 100;
+      if (prev === 0) return null;
+      return ((curr - prev) / prev) * 100;
     };
 
     // Current is statistically equal to what's in dailyData (derived above)
-    // but useful to calculate strictly for trend if needed. 
+    // but useful to calculate strictly for trend if needed.
     // We already have 'totalSpent' and 'itemsProcessed' for current.
-    
+
     const spendTrend = calculateTrend(totalSpent, previous.totalSpent);
     const countTrend = calculateTrend(itemsProcessed, previous.count);
 
     return {
-        totalSpent,       
-        itemsProcessed,   
-        newScansToday,    
-        spendTrend,       
-        countTrend        
+      totalSpent,
+      itemsProcessed,
+      newScansToday,
+      spendTrend,
+      countTrend
     };
   }, [recentReceipts, dailyData, viewMode]);
 
@@ -115,21 +109,17 @@ export default function DashboardContent() {
     const supabase = await createSPASassClient();
     const client = supabase.getSupabaseClient();
     const {
-      data: { user: userApp },
+      data: { user: userApp }
     } = await client.auth.getUser();
 
     if (!userApp) return;
-    const { data: existing } = await client
-      .from("users")
-      .select("id")
-      .eq("id", userApp.id)
-      .single();
+    const { data: existing } = await client.from('users').select('id').eq('id', userApp.id).single();
 
     if (!existing) {
-      await client.from("users").insert({
+      await client.from('users').insert({
         id: userApp.id,
-        slug: userApp.user_metadata.slug || userApp.id, // Fallback if slug missing
-        display_name: userApp.user_metadata.slug || 'User',
+        slug: userApp.user_metadata.slug || userApp.id,
+        display_name: userApp.user_metadata.full_name || userApp.user_metadata.name || 'User'
       });
     }
   };
@@ -170,32 +160,17 @@ export default function DashboardContent() {
           subtextTestId={`stat-items-processed-subtext-${viewMode}`}
         />
 
-        <StatCard
-          title={t('stats.recentActivity')}
-          value={`${stats.newScansToday} ${t('stats.newScans')}`}
-          icon={History}
-          className="shadow-sm"
-          subtext={t('stats.today')}
-          data-testid="stat-recent-activity"
-        />
+        <StatCard title={t('stats.recentActivity')} value={`${stats.newScansToday} ${t('stats.newScans')}`} icon={History} className="shadow-sm" subtext={t('stats.today')} data-testid="stat-recent-activity" />
       </div>
 
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-3">
-           <div className="lg:col-span-2" data-testid="receipt-activity-chart">
-               <ReceiptActivityChart 
-                  data={dailyData} 
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-               />
-           </div>
-           <div data-testid="category-breakdown-container">
-               <CategoryBreakdown 
-                    data={dailyData} 
-                    viewMode={viewMode} 
-                    testId={`category-breakdown-chart-${viewMode}`}
-               />
-           </div>
+        <div className="lg:col-span-2" data-testid="receipt-activity-chart">
+          <ReceiptActivityChart data={dailyData} viewMode={viewMode} onViewModeChange={setViewMode} />
+        </div>
+        <div data-testid="category-breakdown-container">
+          <CategoryBreakdown data={dailyData} viewMode={viewMode} testId={`category-breakdown-chart-${viewMode}`} />
+        </div>
       </div>
     </div>
   );

@@ -42,7 +42,7 @@ import {
   Eye
 } from "lucide-react";
 
-import { RECEIPT_CATEGORIES } from "@/constants/categories";
+import { RECEIPT_CATEGORIES, CATEGORY_COLORS, ReceiptCategory } from "@/constants/categories";
 import { ENABLE_TRANSACTION_DATE_FILTER } from "@/constants/featureFlags";
 import { syncReceiptsToSheet, initGoogleAuth } from "@/lib/services/google-sheets";
 import ReceiptDetailsModal from "@/components/dashboard/ReceiptDetailsModal";
@@ -111,7 +111,7 @@ export default function ReceiptsPage() {
   const categoryLabels = React.useMemo(() => {
     return RECEIPT_CATEGORIES.reduce((acc, cat) => {
       const lowerCat = cat.toLowerCase();
-      if (['food', 'transport', 'utilities', 'entertainment', 'shopping', 'health', 'other'].includes(lowerCat)) {
+      if (['food', 'dining', 'transport', 'utilities', 'entertainment', 'shopping', 'groceries', 'gas', 'health', 'other'].includes(lowerCat)) {
         acc[cat] = tCategories(lowerCat as any);
       } else {
         acc[cat] = cat;
@@ -122,17 +122,8 @@ export default function ReceiptsPage() {
 
   // Helper for category badge colors
   const getCategoryColor = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'dining': return "bg-orange-100 text-orange-700 hover:bg-orange-100";
-      case 'transport': return "bg-blue-100 text-blue-700 hover:bg-blue-100";
-      case 'shopping': return "bg-purple-100 text-purple-700 hover:bg-purple-100";
-      case 'groceries': return "bg-green-100 text-green-700 hover:bg-green-100";
-      case 'entertainment': return "bg-red-100 text-red-700 hover:bg-red-100";
-      case 'gas': return "bg-gray-100 text-gray-700 hover:bg-gray-100";
-      case 'utilities': return "bg-yellow-100 text-yellow-700 hover:bg-yellow-100";
-      case 'health': return "bg-teal-100 text-teal-700 hover:bg-teal-100";
-      default: return "bg-muted text-muted-foreground hover:bg-muted";
-    }
+    const cat = (RECEIPT_CATEGORIES.find(c => c.toLowerCase() === category.toLowerCase()) || 'Other') as ReceiptCategory;
+    return CATEGORY_COLORS[cat];
   };
 
   const handleSort = (key: string) => {
@@ -411,7 +402,14 @@ export default function ReceiptsPage() {
                                 <span className="font-semibold text-foreground" data-testid={`merchant-${receipt.id}`}>{receipt.merchant_name}</span>
                             </TableCell>
                             <TableCell>
-                                <Badge variant="secondary" className={`${getCategoryColor(receipt.category || 'Other')} border-none px-2 py-0.5`}>
+                                <Badge 
+                                  variant="secondary" 
+                                  className="border-none px-2 py-0.5"
+                                  style={{
+                                    backgroundColor: `${getCategoryColor(receipt.category || 'Other')}20`,
+                                    color: getCategoryColor(receipt.category || 'Other'),
+                                  }}
+                                >
                                     {displayCategory}
                                 </Badge>
                             </TableCell>

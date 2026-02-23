@@ -59,8 +59,8 @@ describe('GoogleSigninButton', () => {
       selector({ showAlert: mockShowAlert })
     );
     // Default happy path mocks
-    (GoogleSignin.hasPlayServices as jest.Mock).mockResolvedValue(true);
-    (GoogleSignin.signIn as jest.Mock).mockResolvedValue({
+    (GoogleSignin!.hasPlayServices as jest.Mock).mockResolvedValue(true);
+    (GoogleSignin!.signIn as jest.Mock).mockResolvedValue({
       data: { idToken: 'valid-token' }
     });
     (supabase.auth.signInWithIdToken as jest.Mock).mockResolvedValue({
@@ -80,8 +80,8 @@ describe('GoogleSigninButton', () => {
     fireEvent.press(getByText('auth.continueWithGoogle'));
 
     await waitFor(() => {
-        expect(GoogleSignin.hasPlayServices).toHaveBeenCalled();
-        expect(GoogleSignin.signIn).toHaveBeenCalled();
+        expect(GoogleSignin!.hasPlayServices).toHaveBeenCalled();
+        expect(GoogleSignin!.signIn).toHaveBeenCalled();
         expect(supabase.auth.signInWithIdToken).toHaveBeenCalledWith({
             provider: 'google',
             token: 'valid-token'
@@ -110,7 +110,7 @@ describe('GoogleSigninButton', () => {
   });
 
   it('handles user cancellation gracefully', async () => {
-    (GoogleSignin.signIn as jest.Mock).mockRejectedValue({
+    (GoogleSignin!.signIn as jest.Mock).mockRejectedValue({
         code: 'SIGN_IN_CANCELLED'
     });
 
@@ -118,13 +118,13 @@ describe('GoogleSigninButton', () => {
     fireEvent.press(getByText('auth.continueWithGoogle'));
 
     // Should NOT alert or redirect
-    await waitFor(() => expect(GoogleSignin.signIn).toHaveBeenCalled());
+    await waitFor(() => expect(GoogleSignin!.signIn).toHaveBeenCalled());
     expect(mockShowAlert).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('handles Play Services unavailable', async () => {
-     (GoogleSignin.signIn as jest.Mock).mockRejectedValue({
+     (GoogleSignin!.signIn as jest.Mock).mockRejectedValue({
         code: 'PLAY_SERVICES_NOT_AVAILABLE'
     });
 
@@ -140,7 +140,7 @@ describe('GoogleSigninButton', () => {
   });
 
   it('handles generic errors', async () => {
-    (GoogleSignin.signIn as jest.Mock).mockRejectedValue(new Error('Random failure'));
+    (GoogleSignin!.signIn as jest.Mock).mockRejectedValue(new Error('Random failure'));
 
     const { getByText } = render(<GoogleSigninButton />);
     fireEvent.press(getByText('auth.continueWithGoogle'));

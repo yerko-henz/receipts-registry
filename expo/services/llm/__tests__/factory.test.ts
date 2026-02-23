@@ -1,16 +1,17 @@
-// Mock GeminiProvider before importing
-jest.mock('../GeminiProvider', () => ({
-  GeminiProvider: jest.fn().mockImplementation(() => ({
+// Mock OpenRouterProvider before importing
+jest.mock('../OpenRouterProvider', () => ({
+  OpenRouterProvider: jest.fn().mockImplementation(() => ({
     analyzeReceipt: jest.fn(),
   })),
 }));
 
 import { getLLMProvider } from '../factory';
-import { GeminiProvider } from '../GeminiProvider';
+import { OpenRouterProvider } from '../OpenRouterProvider';
 
 describe('llm/factory', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.EXPO_PUBLIC_LLM_PROVIDER = 'openrouter';
   });
 
   it('returns a provider with analyzeReceipt method', () => {
@@ -19,8 +20,8 @@ describe('llm/factory', () => {
     expect(typeof provider.analyzeReceipt).toBe('function');
   });
 
-  it('creates GeminiProvider instance', () => {
+  it('creates OpenRouterProvider instance', () => {
     getLLMProvider();
-    expect(GeminiProvider).toHaveBeenCalled();
+    expect(OpenRouterProvider).toHaveBeenCalled();
   });
 });
