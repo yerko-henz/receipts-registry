@@ -1,7 +1,7 @@
 'use client';
 import React, { useMemo, useEffect } from 'react';
 import { useGlobal } from '@/lib/context/GlobalContext';
-import { DollarSign, FileCheck, History, TrendingUp } from 'lucide-react';
+import { FileCheck, History, TrendingUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { createSPASassClientAuthenticated as createSPASassClient } from '@/lib/supabase/client';
 import ReceiptActivityChart from '@/components/dashboard/ReceiptActivityChart';
@@ -10,7 +10,8 @@ import StatCard from '@/components/dashboard/StatCard';
 import { groupReceiptsByDay } from '@/lib/date';
 import { useRecentReceipts } from '@/lib/hooks/useReceipts';
 import { formatPrice } from '@/lib/utils/currency';
-import { startOfWeek, startOfMonth, endOfMonth, subMonths, parseISO, isAfter, isBefore, isSameDay } from 'date-fns';
+import { startOfMonth, endOfMonth, subMonths, parseISO, isAfter, isBefore, isSameDay } from 'date-fns';
+import { ENABLE_TRANSACTION_DATE_FILTER } from '@/constants/featureFlags';
 
 export default function DashboardContent() {
   const { loading, user, region } = useGlobal();
@@ -24,7 +25,8 @@ export default function DashboardContent() {
     // Weekly: Rolling 7 Days
     // Monthly: Calendar Month to Date (e.g., Feb 1 to Today)
     const days = viewMode === 'weekly' ? 7 : new Date().getDate();
-    return groupReceiptsByDay(recentReceipts, days, 'en');
+    const dateMode = ENABLE_TRANSACTION_DATE_FILTER ? 'transaction' : 'created';
+    return groupReceiptsByDay(recentReceipts, days, 'en', dateMode);
   }, [recentReceipts, viewMode]);
 
   const stats = useMemo(() => {
