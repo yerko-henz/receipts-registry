@@ -255,7 +255,8 @@
       "remove": "Eliminar",
       "retry": "Reintentar",
       "waiting": "Esperando análisis...",
-      "processing": "Analizando..."
+      "processing": "Analizando...",
+      "viewAll": "Ver todo"
     }
   },
   "storage": {

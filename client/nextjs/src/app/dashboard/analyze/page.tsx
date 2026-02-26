@@ -5,8 +5,9 @@ import { useGlobal } from '@/lib/context/GlobalContext';
 import { analyzeReceiptAction } from '@/app/actions/analyze';
 import { createReceipt, uploadReceiptImage as uploadImageService } from '@/lib/services/receipts';
 import { ReceiptData } from '@/lib/types/receipt';
-import { RECEIPT_CATEGORIES, ReceiptCategory } from '@/constants/categories';
+import { RECEIPT_CATEGORIES, ReceiptCategory, CATEGORY_COLORS } from '@/constants/categories';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, CheckCircle, AlertCircle, Clock, ArrowRight } from 'lucide-react';
@@ -17,6 +18,7 @@ import { FileUploader } from '@/components/FileUploader';
 import { useReceipts } from '@/lib/hooks/useReceipts';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type AnalysisStatus = 'pending' | 'processing' | 'completed' | 'error';
 
@@ -34,6 +36,7 @@ function isValidCategory(category: string): category is ReceiptCategory {
 export default function AnalyzePage() {
   const { user } = useGlobal();
   const t = useTranslations('dashboard.analyze');
+  const tCategories = useTranslations('dashboard');
   const router = useRouter();
 
   const [analyses, setAnalyses] = useState<FileAnalysis[]>([]);
@@ -44,8 +47,8 @@ export default function AnalyzePage() {
   const queryClient = useQueryClient();
 
   // Fetch recently uploaded receipts
-  const { data: recentData } = useReceipts(user?.id, 1, 3);
-  const recentReceipts = recentData?.data || [];
+  const recentDataQuery = useReceipts(user?.id, 1, 3);
+  const recentReceipts = recentDataQuery.data?.data || [];
 
   const createMutation = useMutation({
     mutationFn: createReceipt,
@@ -349,15 +352,31 @@ export default function AnalyzePage() {
               {t('recentlyUploaded')}
             </h2>
             <Link href="/dashboard/receipts">
-              <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/5">
-                View all receipts
+              <Button variant="outline" size="sm" className="hover:bg-primary/5">
+                {t('viewAll')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
 
           <div className="grid gap-4">
-            {recentReceipts.length > 0 ? (
+            {recentDataQuery.isLoading ? (
+              Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 rounded-xl border bg-card">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="text-right flex flex-col items-end gap-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-3 w-16 rounded-full" />
+                  </div>
+                </div>
+              ))
+            ) : recentReceipts.length > 0 ? (
               recentReceipts.map((receipt) => (
                 <div key={receipt.id} className="flex items-center justify-between p-4 rounded-xl border bg-card hover:border-primary/40 hover:shadow-md transition-all group">
                   <div className="flex items-center gap-4">
@@ -374,8 +393,23 @@ export default function AnalyzePage() {
                         currency: receipt.currency || 'CLP'
                       }).format(receipt.total_amount || 0)}
                     </span>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-primary/70 bg-primary/5 px-2 py-0.5 rounded-full">{receipt.category}</span>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-primary/70 bg-primary/5 px-2 py-0.5 rounded-full">{receipt.category}</span>
+                    {(() => {
+                      const categoryKey = receipt.category as ReceiptCategory;
+                      const categoryColor = CATEGORY_COLORS[categoryKey] || CATEGORY_COLORS.Other;
+                      const categoryName = tCategories(`categories.${receipt.category.toLowerCase()}`, { defaultValue: receipt.category });
+                      return (
+                        <Badge
+                          variant="secondary"
+                          className="border-none px-2 py-0.5"
+                          style={{
+                            backgroundColor: `${categoryColor}20`,
+                            color: categoryColor
+                          }}
+                        >
+                          {categoryName}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                 </div>
               ))

@@ -255,7 +255,8 @@
       "remove": "Remove",
       "retry": "Retry",
       "waiting": "Waiting to analyze...",
-      "processing": "Analyzing..."
+      "processing": "Analyzing...",
+      "viewAll": "View all"
     }
   },
   "storage": {

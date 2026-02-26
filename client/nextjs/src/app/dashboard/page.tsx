@@ -144,7 +144,7 @@ export default function DashboardContent() {
           icon={TrendingUp}
           className="shadow-sm"
           trend={stats.spendTrend !== null ? `${stats.spendTrend > 0 ? '+' : ''}${stats.spendTrend.toFixed(1)}%` : undefined}
-          subtext={viewMode === 'weekly' ? t('stats.vsLastWeek') : t('stats.vsLastMonth')}
+          subtext={stats.spendTrend !== null ? (viewMode === 'weekly' ? t('stats.vsLastWeek') : t('stats.vsLastMonth')) : undefined}
           trendType={stats.spendTrend === null || stats.spendTrend === 0 ? 'neutral' : stats.spendTrend > 0 ? 'positive' : 'negative'}
           data-testid="stat-total-spent"
           subtextTestId={`stat-total-spent-subtext-${viewMode}`}
@@ -156,7 +156,7 @@ export default function DashboardContent() {
           icon={FileCheck}
           className="shadow-sm"
           trend={stats.countTrend !== null ? `${stats.countTrend > 0 ? '+' : ''}${stats.countTrend.toFixed(1)}%` : undefined}
-          subtext={viewMode === 'weekly' ? t('stats.vsLastWeek') : t('stats.vsLastMonth')}
+          subtext={stats.countTrend !== null ? (viewMode === 'weekly' ? t('stats.vsLastWeek') : t('stats.vsLastMonth')) : undefined}
           trendType={stats.countTrend === null || stats.countTrend === 0 ? 'neutral' : stats.countTrend > 0 ? 'positive' : 'negative'}
           data-testid="stat-items-processed"
           subtextTestId={`stat-items-processed-subtext-${viewMode}`}
