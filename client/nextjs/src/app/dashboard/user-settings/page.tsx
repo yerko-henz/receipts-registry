@@ -4,8 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { createSPASassClientAuthenticated as createSPASassClient } from '@/lib/supabase/client';
-import { Key, User, CheckCircle, FileSpreadsheet, Globe, MapPin, Palette, Mail, Loader2, Link as LinkIcon, Check, Trash2 } from 'lucide-react';
-import { MFASetup } from '@/components/MFASetup';
+import { Key, User, CheckCircle, Globe, MapPin, Mail, Loader2, Trash2, X } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import Script from 'next/script';
 import { connectToGoogleSheets, initGoogleAuth } from '@/lib/services/google-sheets';
@@ -16,6 +15,7 @@ import { getAllReceiptsForSync } from '@/lib/services/receipts';
 import { syncReceiptsToSheet } from '@/lib/services/google-sheets';
 import { Label } from '@/components/ui/label';
 import { useModal } from '@/lib/context/ModalContext';
+import { Switch } from '@/components/ui/switch';
 
 export default function UserSettingsPage() {
   const { user, loading: globalLoading, region, setRegion } = useGlobal();
@@ -34,28 +34,43 @@ export default function UserSettingsPage() {
   // Google Sheets State
   const [sheetId, setSheetId] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
 
   // General State
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  // Password modal–only error (success shows on page)
   const [passwordError, setPasswordError] = useState('');
 
+  // Load settings on mount
   useEffect(() => {
     if (user?.id) {
       const storedId = localStorage.getItem(`google_sheet_id_${user.id}`);
       setSheetId(storedId || null);
+      const autoSync = localStorage.getItem(`auto_sync_${user.id}`);
+      setAutoSyncEnabled(autoSync === 'true');
     }
   }, [user]);
 
-  const handleInitialSync = async (spreadsheetId: string) => {
+  const handleToggleAutoSync = (checked: boolean) => {
+    if (!user?.id) return;
+
+    setAutoSyncEnabled(checked);
+    localStorage.setItem(`auto_sync_${user.id}`, checked ? 'true' : 'false');
+
+    if (checked) {
+      setSuccess(t('googleSheets.autoSyncEnabled') || 'Auto-sync enabled');
+    } else {
+      setSuccess(t('googleSheets.autoSyncDisabled') || 'Auto-sync disabled');
+    }
+  };
+
+  const handleInitialSync = async () => {
     setGoogleLoading(true);
 
-    // Show syncing state
     openModal({
       title: t('googleSheets.syncing') || 'Syncing...',
       description: t('googleSheets.syncingDescription') || 'Please wait while we sync your receipts...',
-      actions: [], // No actions while syncing
+      actions: [],
       children: (
         <div className="flex justify-center items-center py-6">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -64,7 +79,6 @@ export default function UserSettingsPage() {
     });
 
     try {
-      // Translation wrapper for the service
       const tWrapper = (key: string) => {
         if (key === 'receipts.title') return t('googleSheets.fileTitle') || 'Receipts';
         if (key === 'receipts.receiptDate') return t('googleSheets.columns.date');
@@ -75,11 +89,7 @@ export default function UserSettingsPage() {
         return key;
       };
 
-      // Fetch ALL receipts for the user
       const receipts = await getAllReceiptsForSync(user!.id);
-
-      // Sync them (append mode, though sheet should be empty or we are appending to it)
-      // pass null as lastSyncDate to force checking all, or we could pass null to rely on sheet check
       const result = await syncReceiptsToSheet(receipts, null, tWrapper);
 
       if (user?.id) {
@@ -149,20 +159,22 @@ export default function UserSettingsPage() {
           },
           {
             label: t('googleSheets.syncNow') || 'Sync Existing Receipts',
-            onClick: () => handleInitialSync(id),
+            onClick: () => handleInitialSync(),
             variant: 'default'
           }
         ]
       });
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Failed to connect to Google Sheets');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error(err);
+        setError(err.message);
 
-      openModal({
-        title: 'Error',
-        description: err.message || t('googleSheets.connectError') || 'Failed to connect to Google Sheets',
-        actions: [{ label: 'OK', onClick: closeModal, variant: 'default' }]
-      });
+        openModal({
+          title: 'Error',
+          description: err.message || t('googleSheets.connectError') || 'Failed to connect to Google Sheets',
+          actions: [{ label: 'OK', onClick: closeModal, variant: 'default' }]
+        });
+      }
     } finally {
       setGoogleLoading(false);
     }
@@ -185,7 +197,9 @@ export default function UserSettingsPage() {
           onClick: () => {
             localStorage.removeItem(`google_sheet_id_${user.id}`);
             localStorage.removeItem(`last_export_date_${user.id}`);
+            localStorage.removeItem(`auto_sync_${user.id}`);
             setSheetId(null);
+            setAutoSyncEnabled(false);
             setSuccess('');
             closeModal();
           },
@@ -215,7 +229,6 @@ export default function UserSettingsPage() {
       const supabase = await createSPASassClient();
       const client = supabase.getSupabaseClient();
 
-      // Verify current password first
       const { error: signInError } = await client.auth.signInWithPassword({
         email: user!.email!,
         password: currentPassword
@@ -237,14 +250,16 @@ export default function UserSettingsPage() {
       setNewPassword('');
       setConfirmPassword('');
       setIsPasswordModalOpen(false);
-    } catch (err: Error | unknown) {
-      const message = err instanceof Error ? err.message : '';
-      const isSamePassword = typeof message === 'string' && /new password should be different|same as the old|must be different/i.test(message);
-      if (isSamePassword) {
-        setPasswordError(t('changePassword.error.newPasswordMustDiffer'));
-      } else if (err instanceof Error) {
-        console.error('Error updating password:', err);
-        setPasswordError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        const message = err.message;
+        const isSamePassword = /new password should be different|same as the old|must be different/i.test(message);
+        if (isSamePassword) {
+          setPasswordError(t('changePassword.error.newPasswordMustDiffer'));
+        } else {
+          console.error('Error updating password:', err);
+          setPasswordError(message);
+        }
       } else {
         setPasswordError(t('changePassword.error.generic'));
       }
@@ -271,9 +286,12 @@ export default function UserSettingsPage() {
       )}
 
       {success && (
-        <Alert variant="success" data-testid="settings-success">
+        <Alert variant="success" data-testid="settings-success" className="relative pr-8">
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>{success}</AlertDescription>
+          <button type="button" onClick={() => setSuccess('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-success-foreground/20 rounded-full transition-colors" aria-label={tCommon('close') || 'Close'}>
+            <X className="h-4 w-4" />
+          </button>
         </Alert>
       )}
 
@@ -286,44 +304,12 @@ export default function UserSettingsPage() {
                 {t('userDetails.title')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">{t('userDetails.email')}</label>
                 <p className="mt-1 text-sm text-foreground" data-testid="user-email">
                   {user?.email}
                 </p>
-              </div>
-
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2">
-                  {sheetId ? (
-                    <a href={`https://docs.google.com/spreadsheets/d/${sheetId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 group">
-                      <img src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" alt="Google Sheets" className="h-5 w-5" />
-                      <span className="text-sm font-medium text-muted-foreground group-hover:text-primary group-hover:underline transition-colors">{t('googleSheets.title')}</span>
-                    </a>
-                  ) : (
-                    <>
-                      <img src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" alt="Google Sheets" className="h-5 w-5" />
-                      <span className="text-sm font-medium text-muted-foreground">{t('googleSheets.title')}</span>
-                    </>
-                  )}
-                </div>
-                {sheetId ? (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-100">
-                      <div className="h-2 w-2 rounded-full bg-[#10B981]" />
-                      <span className="text-sm font-medium text-emerald-700">{t('googleSheets.synced')}</span>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={handleDisconnect} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title={t('googleSheets.disconnect')}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <button onClick={handleGoogleSync} disabled={googleLoading} className="flex items-center gap-1.5 outline-none hover:bg-slate-50 px-2 py-1 rounded-md transition-colors">
-                    <div className="h-2 w-2 rounded-full bg-[#64748b]" />
-                    <span className="text-sm font-semibold text-[#1ab8a0]">{googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('googleSheets.connect')}</span>
-                  </button>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -343,7 +329,6 @@ export default function UserSettingsPage() {
                   if (!passwordLoading) {
                     setIsPasswordModalOpen(open);
                     if (open) {
-                      // Clear form and modal error when opening
                       setCurrentPassword('');
                       setNewPassword('');
                       setConfirmPassword('');
@@ -368,7 +353,6 @@ export default function UserSettingsPage() {
                         <AlertDescription>{passwordError}</AlertDescription>
                       </Alert>
                     )}
-                    {/* Hidden password field so the browser fills this instead of the visible current password field */}
                     <input type="password" autoComplete="current-password" tabIndex={-1} aria-hidden className="absolute -left-[9999px] w-px h-px opacity-0 pointer-events-none" readOnly />
                     <div className="space-y-2">
                       <Label htmlFor="current-password">{t('changePassword.currentPassword')}</Label>
@@ -390,6 +374,56 @@ export default function UserSettingsPage() {
                   </form>
                 </DialogContent>
               </Dialog>
+            </CardContent>
+          </Card>
+
+          {/* Google Sheets Integration - Separate Section */}
+          <Card data-testid="google-sheets-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <img src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" alt="Google Sheets" className="h-5 w-5" />
+                {t('googleSheets.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Connection Status */}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-2">
+                  {sheetId ? (
+                    <a href={`https://docs.google.com/spreadsheets/d/${sheetId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 group">
+                      <div className="h-2 w-2 rounded-full bg-[#10B981]" />
+                      <span className="text-sm font-medium text-emerald-700 group-hover:text-primary group-hover:underline transition-colors">{t('googleSheets.connected')}</span>
+                    </a>
+                  ) : (
+                    <>
+                      <div className="h-2 w-2 rounded-full bg-[#64748b]" />
+                      <span className="text-sm font-medium text-muted-foreground">{t('googleSheets.disconnected')}</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {sheetId ? (
+                    <Button variant="ghost" size="icon" onClick={handleDisconnect} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title={t('googleSheets.disconnect')}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <button onClick={handleGoogleSync} disabled={googleLoading} className="flex items-center gap-1.5 outline-none hover:bg-slate-50 px-2 py-1 rounded-md transition-colors">
+                      <span className="text-sm font-semibold text-[#1ab8a0]">{googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('googleSheets.connect')}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Auto-sync Toggle - Only show if Google Sheets is connected */}
+              {sheetId && (
+                <div className="flex items-center justify-between py-2 border-t border-border">
+                  <div className="flex flex-col">
+                    <Label className="text-sm font-medium cursor-default">{t('googleSheets.autoSyncLabel') || 'Auto-sync'}</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('googleSheets.autoSyncDescription') || 'Automatically sync after upload'}</p>
+                  </div>
+                  <Switch id="auto-sync-toggle" checked={autoSyncEnabled} onCheckedChange={handleToggleAutoSync} data-testid="auto-sync-toggle" />
+                </div>
+              )}
             </CardContent>
           </Card>
 

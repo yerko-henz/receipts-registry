@@ -202,7 +202,7 @@
       "alreadySynced": "¡Todos los recibos ya están sincronizados!",
       "alreadySyncedTitle": "Sincronizado",
       "exportSuccess": "¡Exportación exitosa!",
-      "exportSuccessMessage": "Tus recibos se han exportado exitosamente a Google Sheets.",
+      "exportSuccessMessage": "Tus recibos han sido exportados exitosamente a Google Sheets.",
       "close": "Cerrar",
       "delete": "Eliminar",
       "deleteConfirmTitle": "Eliminar Recibo",
@@ -404,6 +404,7 @@
       "connect": "Conectar",
       "synced": "Sincronizado",
       "connected": "Conectado",
+      "disconnected": "Desconectado",
       "disconnect": "Desconectar",
       "disconnectConfirmTitle": "Desconectar Google Sheets",
       "disconnectConfirmDescription": "¿Estás seguro de que deseas desconectar? Puedes volver a conectarte en cualquier momento.",
@@ -423,7 +424,11 @@
         "total": "Total",
         "link": "Enlace del Recibo",
         "id": "ID del Recibo"
-      }
+      },
+      "autoSyncLabel": "Auto-sync",
+      "autoSyncDescription": "Sincronizar automáticamente después de subir recibos",
+      "autoSyncEnabled": "Auto-sync activado",
+      "autoSyncDisabled": "Auto-sync desactivado"
     },
     "verifyEmail": {
       "title": "Verificar correo",

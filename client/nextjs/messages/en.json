@@ -423,7 +423,11 @@
         "total": "Total",
         "link": "Receipt Link",
         "id": "Receipt ID"
-      }
+      },
+      "autoSyncLabel": "Auto-sync",
+      "autoSyncDescription": "Automatically sync after upload",
+      "autoSyncEnabled": "Auto-sync enabled",
+      "autoSyncDisabled": "Auto-sync disabled"
     },
     "verifyEmail": {
       "title": "Verify Email",
