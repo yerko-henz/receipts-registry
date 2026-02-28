@@ -15,6 +15,7 @@
 // 2. openai/gpt-4o-mini (if you prefer OpenAI ecosystem)
 // 3. google/gemini-2.5-flash-lite (only if cost is absolute priority and accuracy can suffer)
 export const OPENROUTER_GEMINI_MODELS = [
+  '',
   'google/gemini-2.5-flash', // DEFAULT - best value for multimodal receipt extraction
   'anthropic/claude-3.5-haiku', // alternative: excellent at structured extraction
   'openai/gpt-4o-mini', // alternative: good all-rounder, competitive pricing
